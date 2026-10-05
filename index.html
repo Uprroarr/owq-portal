@@ -1,4 +1,4 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#0b0b10"><meta name="color-scheme" content="dark"><meta name="robots" content="noindex,nofollow"><link rel="manifest" href="manifest.webmanifest"><link rel="icon" href="icon-192.png"><link rel="apple-touch-icon" href="icon-192.png"><title>Only Winners &amp; Quitters | Command Station II</title><script>window.OWQ_FIREBASE={"apiKey": "AIzaSyCEUwZQsV04SgNzc-MzsiAO9cyMbLM1RuU", "authDomain": "owaq-946ee.firebaseapp.com", "databaseURL": "https://owaq-946ee-default-rtdb.firebaseio.com", "projectId": "owaq-946ee", "storageBucket": "owaq-946ee.firebasestorage.app", "messagingSenderId": "884987875546", "appId": "1:884987875546:web:102d9fc0ab0aceaa3315e3"};window.OWQ_WEB=1;</script><script>
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#0b0b10"><meta name="color-scheme" content="dark"><meta name="robots" content="noindex,nofollow"><link rel="manifest" href="manifest.webmanifest"><link rel="icon" href="icon-192.png"><link rel="apple-touch-icon" href="icon-192.png"><title>Only Winners &amp; Quitters | Command Station II</title><script>window.OWQ_FIREBASE={"apiKey": "AIzaSyCEUwZQsV04SgNzc-MzsiAO9cyMbLM1RuU", "authDomain": "owaq-946ee.firebaseapp.com", "databaseURL": "https://owaq-946ee-default-rtdb.firebaseio.com", "projectId": "owaq-946ee", "storageBucket": "owaq-946ee.firebasestorage.app", "messagingSenderId": "884987875546", "appId": "1:884987875546:web:102d9fc0ab0aceaa3315e3"};window.OWQ_WEB=1;window.OWQ_BUILD="2026-10-05 20:25 UTC";</script><script>
 /*OWQCLOUDstart*/
 /* OWQ Cloud: runs the portal as its own website. It provides the same `claude.use()` surface the portal was written for
    (db, room, user, downloads), backed by Firebase: Firestore = shared documents, Realtime Database = live room (presence,
@@ -81,7 +81,7 @@ function rtBlocked(e){if(ST.rtWarned)return;var c=String(e&&(e.code||e.message)|
  try{toast(msg)}catch(x){}try{console.warn('OWQ live room:',c)}catch(x){}}
 function mkRoomFactory(){
  var D=ST.F.db,rdb=ST.rdb,off=0,conn=false,connL=[],rooms={},offOk,offP=new Promise(function(ok){offOk=ok;setTimeout(ok,2500)});
- try{D.onValue(D.ref(rdb,'.info/serverTimeOffset'),function(s){off=+s.val()||0;offOk()})}catch(e){offOk()}
+ try{D.onValue(D.ref(rdb,'.info/serverTimeOffset'),function(s){off=+s.val()||0;ST.off=off;offOk()})}catch(e){offOk()}
  try{D.onValue(D.ref(rdb,'.info/connected'),function(s){var c=!!s.val();if(c===conn)return;conn=c;Object.keys(rooms).forEach(function(k){try{rooms[k]._conn(c)}catch(e){}});connL.slice().forEach(function(f){try{f(c)}catch(e){}})})}catch(e){}
  function now(){return Date.now()+off}
  function make(name){
@@ -136,7 +136,7 @@ function mkRoomFactory(){
 
 /* ---------------- call diagnostics (website version) ---------------- */
 (function(){var N=W.RTCPeerConnection;if(!N||N.__owq)return;var sent=0;
- function diag(o){if(sent>=8||!ST.ready||!ST.F)return;sent++;try{var F=ST.F.fs;o.k='rtc';o.at=new Date().toISOString();o.who=String((typeof WHO!=='undefined'&&WHO)||'').slice(0,40);o.ua=String(navigator.userAgent||'').slice(0,120);o.emits=ST.emitN||0;o.big=ST.bigEmit||0;
+ function diag(o){if(sent>=8||!ST.ready||!ST.F)return;sent++;try{var F=ST.F.fs;o.k='rtc';o.at=new Date().toISOString();o.who=String((typeof WHO!=='undefined'&&WHO)||'').slice(0,40);o.ua=String(navigator.userAgent||'').slice(0,120);o.emits=ST.emitN||0;o.big=ST.bigEmit||0;o.off=ST.off||0;
   F.setDoc(F.doc(F.collection(ST.fs,'diag')),enc(o)).catch(function(){})}catch(e){}}
  function P(cfg,more){var pc=more===undefined?new N(cfg):new N(cfg,more),info={t0:Date.now(),lc:{},rc:{},st:[]},done=0;
   pc.addEventListener('icecandidate',function(e){if(e.candidate){var ty=(/ typ (\w+)/.exec(e.candidate.candidate||'')||[])[1]||'?';info.lc[ty]=(info.lc[ty]||0)+1}});
@@ -255,7 +255,7 @@ function tmPaint(){var md=document.getElementById('md');if(!md||!md.querySelecto
  h+='<h5>DATA</h5><div class=owqrow><button class="btn o sm" onclick="OWQC.exportAll()">Export backup</button><label class="btn o sm" style="cursor:pointer">Import data<input type=file accept=".json,application/json" style="display:none" onchange="OWQC.importFile(this)"></label></div><p class=mut id=owqdmsg role=status></p>';
  box.innerHTML=h}
 function tmMsg(t,id){var e=document.getElementById(id||'owqtmmsg');if(e)e.textContent=t}
-ST.team=function(){if(!(ST.role==='owner'||ST.role==='admin')){try{toast('Team Access is for the agency owner.')}catch(e){}return}syncMembers();var md=document.getElementById('md');if(!md)return;md.innerHTML='<div class="mb owqtm" role=dialog aria-label="Team access"><div class=c><h4>Team Access</h4><p class=mut>Only people listed here can open the portal. They sign in with Google, or with a sign-in link sent to their email.</p><div id=owqtmb></div><div style="margin-top:14px"><button class="btn o" onclick="OWQC.teamClose()">Close</button></div></div></div>';
+ST.team=function(){if(!(ST.role==='owner'||ST.role==='admin')){try{toast('Team Access is for the agency owner.')}catch(e){}return}syncMembers();var md=document.getElementById('md');if(!md)return;md.innerHTML='<div class="mb owqtm" role=dialog aria-label="Team access"><div class=c><h4>Team Access</h4><p class=mut>Only people listed here can open the portal. They sign in with Google, or with a sign-in link sent to their email.</p><p class=mut style="font-size:11px;opacity:.75;margin-top:-4px">Site version '+esc(String(W.OWQ_BUILD||'dev'))+'</p><div id=owqtmb></div><div style="margin-top:14px"><button class="btn o" onclick="OWQC.teamClose()">Close</button></div></div></div>';
  var F=ST.F.fs;if(!TM.u1)TM.u1=F.onSnapshot(F.collection(ST.fs,'members'),function(s){TM.m=s.docs.map(function(d){var x=d.data()||{};return{id:d.id,name:x.name,role:x.role}}).sort(function(a,b){return(a.role==='owner'?-1:0)-(b.role==='owner'?-1:0)||a.id.localeCompare(b.id)});tmPaint()},function(){});
  if(!TM.u2)TM.u2=F.onSnapshot(F.collection(ST.fs,'requests'),function(s){TM.r=s.docs.map(function(d){var x=d.data()||{};return{email:d.id,name:x.name}});tmPaint()},function(){});tmPaint()};
 ST.teamClose=function(){try{TM.u1&&TM.u1();TM.u2&&TM.u2()}catch(e){}TM.u1=TM.u2=null;try{closeM()}catch(e){var md=document.getElementById('md');if(md)md.innerHTML=''}};
@@ -10203,4 +10203,56 @@ ${r.quote?`<blockquote class=qr-q>&ldquo;${esc(r.quote)}&rdquo;</blockquote>`:''
 /*VXend*/
 </script>
 
+<script>
+/*VFIXstart*/
+/* Sales Floor call setup that does not depend on computer clocks (website version).
+   The original only lets the person who walks on last dial the others, and "last" was judged by each computer's own clock,
+   so one computer with a wrong clock got no calls at all. Now: for anyone on the floor we are not connected to, the side
+   with the lower peer id dials after 1.2 s and the other side after 5 s (covers people still on an older version); a call
+   that fails or stalls is replaced and dialled again with back-off; an offer that arrives for a dead connection gets a
+   fresh one; a few diagnostics (clock offset, redials) go to the diag collection; a clock that is far off gets a heads-up. */
+(function(){
+ if(typeof VC!=='object'||!VC||typeof vcCall!=='function'||typeof vcPc!=='function'||typeof vcSig!=='function'||typeof vcDrop!=='function'||typeof vcJoin!=='function')return;
+ var T={},N={},STALL=15000,DISC=8000,MAXN=8,dn=0,late=VC.room?1:0;
+ function now(){return Date.now()}
+ function mine(){try{return vcMe()||''}catch(e){return''}}
+ function list(){try{return VC.room?VC.room.peers():[]}catch(e){return[]}}
+ function onFloor(id){var a=list();for(var i=0;i<a.length;i++){var p=a[i];if(p.peer===id)return !p.sameTab&&!!(p.presence&&p.presence.vc)}return false}
+ function healthy(pc){var s=pc.connectionState;if(s==='connected')return true;if(s==='failed'||s==='closed')return false;
+  return now()-(pc.__vs||pc.__v0||now())<(s==='disconnected'?DISC:STALL)}
+ function clockOff(){try{return typeof OWQC==='object'&&OWQC&&typeof OWQC.off==='number'?OWQC.off:0}catch(e){return 0}}
+ function diag(o){if(dn>=6)return;dn++;try{var c=globalThis.claude;if(!c||!c.use)return;
+  c.use('db').then(function(db){if(!db)return;o.k='vcx';o.at=new Date().toISOString();o.who=String((typeof WHO!=='undefined'&&WHO)||'').slice(0,40);
+   o.off=clockOff();o.ua=String(navigator.userAgent||'').slice(0,120);return db.collection('diag').add(o)}).catch(function(){})}catch(e){}}
+ function plan(id,ms){if(T[id])return;T[id]=setTimeout(function(){delete T[id];tick(id)},ms)}
+ function tick(id){if(!VC.on||!VC.room||!onFloor(id))return;var pc=VC.pcs[id];
+  if(pc&&healthy(pc)){if(pc.connectionState!=='connected')plan(id,3000);return}
+  var n=N[id]=(N[id]||0)+1;if(n>MAXN)return;
+  if(pc){diag({ev:'redial',n:n,cs:pc.connectionState,ss:pc.signalingState,is:pc.iceConnectionState,age:now()-(pc.__v0||now())});try{vcDrop(id)}catch(e){}}
+  try{vcCall(id)}catch(e){}
+  plan(id,STALL+1000+Math.min(n,6)*4000)}
+ function consider(id){if(T[id]||!VC.on||!onFloor(id))return;var pc=VC.pcs[id];if(pc&&healthy(pc))return;plan(id,mine()<id?1200:5000)}
+ function sweep(){if(!VC.on||!VC.room)return;list().forEach(function(p){if(!p.sameTab&&p.presence&&p.presence.vc)consider(p.peer)})}
+ /* stamp every connection with its start time and the time of its last state change */
+ var _pc=vcPc;vcPc=function(peer){var had=VC.pcs[peer],pc=_pc.apply(this,arguments);
+  if(pc&&!had&&!pc.__v0){pc.__v0=now();try{pc.addEventListener('connectionstatechange',function(){pc.__vs=now();var s=pc.connectionState;
+   if(s==='connected')N[peer]=0;else if(s==='failed'||s==='disconnected')setTimeout(function(){consider(peer)},s==='failed'?300:DISC+500)})}catch(e){}}
+  return pc};
+ /* an offer for a dead or stalled connection starts a fresh one instead of renegotiating the dead one */
+ var _sig=vcSig;vcSig=function(m){try{var d=m&&m.data;if(VC.on&&d&&d.k==='d'&&d.t==='offer'&&d.to===mine()&&!m.isMe){var pc=VC.pcs[m.peer];if(pc&&!healthy(pc))vcDrop(m.peer)}}catch(e){}
+  return _sig.apply(this,arguments)};
+ /* joining: the original dials the people it thinks came earlier; the sweep covers everyone else */
+ var _join=vcJoin;vcJoin=function(){var r=_join.apply(this,arguments);
+  Promise.resolve(r).then(function(){if(!VC.on)return;N={};setTimeout(sweep,300);var off=clockOff();
+   diag({ev:'join',n:list().filter(function(p){return !p.sameTab&&p.presence&&p.presence.vc}).length,pre:Object.keys(VC.pcs).length,late:late});
+   if(Math.abs(off)>90000&&!VC.__skewTold){VC.__skewTold=1;var mn=Math.max(1,Math.round(Math.abs(off)/60000));
+    try{toast('Heads up: this computer\'s clock is about '+mn+' minute'+(mn===1?'':'s')+' '+(off>0?'behind':'ahead')+'. Turn on automatic date and time in your computer settings so chat and check-in times are right.')}catch(e){}}}).catch(function(){});
+  return r};
+ var hooked=0;function hook(){if(hooked||!VC.room)return;hooked=1;try{VC.room.onPeers(function(){sweep()})}catch(e){}}
+ setInterval(function(){hook();sweep()},4000);
+ var w=setInterval(function(){if(VC.room){hook();clearInterval(w)}},500);
+})();
+/*VFIXend*/
+
+</script>
 </body></html>
