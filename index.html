@@ -1,4 +1,4 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#0b0b10"><meta name="color-scheme" content="dark"><meta name="robots" content="noindex,nofollow"><link rel="manifest" href="manifest.webmanifest"><link rel="icon" href="icon-192.png"><link rel="apple-touch-icon" href="icon-192.png"><title>Only Winners &amp; Quitters | Command Station II</title><script>window.OWQ_FIREBASE={"apiKey": "AIzaSyCEUwZQsV04SgNzc-MzsiAO9cyMbLM1RuU", "authDomain": "owaq-946ee.firebaseapp.com", "databaseURL": "https://owaq-946ee-default-rtdb.firebaseio.com", "projectId": "owaq-946ee", "storageBucket": "owaq-946ee.firebasestorage.app", "messagingSenderId": "884987875546", "appId": "1:884987875546:web:102d9fc0ab0aceaa3315e3"};window.OWQ_WEB=1;window.OWQ_BUILD="2026-10-05 20:25 UTC";</script><script>
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#0b0b10"><meta name="color-scheme" content="dark"><meta name="robots" content="noindex,nofollow"><link rel="manifest" href="manifest.webmanifest"><link rel="icon" href="icon-192.png"><link rel="apple-touch-icon" href="icon-192.png"><title>Only Winners &amp; Quitters | Command Station II</title><script>window.OWQ_FIREBASE={"apiKey": "AIzaSyCEUwZQsV04SgNzc-MzsiAO9cyMbLM1RuU", "authDomain": "owaq-946ee.firebaseapp.com", "databaseURL": "https://owaq-946ee-default-rtdb.firebaseio.com", "projectId": "owaq-946ee", "storageBucket": "owaq-946ee.firebasestorage.app", "messagingSenderId": "884987875546", "appId": "1:884987875546:web:102d9fc0ab0aceaa3315e3"};window.OWQ_WEB=1;window.OWQ_BUILD="2026-10-05 21:15 UTC";</script><script>
 /*OWQCLOUDstart*/
 /* OWQ Cloud: runs the portal as its own website. It provides the same `claude.use()` surface the portal was written for
    (db, room, user, downloads), backed by Firebase: Firestore = shared documents, Realtime Database = live room (presence,
@@ -10241,9 +10241,17 @@ ${r.quote?`<blockquote class=qr-q>&ldquo;${esc(r.quote)}&rdquo;</blockquote>`:''
  /* an offer for a dead or stalled connection starts a fresh one instead of renegotiating the dead one */
  var _sig=vcSig;vcSig=function(m){try{var d=m&&m.data;if(VC.on&&d&&d.k==='d'&&d.t==='offer'&&d.to===mine()&&!m.isMe){var pc=VC.pcs[m.peer];if(pc&&!healthy(pc))vcDrop(m.peer)}}catch(e){}
   return _sig.apply(this,arguments)};
+ /* a browser that hands out no network routes at all (a VPN or privacy extension's "WebRTC leak protection", or a policy that
+    disables non-proxied UDP) can never connect a call: probe once per join and say so plainly instead of failing silently */
+ function iceProbe(){return new Promise(function(res){var pc=null,n=0,done=0,t=0;function fin(){if(done)return;done=1;clearTimeout(t);try{if(pc)pc.close()}catch(e){}res(n)}
+  try{pc=new RTCPeerConnection({iceServers:[{urls:'stun:stun.l.google.com:19302'}]});pc.createDataChannel('probe');
+   pc.onicecandidate=function(e){if(e.candidate&&e.candidate.candidate){n++;fin()}};
+   pc.createOffer().then(function(o){return pc.setLocalDescription(o)}).catch(function(){n=-1;fin()});t=setTimeout(fin,4500)}catch(e){n=-1;fin()}})}
+ var ICEMSG='Voice cannot connect from this browser: it is blocking call connections (WebRTC). This is usually a VPN or privacy extension with "WebRTC leak protection" turned on. Turn that setting off or pause the extension, then reload and rejoin, or use another browser.';
+ function probeJoin(){iceProbe().then(function(n){VC.iceN=n;if(n!==0||!VC.on)return;VC.err=ICEMSG;try{vcPaint()}catch(e){}try{toast('Voice is blocked in this browser (WebRTC). Open the Sales Floor for the fix.')}catch(e){}diag({ev:'noice'})})}
  /* joining: the original dials the people it thinks came earlier; the sweep covers everyone else */
  var _join=vcJoin;vcJoin=function(){var r=_join.apply(this,arguments);
-  Promise.resolve(r).then(function(){if(!VC.on)return;N={};setTimeout(sweep,300);var off=clockOff();
+  Promise.resolve(r).then(function(){if(!VC.on)return;N={};setTimeout(sweep,300);probeJoin();var off=clockOff();
    diag({ev:'join',n:list().filter(function(p){return !p.sameTab&&p.presence&&p.presence.vc}).length,pre:Object.keys(VC.pcs).length,late:late});
    if(Math.abs(off)>90000&&!VC.__skewTold){VC.__skewTold=1;var mn=Math.max(1,Math.round(Math.abs(off)/60000));
     try{toast('Heads up: this computer\'s clock is about '+mn+' minute'+(mn===1?'':'s')+' '+(off>0?'behind':'ahead')+'. Turn on automatic date and time in your computer settings so chat and check-in times are right.')}catch(e){}}}).catch(function(){});
