@@ -116,7 +116,7 @@ function mkRoomFactory(){
   var R={name:name||undefined,
    _conn:function(c){if(c&&alive)attach()},
    emit:function(topic,data){if(!alive)return Promise.reject({code:'invalid_argument',message:'room left'});if(!TOPIC.test(String(topic)))return Promise.reject({code:'invalid_argument',message:'bad topic'});
-    var txt;try{txt=data===undefined?'':JSON.stringify(data)}catch(e){return Promise.reject({code:'invalid_argument',message:'data is not JSON'})}if(txt.length>4096)return Promise.reject({code:'invalid_argument',message:'data over 4 KiB'});
+    var txt;try{txt=data===undefined?'':JSON.stringify(data)}catch(e){return Promise.reject({code:'invalid_argument',message:'data is not JSON'})}if(txt.length>60000){ST.bigEmit=(ST.bigEmit||0)+1;return Promise.reject({code:'invalid_argument',message:'data over 60 KB'})}ST.emitN=(ST.emitN||0)+1;
     var r=D.push(D.ref(rdb,base+'/e'));D.set(r,{t:topic,d:txt,f:me,by:uid,at:D.serverTimestamp()}).catch(function(){});setTimeout(function(){try{D.remove(r)}catch(e){}},30000);return Promise.resolve()},
    on:function(topic,h,onErr){if(typeof h!=='function')throw new TypeError('handler must be a function');if(!TOPIC.test(String(topic))){if(onErr)Promise.resolve().then(function(){onErr({code:'invalid_argument',message:'bad topic'})});return function(){}}
     (tl[topic]=tl[topic]||[]).push(h);return function(){var a=tl[topic]||[],i=a.indexOf(h);if(i>=0)a.splice(i,1)}},
@@ -133,6 +133,18 @@ function mkRoomFactory(){
    sendToClaudeSession:function(){return Promise.reject({code:'claude_unavailable',message:'not available on the website version'})}};
   rebuild({});rooms[name||'']=R;return R}
  return function(){return rooms['']||make('')}}
+
+/* ---------------- call diagnostics (website version) ---------------- */
+(function(){var N=W.RTCPeerConnection;if(!N||N.__owq)return;var sent=0;
+ function diag(o){if(sent>=8||!ST.ready||!ST.F)return;sent++;try{var F=ST.F.fs;o.k='rtc';o.at=new Date().toISOString();o.who=String((typeof WHO!=='undefined'&&WHO)||'').slice(0,40);o.ua=String(navigator.userAgent||'').slice(0,120);o.emits=ST.emitN||0;o.big=ST.bigEmit||0;
+  F.setDoc(F.doc(F.collection(ST.fs,'diag')),enc(o)).catch(function(){})}catch(e){}}
+ function P(cfg,more){var pc=more===undefined?new N(cfg):new N(cfg,more),info={t0:Date.now(),lc:{},rc:{},st:[]},done=0;
+  pc.addEventListener('icecandidate',function(e){if(e.candidate){var ty=(/ typ (\w+)/.exec(e.candidate.candidate||'')||[])[1]||'?';info.lc[ty]=(info.lc[ty]||0)+1}});
+  var oadd=pc.addIceCandidate;pc.addIceCandidate=function(c){try{var ty=(/ typ (\w+)/.exec(c&&c.candidate||'')||[])[1];if(ty)info.rc[ty]=(info.rc[ty]||0)+1}catch(e){}return oadd.apply(pc,arguments)};
+  pc.addEventListener('connectionstatechange',function(){var st=pc.connectionState;info.st.push(st);if(!done&&(st==='connected'||st==='failed')){done=1;
+    var sel=null;pc.getStats().then(function(r){r.forEach(function(x){if(x.type==='candidate-pair'&&(x.nominated||x.selected)&&x.state==='succeeded'){var l=r.get(x.localCandidateId),m=r.get(x.remoteCandidateId);sel=[l&&l.candidateType,m&&m.candidateType]}})}).catch(function(){}).then(function(){diag({state:st,ms:Date.now()-info.t0,lc:info.lc,rc:info.rc,steps:info.st.slice(0,12),pair:sel,ice:(cfg&&cfg.iceServers||[]).length})})}});
+  return pc}
+ P.prototype=N.prototype;P.__owq=1;try{P.generateCertificate=N.generateCertificate}catch(e){}W.RTCPeerConnection=P})();
 
 /* ---------------- user, downloads ---------------- */
 function mkUser(){var m=ST.member||{};return Object.freeze({
@@ -209,7 +221,9 @@ function checkMember(u){var F=ST.F.fs,e=lc(u.email);ST.phase='checking';paint();
    if(m.role==='owner')return D.set(D.ref(ST.rdb,'members/'+ekey(e)),'owner').catch(function(){}).then(function(){return m});return m})}
 function loadCodes(){var F=ST.F.fs;return F.getDoc(F.doc(ST.fs,'cfg/codes')).then(function(s){var ex=typeof s.exists==='function'?s.exists():!!s.exists;var b=ex?dec(s.data())||{}:{};var c=b.codes||{};ST.codes=c;
   try{if(typeof PWD==='object'&&PWD){Object.keys(PWD).forEach(function(k){delete PWD[k]});Object.keys(c).forEach(function(k){PWD[k]=String(c[k]).toLowerCase()})}}catch(e){}},function(){})}
-function loadRtc(){var F=ST.F.fs;return F.getDoc(F.doc(ST.fs,'cfg/rtc')).then(function(s){var ex=typeof s.exists==='function'?s.exists():!!s.exists;if(!ex)return;var b=dec(s.data())||{};
+var STUNS=[{urls:['stun:stun.l.google.com:19302','stun:stun1.l.google.com:19302','stun:stun2.l.google.com:19302']},{urls:'stun:stun.cloudflare.com:3478'}];
+function loadRtc(){try{if(typeof VCFG==='object'&&VCFG&&Array.isArray(VCFG.iceServers)){VCFG.iceServers.length=0;STUNS.forEach(function(x){VCFG.iceServers.push(x)})}}catch(e){}
+ var F=ST.F.fs;return F.getDoc(F.doc(ST.fs,'cfg/rtc')).then(function(s){var ex=typeof s.exists==='function'?s.exists():!!s.exists;if(!ex)return;var b=dec(s.data())||{};
   try{if(Array.isArray(b.iceServers)&&b.iceServers.length&&typeof VCFG==='object'){VCFG.iceServers.length=0;b.iceServers.forEach(function(x){VCFG.iceServers.push(x)})}}catch(e){}},function(){})}
 
 function start(){
