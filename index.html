@@ -75,6 +75,10 @@ function mkDb(){
 
 /* ---------------- room: Realtime Database presence + moments ---------------- */
 var TOPIC=/^[a-z][a-z0-9_.-]{0,47}$/,RNAME=/^[a-z0-9][a-z0-9_.-]{0,47}$/;
+function rtBlocked(e){if(ST.rtWarned)return;var c=String(e&&(e.code||e.message)||'');if(!/PERMISSION|permission/i.test(c))return;ST.rtWarned=1;ST.rtErr=c;
+ var own=ST.role==='owner'||ST.role==='admin';
+ var msg=own?'Live room is blocked: publish the Realtime Database rules in Firebase (Build > Realtime Database > Rules), then reload.':'You are not connected to the live room yet. Ask the owner to open Team Access once (it refreshes access), then reload.';
+ try{toast(msg)}catch(x){}try{console.warn('OWQ live room:',c)}catch(x){}}
 function mkRoomFactory(){
  var D=ST.F.db,rdb=ST.rdb,off=0,conn=false,connL=[],rooms={},offOk,offP=new Promise(function(ok){offOk=ok;setTimeout(ok,2500)});
  try{D.onValue(D.ref(rdb,'.info/serverTimeOffset'),function(s){off=+s.val()||0;offOk()})}catch(e){offOk()}
@@ -86,7 +90,7 @@ function mkRoomFactory(){
   var pref=D.ref(rdb,base+'/p/'+me);
   function mkPeer(k,by,pr,o){var p={peer:k,by:by||null,isMe:!!uid&&by===uid,sameTab:k===me,kind:'viewer',guest:false,presence:Object.freeze(o&&typeof o==='object'&&!Array.isArray(o)?o:{}),updatedAt:Date.now()};Object.defineProperty(p,'__pr',{value:pr});return Object.freeze(p)}
   function selfPeer(){var pr=JSON.stringify(my);return mkPeer(me,uid,pr,clone(my)||{})}
-  function writeP(){pend=null;pt=Date.now();if(!alive)return Promise.resolve();return D.set(pref,{by:uid,g:0,pr:JSON.stringify(my),at:D.serverTimestamp()}).catch(function(){})}
+  function writeP(){pend=null;pt=Date.now();if(!alive)return Promise.resolve();return D.set(pref,{by:uid,g:0,pr:JSON.stringify(my),at:D.serverTimestamp()}).then(function(){ST.rtOk=true},function(e){rtBlocked(e)})}
   function schedule(){if(!pend)pend=setTimeout(writeP,Math.max(0,90-(Date.now()-pt)))}
   function rebuild(val){var nm={},list=[],j=[],l=[],u=[];val=val||{};
    Object.keys(val).forEach(function(k){var v=val[k]||{},pr=typeof v.pr==='string'?v.pr:'{}',old=cache[k];
@@ -177,7 +181,10 @@ function paint(){var g=gate(),h='<div class=owqgc><div class=owqgb><i></i>ONLY W
  else if(ST.phase==='error')h+='<h1>CONNECTION PROBLEM</h1><p class=owqge role=alert>'+esc(ST.err||'Something went wrong.')+'</p><button class=owqgbtn onclick="location.reload()">TRY AGAIN</button>';
  h+='<div class=owqgs>'+(ST.phase==='out'?'ENCRYPTED &middot; APPROVED MEMBERS ONLY':'')+'</div></div>';g.innerHTML=h;
  var b=g.querySelector('.owqgbtn');if(b&&b.focus)try{b.focus({preventScroll:true})}catch(e){}}
-function admit(){ST.ready=true;ST.phase='in';var w=ST.waiters;ST.waiters=[];w.forEach(function(f){f(true)});if(G){G.classList.add('out');setTimeout(function(){if(G&&ST.phase==='in')G.style.display='none'},700)}teamBtn()}
+function syncMembers(){if(!(ST.role==='owner'||ST.role==='admin'))return Promise.resolve();var F=ST.F.fs,D=ST.F.db;
+ return F.getDocs(F.collection(ST.fs,'members')).then(function(s){return Promise.all(s.docs.map(function(d){var x=d.data()||{},r=x.role==='owner'?'owner':x.role==='admin'?'admin':'member';return D.set(D.ref(ST.rdb,'members/'+ekey(d.id)),r).catch(function(e){rtBlocked(e)})}))}).catch(function(){})}
+ST.syncMembers=syncMembers;
+function admit(){ST.ready=true;ST.phase='in';setTimeout(syncMembers,1200);var w=ST.waiters;ST.waiters=[];w.forEach(function(f){f(true)});if(G){G.classList.add('out');setTimeout(function(){if(G&&ST.phase==='in')G.style.display='none'},700)}teamBtn()}
 function deny(){var w=ST.waiters;ST.waiters=[];w.forEach(function(f){f(false)})}
 
 ST.signIn=function(){var A=ST.F.auth,p=new A.GoogleAuthProvider();try{p.setCustomParameters({prompt:'select_account'})}catch(e){}ST.err='';
@@ -234,7 +241,7 @@ function tmPaint(){var md=document.getElementById('md');if(!md||!md.querySelecto
  h+='<h5>DATA</h5><div class=owqrow><button class="btn o sm" onclick="OWQC.exportAll()">Export backup</button><label class="btn o sm" style="cursor:pointer">Import data<input type=file accept=".json,application/json" style="display:none" onchange="OWQC.importFile(this)"></label></div><p class=mut id=owqdmsg role=status></p>';
  box.innerHTML=h}
 function tmMsg(t,id){var e=document.getElementById(id||'owqtmmsg');if(e)e.textContent=t}
-ST.team=function(){if(!(ST.role==='owner'||ST.role==='admin')){try{toast('Team Access is for the agency owner.')}catch(e){}return}var md=document.getElementById('md');if(!md)return;md.innerHTML='<div class="mb owqtm" role=dialog aria-label="Team access"><div class=c><h4>Team Access</h4><p class=mut>Only people listed here can open the portal. They sign in with Google, or with a sign-in link sent to their email.</p><div id=owqtmb></div><div style="margin-top:14px"><button class="btn o" onclick="OWQC.teamClose()">Close</button></div></div></div>';
+ST.team=function(){if(!(ST.role==='owner'||ST.role==='admin')){try{toast('Team Access is for the agency owner.')}catch(e){}return}syncMembers();var md=document.getElementById('md');if(!md)return;md.innerHTML='<div class="mb owqtm" role=dialog aria-label="Team access"><div class=c><h4>Team Access</h4><p class=mut>Only people listed here can open the portal. They sign in with Google, or with a sign-in link sent to their email.</p><div id=owqtmb></div><div style="margin-top:14px"><button class="btn o" onclick="OWQC.teamClose()">Close</button></div></div></div>';
  var F=ST.F.fs;if(!TM.u1)TM.u1=F.onSnapshot(F.collection(ST.fs,'members'),function(s){TM.m=s.docs.map(function(d){var x=d.data()||{};return{id:d.id,name:x.name,role:x.role}}).sort(function(a,b){return(a.role==='owner'?-1:0)-(b.role==='owner'?-1:0)||a.id.localeCompare(b.id)});tmPaint()},function(){});
  if(!TM.u2)TM.u2=F.onSnapshot(F.collection(ST.fs,'requests'),function(s){TM.r=s.docs.map(function(d){var x=d.data()||{};return{email:d.id,name:x.name}});tmPaint()},function(){});tmPaint()};
 ST.teamClose=function(){try{TM.u1&&TM.u1();TM.u2&&TM.u2()}catch(e){}TM.u1=TM.u2=null;try{closeM()}catch(e){var md=document.getElementById('md');if(md)md.innerHTML=''}};
