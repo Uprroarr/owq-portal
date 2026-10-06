@@ -1,4 +1,4 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#0b0b10"><meta name="color-scheme" content="dark"><meta name="robots" content="noindex,nofollow"><link rel="manifest" href="manifest.webmanifest"><link rel="icon" href="icon-192.png"><link rel="apple-touch-icon" href="icon-192.png"><title>Only Winners &amp; Quitters | Command Station II</title><script>window.OWQ_FIREBASE={"apiKey": "AIzaSyCEUwZQsV04SgNzc-MzsiAO9cyMbLM1RuU", "authDomain": "owaq-946ee.firebaseapp.com", "databaseURL": "https://owaq-946ee-default-rtdb.firebaseio.com", "projectId": "owaq-946ee", "storageBucket": "owaq-946ee.firebasestorage.app", "messagingSenderId": "884987875546", "appId": "1:884987875546:web:102d9fc0ab0aceaa3315e3"};window.OWQ_WEB=1;window.OWQ_BUILD="2026-10-06 15:21 UTC";</script><script>
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#0b0b10"><meta name="color-scheme" content="dark"><meta name="robots" content="noindex,nofollow"><link rel="manifest" href="manifest.webmanifest"><link rel="icon" href="icon-192.png"><link rel="apple-touch-icon" href="icon-192.png"><title>Only Winners &amp; Quitters | Command Station II</title><script>window.OWQ_FIREBASE={"apiKey": "AIzaSyCEUwZQsV04SgNzc-MzsiAO9cyMbLM1RuU", "authDomain": "owaq-946ee.firebaseapp.com", "databaseURL": "https://owaq-946ee-default-rtdb.firebaseio.com", "projectId": "owaq-946ee", "storageBucket": "owaq-946ee.firebasestorage.app", "messagingSenderId": "884987875546", "appId": "1:884987875546:web:102d9fc0ab0aceaa3315e3"};window.OWQ_WEB=1;window.OWQ_BUILD="2026-10-06 16:15 UTC";</script><script>
 /*OWQCLOUDstart*/
 /* OWQ Cloud: runs the portal as its own website. It provides the same `claude.use()` surface the portal was written for
    (db, room, user, downloads), backed by Firebase: Firestore = shared documents, Realtime Database = live room (presence,
@@ -8508,7 +8508,7 @@ function ckNagCheck(){try{if(!ONLINE||!WHO||!D.agents.some(a=>a.name===WHO)){NAG
  if(Date.now()-NAGK.t>=NAGK.ms&&Date.now()>=NAGK.snz)ckNagShow()}catch(e){}}
 setInterval(ckNagCheck,15000);
 /* ===== Learning nag: on the clock 30+ min with an unfinished Learning Network -> send them to it ===== */
-const LNAG={snz:0,ms:1800000};
+const LNAG={snz:0,ms:1800000,only:[/^ayma[nm]\b/i]};
 function lnNagShow(done,total){if(document.getElementById('lnn')||document.getElementById('ckn'))return;ckNagCss();
  if(!document.getElementById('lnnS')){const st=document.createElement('style');st.id='lnnS';st.textContent=document.getElementById('cknS').textContent.replace(/#ckn/g,'#lnn').replace(/cknIn/g,'lnnIn').replace(/cknP/g,'lnnP')+'#lnn .lp{width:min(420px,80vw);height:12px;margin:0 auto 26px;border:1px solid rgba(255,31,79,.7);background:rgba(10,2,6,.8)}#lnn .lp i{display:block;height:100%;background:linear-gradient(90deg,#7d0b27,#ff1f4f,#ff8aa3);box-shadow:0 0 16px #ff1f4f}#lnn .lc{display:block;margin:-14px 0 24px;font:700 12px Verdana,sans-serif;letter-spacing:.2em;color:#fff}';document.head.appendChild(st)}
  const d=document.createElement('div');d.id='lnn';d.setAttribute('role','alertdialog');d.setAttribute('aria-label','Finish your training');const pc=Math.round(done/Math.max(1,total)*100);
@@ -8517,6 +8517,7 @@ function lnNagShow(done,total){if(document.getElementById('lnn')||document.getEl
  document.getElementById('lnnGo').onclick=()=>{d.remove();LNAG.snz=Date.now()+900000;try{openTab('Learning Network')}catch(e){try{tab='Learning Network';go()}catch(x){}}};
  document.getElementById('lnnLater').onclick=()=>{LNAG.snz=Date.now()+900000;d.remove()}}
 function lnNagCheck(){try{if(!ONLINE||!WHO||!D.agents.some(a=>a.name===WHO))return;
+ if(!LNAG.only.some(r=>r.test(WHO))){const e=document.getElementById('lnn');if(e)e.remove();return}
  const sh=typeof openShift==='function'?openShift(WHO):null;if(!sh||Date.now()-sh.start<LNAG.ms)return;
  const S=lnStates(WHO),s1=S.filter(x=>x.tr===0),d1=s1.every(x=>x.done),rq=lnReq(WHO),bp=S.filter(x=>x.tr===1&&!x.soon),bt=lnBpOpen(WHO,S)&&bp.some(x=>!x.done&&x.unlocked);
  const kind=!d1?'s1':(!lnAccess(WHO)&&!rq)?'req':bt?'bp':'';
