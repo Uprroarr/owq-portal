@@ -1,4 +1,4 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#0b0b10"><meta name="color-scheme" content="dark"><meta name="robots" content="noindex,nofollow"><link rel="manifest" href="manifest.webmanifest"><link rel="icon" href="icon-192.png"><link rel="apple-touch-icon" href="icon-192.png"><title>Only Winners &amp; Quitters | Command Station II</title><script>window.OWQ_FIREBASE={"apiKey": "AIzaSyCEUwZQsV04SgNzc-MzsiAO9cyMbLM1RuU", "authDomain": "owaq-946ee.firebaseapp.com", "databaseURL": "https://owaq-946ee-default-rtdb.firebaseio.com", "projectId": "owaq-946ee", "storageBucket": "owaq-946ee.firebasestorage.app", "messagingSenderId": "884987875546", "appId": "1:884987875546:web:102d9fc0ab0aceaa3315e3"};window.OWQ_WEB=1;window.OWQ_BUILD="2026-10-06 18:46 UTC";</script><script>
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#0b0b10"><meta name="color-scheme" content="dark"><meta name="robots" content="noindex,nofollow"><link rel="manifest" href="manifest.webmanifest"><link rel="icon" href="icon-192.png"><link rel="apple-touch-icon" href="icon-192.png"><title>Only Winners &amp; Quitters | Command Station II</title><script>window.OWQ_FIREBASE={"apiKey": "AIzaSyCEUwZQsV04SgNzc-MzsiAO9cyMbLM1RuU", "authDomain": "owaq-946ee.firebaseapp.com", "databaseURL": "https://owaq-946ee-default-rtdb.firebaseio.com", "projectId": "owaq-946ee", "storageBucket": "owaq-946ee.firebasestorage.app", "messagingSenderId": "884987875546", "appId": "1:884987875546:web:102d9fc0ab0aceaa3315e3"};window.OWQ_WEB=1;window.OWQ_BUILD="2026-10-07 13:55 UTC";</script><script>
 /*OWQCLOUDstart*/
 /* OWQ Cloud: runs the portal as its own website. It provides the same `claude.use()` surface the portal was written for
    (db, room, user, downloads), backed by Firebase: Firestore = shared documents, Realtime Database = live room (presence,
@@ -5903,7 +5903,7 @@ stamp();save();scanNow();refreshQuiet();hudRender()}
 function simLoop(){clearTimeout(SIMT);if(!ONLINE||!D.sim)return;SIMT=setTimeout(()=>{if(!document.hidden)simEvent();simLoop()},14000+Math.random()*16000)}
 function refreshQuiet(){if(!ONLINE)return;try{if(MR.ready)mrHitCheck()}catch(e){}if(tab==='Morning Recognition'){try{mrRefresh()}catch(e){}return}const md=document.getElementById('md'),ae=document.activeElement,tg=(ae&&ae.tagName)||'',nx=document.getElementById('nx');if((md&&md.innerHTML)||/INPUT|TEXTAREA|SELECT/.test(tg)||(nx&&nx.value)||(tab==='Clients'&&SUB['Clients']==='Message Builder')||tab==='Team Chat'||(tab==='Check-In'&&document.getElementById('cki_goal')))return;const m=document.getElementById('main'),y=m.scrollTop,ap=document.getElementById('app');QUIET=1;if(ap)ap.classList.add('nq');go();m.scrollTop=y;QUIET=0;setTimeout(()=>{if(ap)ap.classList.remove('nq')},1200)}
 const CMDS=()=>{const L=[];Object.keys(views).forEach(k=>L.push(['Go to '+k,views[k][3],()=>openTab(k)]));
-[['Agency Performance','Policies'],['Agency Performance','Agents'],['Business Performance','Income'],['Business Performance','Expenses'],['Business Performance','Statement']].forEach(([k,s])=>L.push(['Go to '+k+': '+s,'Tab',()=>openTab(k,s)]));
+[['Agency Performance','Policies'],['Agency Performance','Agents'],['Business Performance','Income'],['Business Performance','Expenses'],['Business Performance','Statement']].concat(typeof pfOwnerNow==='function'&&pfOwnerNow()?[['Business Performance','Portfolio']]:[]).forEach(([k,s])=>L.push(['Go to '+k+': '+s,'Tab',()=>openTab(k,s)]));
 [['Add policy','P'],['Add income','I'],['Add expense','E'],['Log activity','A'],['Add client','C'],['Add agent','G'],['New challenge','H']].forEach(([n,t])=>L.push([n,'Form',()=>openM(t)]));
 L.push(['Open challenges','Leaderboard',()=>{LBV='Challenges';openTab('Leaderboard')}]);L.push(['Open message builder','Clients',()=>{SUB['Clients']='Message Builder';openTab('Clients')}]);L.push(['Open alert center','Alerts',()=>toggleRail(true)],['Mark all alerts read','Alerts',markAll],['Turn live simulation on or off','Alerts',toggleSim],['Trigger a sample event','Alerts',()=>simEvent(1)],['Settings and backup','System',()=>openM('S')],['Lock station','System',lockView],['Team access (owner)','System',()=>{try{OWQC.team()}catch(e){}}]);
 crmCmds(L);MYCL().forEach(c=>L.push(['Client: '+c.name,c.st,()=>{cid=c.id;SUB['Clients']='Client Book';openTab('Clients')}]));MYCL().forEach(c=>L.push(['Write message: '+c.name,'Message Builder',()=>{tab='Clients';mbOpen(c.id)}]));D.agents.forEach(a=>L.push(['Agent report: '+a.name,'Agents',()=>agOpen(a.name)]));return L};
@@ -6434,10 +6434,10 @@ function mrCleanAtt(a){if(!a||typeof a!=='object')return null;const id=fileKey(a
 function mrCleanRx(rx){const o={};if(rx&&typeof rx==='object')RX.forEach(([k])=>{if(Array.isArray(rx[k]))o[k]=rx[k].filter(x=>typeof x==='string').map(x=>x.slice(0,60)).slice(0,40)});return o}
 function mrCleanGoals(a){const seen={};return(Array.isArray(a)?a:[]).map(g=>{if(!g||typeof g!=='object'||!MRMK[g.m]||seen[g.m])return null;const t=+g.t;if(!isFinite(t)||t<=0||t>1e7)return null;seen[g.m]=1;return{m:g.m,t:Math.round(t*10)/10}}).filter(Boolean).slice(0,8)}
 function mrCleanRec(id,d){if(!d||typeof d!=='object'||!MRID.test(id)||!MRDAY.test(d.day||''))return null;
-  const goals=mrCleanGoals(d.goals),quote=String(d.quote||'').slice(0,260);if(!goals.length&&!quote)return null;
-  return{id,day:d.day,by:String(d.by||'').slice(0,60),des:String(d.des||'').slice(0,60),cov:d.cov?1:0,goals,quote,note:String(d.note||'').slice(0,320),att:mrCleanAtt(d.att),at:+d.at||0,late:d.late?1:0,ed:+d.ed||0,rx:mrCleanRx(d.rx)}}
+  const goals=mrCleanGoals(d.goals),quote=String(d.quote||'').slice(0,20000);if(!goals.length&&!quote)return null;
+  return{id,day:d.day,by:String(d.by||'').slice(0,60),des:String(d.des||'').slice(0,60),cov:d.cov?1:0,goals,quote,note:String(d.note||'').slice(0,20000),att:mrCleanAtt(d.att),at:+d.at||0,late:d.late?1:0,ed:+d.ed||0,rx:mrCleanRx(d.rx)}}
 function mrCleanMsg(id,d){if(!d||typeof d!=='object'||!MRID.test(id)||!MRID.test(String(d.rid||'')))return null;
-  return{id,rid:String(d.rid),who:String(d.who||'').slice(0,60),text:String(d.text||'').slice(0,500),at:+d.at||0,att:mrCleanAtt(d.att),stk:STK[d.stk]?d.stk:'',rx:mrCleanRx(d.rx)}}
+  return{id,rid:String(d.rid),who:String(d.who||'').slice(0,60),text:String(d.text||'').slice(0,20000),at:+d.at||0,att:mrCleanAtt(d.att),stk:STK[d.stk]?d.stk:'',rx:mrCleanRx(d.rx)}}
 function mrSetReady(){if(MR.ready)return;MR.ready=1;mrRefresh();setTimeout(mrTick,300)}
 
 /* ---- status of today ---- */
@@ -6822,7 +6822,7 @@ function mrThreadBox(){
   return`<div class="c chm mrtb"><div class=chth id=mrth>${mrThreadHead(r)}</div><div class=chl id=mrl role=log aria-live=polite aria-label="Discussion">${mrMsgsHtml(r.id)}</div><div id=mrerr>${MR.err?`<p class=cherr>${esc(MR.err)}</p>`:''}</div>
 <div id=mrst class=chst>${mrStaged()}</div><div id=mrx class=chx>${mrPanelHtml()}</div><div id=mrmn class=chmn></div>
 <div class="chf cf2"><div class=cft><button class=cfb onclick="mrPanel('emo')" title=Emoji aria-label=Emoji ${ro?'disabled':''}>&#128512;</button><button class=cfb onclick="mrPanel('stk')" title="Hype stickers" aria-label="Hype stickers" ${ro?'disabled':''}>&#11088;</button>${mrCheers()}</div>
-<div class=cfi><button class="btn o" onclick="document.getElementById('mrfile').click()" aria-label="Attach a file" title="Attach a file or image" ${ro?'disabled':''}>&#128206;</button><input type=file id=mrfile hidden accept="image/*,${CHA}" onchange="mrPick(this.files,'t')"><input id=mri maxlength=500 placeholder="${ro?'View only: ask the owner for Contributor access to reply':'Respond to '+esc(mrFirst(r.by))+'&rsquo;s Morning Recognition (type @ to mention someone)'}" ${ro?'disabled':''} value="${esc(MR.draft)}" oninput="MR.draft=this.value;mrMent(this)" onkeydown="if(event.key==='Enter'){if(!mrMentKey(event))mrSend()}else mrMentNav(event)" aria-label="Reply" autocomplete=off><button class="btn cfs" onclick="mrSend()" ${ro?'disabled':''}>Send &#10148;</button></div></div></div>`}
+<div class=cfi><button class="btn o" onclick="document.getElementById('mrfile').click()" aria-label="Attach a file" title="Attach a file or image" ${ro?'disabled':''}>&#128206;</button><input type=file id=mrfile hidden accept="image/*,${CHA}" onchange="mrPick(this.files,'t')"><input id=mri placeholder="${ro?'View only: ask the owner for Contributor access to reply':'Respond to '+esc(mrFirst(r.by))+'&rsquo;s Morning Recognition (type @ to mention someone)'}" ${ro?'disabled':''} value="${esc(MR.draft)}" oninput="MR.draft=this.value;mrMent(this)" onkeydown="if(event.key==='Enter'){if(!mrMentKey(event))mrSend()}else mrMentNav(event)" aria-label="Reply" autocomplete=off><button class="btn cfs" onclick="mrSend()" ${ro?'disabled':''}>Send &#10148;</button></div></div></div>`}
 
 /* left rail + mobile chips */
 function mrRail(){
@@ -6871,21 +6871,21 @@ function mrRefresh(hard){
 /* thread actions */
 function mrSelect(id){const lat=mrLatest();if(!MRID.test(id)||!mrById(id))return;MR.sel=lat&&lat.id===id?'':id;MR.draft='';MR.tAtt=null;MR.panel='';MR.err='';go()}
 function mrPanel(k){MR.panel=MR.panel===k?'':k;const e=mrE('mrx');if(e)e.innerHTML=mrPanelHtml()}
-function mrEmo(e){const i=mrE('mri');if(!i)return;const t=document.createElement('textarea');t.innerHTML=e;i.value=(i.value+t.value).slice(0,500);MR.draft=i.value;i.focus()}
+function mrEmo(e){const i=mrE('mri');if(!i)return;const t=document.createElement('textarea');t.innerHTML=e;i.value=(i.value+t.value).slice(0,20000);MR.draft=i.value;i.focus()}
 async function mrSticker(k){if(!MR.canW||!STK[k])return;const r=mrCur();if(!r)return;MR.panel='';const e=mrE('mrx');if(e)e.innerHTML='';await mrPostMsg({rid:r.id,who:mrMe(),text:'',stk:k,at:Date.now(),att:null});mrScroll()}
 async function mrCheer(i){if(!MR.canW||!MRCH[i])return;const r=mrCur();if(!r)return;await mrPostMsg({rid:r.id,who:mrMe(),text:MRCH[i],at:Date.now(),att:null});mrScroll()}
 /* recognizing a teammate happens here in the discussion: pick them from the mention list and say what they did */
-function mrShout(){if(!MR.canW)return;const i=mrE('mri');if(!i)return;let v=i.value;if(v&&!/\s$/.test(v))v+=' ';i.value=(v+'\u{1F3C6} Shout-out to @').slice(0,500);MR.draft=i.value;i.focus();try{i.setSelectionRange(i.value.length,i.value.length)}catch(e){}mrMent(i)}
+function mrShout(){if(!MR.canW)return;const i=mrE('mri');if(!i)return;let v=i.value;if(v&&!/\s$/.test(v))v+=' ';i.value=(v+'\u{1F3C6} Shout-out to @').slice(0,20000);MR.draft=i.value;i.focus();try{i.setSelectionRange(i.value.length,i.value.length)}catch(e){}mrMent(i)}
 async function mrSend(){
   const r=mrCur();if(!r||!MR.canW)return;const i=mrE('mri'),t=(i?i.value:MR.draft).trim(),att=MR.tAtt;if(!t&&!att)return;
   MR.draft='';MR.err='';MR.tAtt=null;if(i)i.value='';mrStage();let a=null;
   if(att){try{toast('Uploading file...');a=await mrUpload(att)}catch(e){MR.tAtt=att;MR.draft=t;MR.err=mrWriteErr(e,'upload the file');mrStage();mrRefresh();return}}
-  const ok=await mrPostMsg({rid:r.id,who:mrMe(),text:t.slice(0,500),at:Date.now(),att:a});
+  const ok=await mrPostMsg({rid:r.id,who:mrMe(),text:t.slice(0,20000),at:Date.now(),att:a});
   if(ok)setTimeout(mrScroll,30)}
 function mrMent(inp){const m=/@([A-Za-z]*)$/.exec(inp.value.slice(0,inp.selectionStart||inp.value.length));const box=mrE('mrmn');if(!box)return;if(!m){box.innerHTML='';MNT.open=0;return}
   const q=m[1].toLowerCase(),L=D.agents.map(a=>a.name).filter(n=>n!==mrMe()&&n.toLowerCase().split(' ')[0].startsWith(q)).slice(0,5);MNT.list=L;MNT.i=0;MNT.open=L.length?1:0;
   box.innerHTML=L.map((n,i)=>`<button class="${i===0?'on':''}" onmousedown="event.preventDefault();mrMentPick(${i})">${av(n,22)}<b>${esc(n)}</b></button>`).join('')}
-function mrMentPick(i){const inp=mrE('mri'),n=MNT.list[i];if(!inp||!n)return;const pos=inp.selectionStart||inp.value.length,pre=inp.value.slice(0,pos).replace(/@([A-Za-z]*)$/,'@'+n.split(' ')[0]+' ');inp.value=(pre+inp.value.slice(pos)).slice(0,500);MR.draft=inp.value;const b=mrE('mrmn');if(b)b.innerHTML='';MNT.open=0;inp.focus()}
+function mrMentPick(i){const inp=mrE('mri'),n=MNT.list[i];if(!inp||!n)return;const pos=inp.selectionStart||inp.value.length,pre=inp.value.slice(0,pos).replace(/@([A-Za-z]*)$/,'@'+n.split(' ')[0]+' ');inp.value=(pre+inp.value.slice(pos)).slice(0,20000);MR.draft=inp.value;const b=mrE('mrmn');if(b)b.innerHTML='';MNT.open=0;inp.focus()}
 function mrMentKey(e){if(!MNT.open)return false;e.preventDefault();mrMentPick(MNT.i);return true}
 function mrMentNav(e){if(!MNT.open)return;if(e.key==='ArrowDown'||e.key==='ArrowUp'){e.preventDefault();MNT.i=(MNT.i+(e.key==='ArrowDown'?1:MNT.list.length-1))%MNT.list.length;const b=mrE('mrmn');if(b)[...b.children].forEach((c,i)=>c.classList.toggle('on',i===MNT.i))}else if(e.key==='Escape'){MNT.open=0;const b=mrE('mrmn');if(b)b.innerHTML=''}}
 
@@ -6933,7 +6933,7 @@ function mrOpenForm(editId){
     if(!s.w.on)return toast('No Morning Recognition is scheduled today.');
     if(!(s.w.who===me||mrOwner()))return toast('Only '+(s.w.who||'the person on duty')+' (or the owner) can post today\u2019s recognition.');
     const d=D.mrDraft&&D.mrDraft.day===s.k?D.mrDraft:null,dg=d?mrCleanGoals(d.goals):[];
-    MR.form={edit:'',goals:dg.length?dg:mrDefGoals(),quote:d&&d.quote?String(d.quote).slice(0,260):mrRandQuote(),own:d&&d.own?1:0,note:d?String(d.note||'').slice(0,300):'',att:null,keep:null,err:'',busy:0,ai:0}
+    MR.form={edit:'',goals:dg.length?dg:mrDefGoals(),quote:d&&d.quote?String(d.quote).slice(0,20000):mrRandQuote(),own:d&&d.own?1:0,note:d?String(d.note||'').slice(0,20000):'',att:null,keep:null,err:'',busy:0,ai:0}
   }
   mrFormRender();mrAIProbe();
   setTimeout(()=>{const e=mrE('mrgt0')||document.querySelector('#md .mrfm .mrpp, #md .mrfm .btn');if(e&&e.focus)e.focus()},60)}
@@ -6953,10 +6953,10 @@ function mrFormRender(){
 <div class=mrgl>${f.goals.length?f.goals.map(mrGoalRow).join(''):'<p class=mrgz>No goals yet. Add one below.</p>'}</div>
 ${left.length?`<div class=mrga role=group aria-label="Add a goal"><small>Add a goal</small>${left.map(m=>`<button type=button class=mrpp onclick="mrGoalAdd('${m.k}')" title="${esc(m.about)}"><span aria-hidden=true>${m.ic}</span> ${esc(m.n)}</button>`).join('')}</div>`:''}
 <label>Quote of the day <small>${f.own?'In your own words':'Picked at random'}</small></label>
-${f.own?`<textarea id=mrfq rows=3 maxlength=260 placeholder="Write the line you want the team to read first" oninput="MR.form.quote=this.value;mrCnt('mrfqc',this.value.length,260);mrErrClr();mrDraftSave()">${esc(f.quote)}</textarea><small class=mrcn id=mrfqc>${f.quote.length}/260</small>`:`<blockquote class="mrq mrqf"><span class=mrqm aria-hidden=true>&ldquo;</span><p>${esc(f.quote)}</p></blockquote>`}
+${f.own?`<textarea id=mrfq rows=3 placeholder="Write the line you want the team to read first" oninput="MR.form.quote=this.value;mrErrClr();mrDraftSave()">${esc(f.quote)}</textarea>`:`<blockquote class="mrq mrqf"><span class=mrqm aria-hidden=true>&ldquo;</span><p>${esc(f.quote)}</p></blockquote>`}
 <div class=mrqa><button type=button class="btn o sm" onclick="mrQuoteShuffle()"><span aria-hidden=true>&#128256;</span> Shuffle</button><button type=button class="btn o sm" onclick="mrQuoteOwn()">${f.own?'<span aria-hidden=true>&#10003;</span> Done writing':'<span aria-hidden=true>&#9998;</span> Write my own'}</button>${MR.ai===1?mrAIBtn(f):''}</div>
-<label for=mrfn>Focus for the day <small>Optional</small><small class=mrcn id=mrfnc>${f.note.length}/300</small></label>
-<textarea id=mrfn rows=3 maxlength=300 placeholder="Anything the team should know today: a product to push, a training time, a promo, a reminder." oninput="MR.form.note=this.value;mrCnt('mrfnc',this.value.length,300);mrDraftSave()">${esc(f.note)}</textarea>
+<label for=mrfn>Focus for the day <small>Optional</small></label>
+<textarea id=mrfn rows=3 placeholder="Anything the team should know today: a product to push, a training time, a promo, a reminder." oninput="MR.form.note=this.value;mrDraftSave()">${esc(f.note)}</textarea>
 <label>Photo or file <small>Optional</small></label>
 <div class=mrat>${at?`<div class=chsc>${at.th?`<img src="${at.th}" alt="">`:'<span>&#128196;</span>'}<div><b>${esc(at.name)}</b><small>${fmtSz(at.size)}${f.att?' - ready to post':''}</small></div><button type=button onclick="MR.form.att=null;MR.form.keep=null;mrFormRender()" aria-label="Remove attachment">&times;</button></div>`:`<button type=button class="btn o sm" onclick="document.getElementById('mrff').click()">&#128206; Add a photo or file</button>`}<input type=file id=mrff hidden accept="image/*,${CHA}" onchange="mrPick(this.files,'f')"></div>
 ${f.err?`<p class=mrerr role=alert>${esc(f.err)}</p>`:''}
@@ -6995,7 +6995,7 @@ async function mrQuoteAI(){
 
 async function mrSubmit(){
   const f=MR.form;if(!f||f.busy)return;
-  const goals=f.goals.map(g=>{const m=MRMK[g.m],n=+g.t||0;return{m:g.m,t:m.u==='h'?Math.round(n*10)/10:Math.round(n)}}),quote=String(f.quote||'').replace(/\s+/g,' ').trim(),note=String(f.note||'').trim().slice(0,300);let e='';
+  const goals=f.goals.map(g=>{const m=MRMK[g.m],n=+g.t||0;return{m:g.m,t:m.u==='h'?Math.round(n*10)/10:Math.round(n)}}),quote=String(f.quote||'').replace(/\s+/g,' ').trim(),note=String(f.note||'').trim().slice(0,20000);let e='';
   if(!goals.length)e='Add at least one goal for the day.';
   else{const bad=goals.find(g=>!(g.t>0));if(bad)e='Set a target above zero for '+MRMK[bad.m].n+', or remove that goal.'}
   if(!e&&quote.length<8)e='Add a quote for the day. Use Shuffle for a random one, or write your own.';
@@ -10156,7 +10156,7 @@ function anim(){document.querySelectorAll('.cu').forEach(e=>{const v=+e.dataset.
 const NSUB={'Agency Performance':['Summary','Policies','Agents'],'Business Performance':['Summary','Income','Expenses','Statement'],'Clients':['Client Book','Message Builder'],'Leaderboard':['Rankings','Challenges']};
 function navSubs(k){if(k!==tab)return'';let it=[];
 if(k==='Learning Network'){const S=lnStates(WHO),T=lnTrkCur(S);it=[{l:'01 &middot; Agency Essentials',on:!LN.id&&T===0,st:lnSecDone(S,0)?'ok':'',c:'sec',f:'lnTrk(0)'},{l:'02 &middot; New Broker Blueprint',on:!LN.id&&T===1,st:lnBpOpen(WHO,S)?'':'lock',c:'sec',f:'lnTrk(1)'}].concat(S.filter(s=>s.tr===T).map(s=>({l:s.m.ic+' '+s.m.t,on:LN.id===s.m.id,st:s.done?'ok':(s.unlocked?'':'lock'),f:"lnSub('"+s.m.id+"')"})))}
-else if(NSUB[k]){const cur=k==='Leaderboard'?LBV:SUB[k]||NSUB[k][0];it=NSUB[k].map(x=>({l:x,on:cur===x,st:'',f:"navSub('"+k+"','"+x+"')"}))}
+else if(NSUB[k]){const cur=k==='Leaderboard'?LBV:SUB[k]||NSUB[k][0];it=(k==='Business Performance'&&typeof pfOwnerNow==='function'&&pfOwnerNow()?NSUB[k].concat('Portfolio'):NSUB[k]).map(x=>({l:x,on:cur===x,st:'',f:"navSub('"+k+"','"+x+"')"}))}
 return it.length?'<div class=nsubs>'+it.map(x=>`<button class="nsb ${x.on?'on':''} ${x.st} ${x.c||''}" onclick="${x.f}">${x.st==='ok'?'<i>&#10003;</i>':x.st==='lock'?'<i>&#128274;</i>':'<i>&bull;</i>'}${x.l}</button>`).join('')+'</div>':''}
 function navSub(k,x){if(k==='Leaderboard'){LBV=x;openTab(k)}else openTab(k,x)}
 function lnSub(id){if(LN.id===id&&LN.mode==='lesson')return;lnOpen(id)}
@@ -10468,7 +10468,7 @@ ${r.quote?`<blockquote class=qr-q>&ldquo;${esc(r.quote)}&rdquo;</blockquote>`:''
  const _send=qvSend;
  qvSend=function(){if(!on())return _send.apply(this,arguments);if(!canW())return;const r=rec();const i=qv$('qvCI');if(!i||!r)return;const t=String(i.value||'').trim();if(!t)return;
   i.value='';QV.drafts[QR]='';qvGrow(i);qvMentClose();qvEmo(0);MR.err='';QV.stick=1;
-  const p=mrPostMsg({rid:r.id,who:mrMe(),text:t.slice(0,500),at:Date.now(),att:null});
+  const p=mrPostMsg({rid:r.id,who:mrMe(),text:t.slice(0,20000),at:Date.now(),att:null});
   Promise.resolve(p).then(ok=>{if(ok===false){QV.drafts[QR]=t;const j=qv$('qvCI');if(j&&!j.value){j.value=t;qvGrow(j)}}MR.draft='';qvList(true)});if(i.focus)i.focus()};
  const _open=qvOpenChat;
  qvOpenChat=function(){if(!on())return _open.apply(this,arguments);try{const r=rec();if(r)MR.sel=r.id}catch(e){}openTab('Morning Recognition');if(qvOverlay())toggleRail(false)};
