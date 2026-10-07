@@ -1,4 +1,4 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#0b0b10"><meta name="color-scheme" content="dark"><meta name="robots" content="noindex,nofollow"><link rel="manifest" href="manifest.webmanifest"><link rel="icon" href="icon-192.png"><link rel="apple-touch-icon" href="icon-192.png"><title>Only Winners &amp; Quitters | Command Station II</title><script>window.OWQ_FIREBASE={"apiKey": "AIzaSyCEUwZQsV04SgNzc-MzsiAO9cyMbLM1RuU", "authDomain": "owaq-946ee.firebaseapp.com", "databaseURL": "https://owaq-946ee-default-rtdb.firebaseio.com", "projectId": "owaq-946ee", "storageBucket": "owaq-946ee.firebasestorage.app", "messagingSenderId": "884987875546", "appId": "1:884987875546:web:102d9fc0ab0aceaa3315e3"};window.OWQ_WEB=1;window.OWQ_BUILD="2026-10-07 15:07 UTC";</script><script>
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#0b0b10"><meta name="color-scheme" content="dark"><meta name="robots" content="noindex,nofollow"><link rel="manifest" href="manifest.webmanifest"><link rel="icon" href="icon-192.png"><link rel="apple-touch-icon" href="icon-192.png"><title>Only Winners &amp; Quitters | Command Station II</title><script>window.OWQ_FIREBASE={"apiKey": "AIzaSyCEUwZQsV04SgNzc-MzsiAO9cyMbLM1RuU", "authDomain": "owaq-946ee.firebaseapp.com", "databaseURL": "https://owaq-946ee-default-rtdb.firebaseio.com", "projectId": "owaq-946ee", "storageBucket": "owaq-946ee.firebasestorage.app", "messagingSenderId": "884987875546", "appId": "1:884987875546:web:102d9fc0ab0aceaa3315e3"};window.OWQ_WEB=1;window.OWQ_BUILD="2026-10-07 16:14 UTC";</script><script>
 /*OWQCLOUDstart*/
 /* OWQ Cloud: runs the portal as its own website. It provides the same `claude.use()` surface the portal was written for
    (db, room, user, downloads), backed by Firebase: Firestore = shared documents, Realtime Database = live room (presence,
@@ -1593,6 +1593,7 @@ ol.pf-steps{text-align:left;max-width:470px;margin:4px auto 16px;padding-left:22
 .ngd{width:6px;height:6px;border-radius:50%;background:var(--red);box-shadow:0 0 8px var(--red)}
 .nga{position:absolute;right:10px;top:13px;background:none;border:1px solid var(--ln);color:var(--mut);width:20px;height:20px;padding:0;font-size:13px;line-height:1;cursor:pointer}.nga:hover{color:#fff;border-color:var(--red)}
 .ngw:not(:first-child) .ngc{margin-right:0}
+.sndsh{margin:12px 0 4px!important}.sndsi{font-size:16px;width:22px;text-align:center}
 </style><canvas id=bgc></canvas><div class="app" id=app>
 <aside><div class="brand"><svg class=lo viewBox="0 0 40 40"><circle class=r2 cx=20 cy=20 r=17 style="transform-origin:20px 20px" /><circle cx=20 cy=20 r=8 fill="#ff1f4f" style="animation:pulse 1.6s infinite" /></svg>Only Winners<br><small>&amp; QUITTERS</small><i></i></div><div class="stat"><b></b>COMMAND STATION LIVE</div>
 <div class="nvs" id="nav"></div><div class="foot"><div id="clk"></div><div id="dt"></div><div id=who style="margin-top:8px;letter-spacing:2px;font-size:10px"></div><div id=syn2 class=syn2></div><div id=acl class=syn2></div><button class="btn o" onclick="lockView()">Lock station</button><button class="btn o owqtab" id=owqtab hidden onclick="OWQC.team()" style="margin-top:6px">Team access</button></div></aside>
@@ -6273,7 +6274,7 @@ catch(e){VC.err=vcErr(e,'The camera')}vcPaint()}
 function vcStopTracks(s){if(!s)return;s.getTracks().forEach(t=>{Object.values(VC.pcs).forEach(pc=>pc.getSenders().forEach(se=>{if(se.track===t){try{pc.removeTrack(se)}catch(e){}}}));t.stop()})}
 function vcStopCam(){if(!VC.cam)return;const s=VC.cam;VC.cam=null;vcStopTracks(s);vcDropVid('local-cam');if(VC.room)VC.room.presence({cam:0}).catch(()=>{});vcPaint()}
 async function vcScr(){if(!VC.on)return;if(VC.scr)return vcStopScr();VC.err='';const md=vcMD();if(!md||!md.getDisplayMedia){VC.err='Screen sharing is not supported in this browser.';return vcPaint()}
-try{const s=await md.getDisplayMedia({video:{frameRate:{ideal:15,max:20}},audio:false});VC.scr=s;const t=s.getVideoTracks()[0];if(t)t.onended=()=>vcStopScr();vcLocalVid('local-scr',s);Object.keys(VC.pcs).forEach(p=>vcAddLocal(VC.pcs[p]));await VC.room.presence({scr:1,ss:s.id});VC.stage='local-scr'}
+try{let s=null;try{s=await md.getDisplayMedia({video:{frameRate:{ideal:15,max:20}},audio:{echoCancellation:false,noiseSuppression:false,autoGainControl:false},systemAudio:'include'})}catch(e1){if(e1&&e1.name==='NotAllowedError')throw e1;s=await md.getDisplayMedia({video:{frameRate:{ideal:15,max:20}},audio:false})}VC.scr=s;scrAudioHint(s);const t=s.getVideoTracks()[0];if(t)t.onended=()=>vcStopScr();vcLocalVid('local-scr',s);Object.keys(VC.pcs).forEach(p=>vcAddLocal(VC.pcs[p]));await VC.room.presence({scr:1,ss:s.id});VC.stage='local-scr'}
 catch(e){VC.err=(e&&e.name)==='NotAllowedError'?'Screen sharing was cancelled or is blocked for this page.':vcErr(e,'Screen sharing')}vcPaint()}
 function vcStopScr(){if(!VC.scr)return;const s=VC.scr;VC.scr=null;vcStopTracks(s);vcDropVid('local-scr');if(VC.stage==='local-scr')VC.stage='';if(VC.room)VC.room.presence({scr:0,ss:null}).catch(()=>{});vcPaint()}
 async function vcSetMic(id){VC.pref.mic=id;vcPrefSave();if(!VC.on||!VC.mic)return;const old=VC.mic.getAudioTracks()[0];
@@ -10581,8 +10582,8 @@ setInterval(()=>{try{if((VOX.pop==='toss'||VOX.pop==='yeet')&&typeof voOffice===
    alerts get a scaled volume. The slider curve is squared, so 50% sounds about half as loud. */
 (function(){
  if(window.SNDX)return;
- var K='owq_snd',CATS={m:1,mu:1,fx:1,vo:1},X=window.SNDX={};
- var S={v:{m:100,mu:100,fx:100,vo:100},x:{},p:{},px:{}};
+ var K='owq_snd',CATS={m:1,mu:1,fx:1,vo:1,ss:1},X=window.SNDX={};
+ var S={v:{m:100,mu:100,fx:100,vo:100,ss:100},x:{},p:{},px:{}};
  function cp(n){n=Math.round(+n);return isFinite(n)?Math.max(0,Math.min(100,n)):100}
  try{var j=JSON.parse(localStorage.getItem(K)||'null');if(j&&typeof j==='object'){
   if(j.v)for(var k in CATS)if(j.v[k]!==undefined)S.v[k]=cp(j.v[k]);
@@ -10594,7 +10595,7 @@ setInterval(()=>{try{if((VOX.pop==='toss'||VOX.pop==='yeet')&&typeof voOffice===
  function pp(n){if(!n)return 1;if(S.px[n])return 0;var v=S.p[n];return v===undefined?1:v/100}
  function sq(f){return f*f}
  function cat(el){if(el.__snd)return el.__snd;try{if(typeof LB!=='undefined'&&LB&&LB.au===el)return el.__snd='mu'}catch(e){}return'fx'}
- function mult(el){var k=cat(el),f=lvl('m');if(k==='mu')f*=lvl('mu');else if(k==='vo')f*=lvl('vo')*pp(el.__who||'');else f*=lvl('fx');return sq(f)}
+ function mult(el){var k=cat(el),f=lvl('m');if(k==='mu')f*=lvl('mu');else if(k==='vo')f*=lvl('vo')*pp(el.__who||'');else if(k==='ss')f*=lvl('ss')*pp(el.__who?'scr:'+el.__who:'');else f*=lvl('fx');return sq(f)}
  function fxGain(){return sq(lvl('m')*lvl('fx'))}
 
  /* ---- media elements (music, voices, test tone) ---- */
@@ -10624,7 +10625,8 @@ setInterval(()=>{try{if((VOX.pop==='toss'||VOX.pop==='yeet')&&typeof voOffice===
  /* ---- voices on the floor: each remote stream belongs to a peer, each peer has a name ---- */
  function peerOf(sid){try{var rs=VC.rs||{};for(var p in rs)if(rs[p]&&rs[p][sid])return p}catch(e){}return''}
  function nameOf(peer){try{var a=VC.room?VC.room.peers():[];for(var i=0;i<a.length;i++)if(a[i].peer===peer)return String((a[i].presence&&a[i].presence.nm)||'').slice(0,40)}catch(e){}return''}
- function voices(){try{if(typeof VC!=='object'||!VC||!VC.vid)return;Object.keys(VC.vid).forEach(function(k){if(k.indexOf('local-')===0)return;var v=VC.vid[k];if(!v)return;v.__snd='vo';var p=peerOf(k),n=p?nameOf(p):'';if(n)v.__who=n;apply(v)})}catch(e){}}
+ function ssOf(peer){try{var a=VC.room?VC.room.peers():[];for(var i=0;i<a.length;i++)if(a[i].peer===peer)return(a[i].presence&&a[i].presence.ss)||''}catch(e){}return''}
+ function voices(){try{if(typeof VC!=='object'||!VC||!VC.vid)return;Object.keys(VC.vid).forEach(function(k){if(k.indexOf('local-')===0)return;var v=VC.vid[k];if(!v)return;var p=peerOf(k),n=p?nameOf(p):'';v.__snd=p&&ssOf(p)===k?'ss':'vo';if(n)v.__who=n;apply(v)})}catch(e){}}
  function applyAll(){try{if(typeof LB!=='undefined'&&LB&&LB.au){if(!LB.au.__snd)LB.au.__snd='mu';apply(LB.au)}}catch(e){}EL.forEach(apply);voices();gains()}
 
  /* ---- the panel ---- */
@@ -10637,16 +10639,16 @@ setInterval(()=>{try{if((VOX.pop==='toss'||VOX.pop==='yeet')&&typeof voOffice===
  function row(k,lab,sub){var v=S.v[k],mu=!!S.x[k];return'<div class="sndr'+(mu?' mu':'')+'" data-k="'+k+'"><button type=button class=sndm onclick="SNDX.mute(\''+k+'\')" aria-pressed="'+mu+'" aria-label="'+(mu?'Unmute ':'Mute ')+lab+'" title="'+(mu?'Unmute':'Mute')+'">'+ico(mu?0:v/100)+
   '</button><label class=sndl for="sndi_'+k+'"><b>'+lab+'</b><small>'+sub+'</small></label><output id="sndo_'+k+'">'+(mu?'MUTED':v+'%')+'</output><input type=range id="sndi_'+k+'" min=0 max=100 step=1 value="'+v+'" style="--v:'+v+'%" aria-label="'+lab+' volume" oninput="SNDX.set(\''+k+'\',this.value)"></div>'}
  function prow(n,i,sp){var v=S.p[n]===undefined?100:S.p[n],mu=!!S.px[n],e=E(n);return'<div class="sndr sndpr'+(mu?' mu':'')+(sp?' sp':'')+'" data-i="'+i+'"><button type=button class=sndm onclick="SNDX.pmute('+i+')" aria-pressed="'+mu+'" aria-label="'+(mu?'Unmute ':'Mute ')+e+'" title="'+(mu?'Unmute':'Mute')+'">'+ico(mu?0:v/100)+
-  '</button><label class=sndl for="sndq_'+i+'">'+avh(n)+'<b>'+e+'</b><i class=snddot title="Talking"></i></label><output id="sndr_'+i+'">'+(mu?'MUTED':v+'%')+'</output><input type=range id="sndq_'+i+'" min=0 max=100 step=1 value="'+v+'" style="--v:'+v+'%" aria-label="'+e+' volume" oninput="SNDX.pset('+i+',this.value)"></div>'}
- function people(){var out=[],seen={};try{var me=vcMe();vcList().forEach(function(p){if(p.sameTab||p.peer===me)return;var x=p.presence||{},n=String(x.nm||'').slice(0,40);if(!n||seen[n])return;seen[n]=1;out.push({n:n,sp:!!(x.sp&&!x.mu)})})}catch(e){}return out}
- function floorHtml(){var L=people();P.names=L.map(function(x){return x.n});P.sig=P.names.join('|');
+  '</button><label class=sndl for="sndq_'+i+'">'+(n.indexOf('scr:')===0?'<span class=sndsi aria-hidden=true>&#128250;</span><b>'+E(n.slice(4))+'&rsquo;s screen</b>':avh(n)+'<b>'+e+'</b><i class=snddot title="Talking"></i>')+'</label><output id="sndr_'+i+'">'+(mu?'MUTED':v+'%')+'</output><input type=range id="sndq_'+i+'" min=0 max=100 step=1 value="'+v+'" style="--v:'+v+'%" aria-label="'+e+' volume" oninput="SNDX.pset('+i+',this.value)"></div>'}
+ function people(){var out=[],seen={};try{var me=vcMe();vcList().forEach(function(p){if(p.sameTab||p.peer===me)return;var x=p.presence||{},n=String(x.nm||'').slice(0,40);if(!n||seen[n])return;seen[n]=1;out.push({n:n,sp:!!(x.sp&&!x.mu),scr:!!(x.scr&&x.ss)})})}catch(e){}return out}
+ function floorHtml(){var L=people(),SC=L.filter(function(x){return x.scr});P.names=L.map(function(x){return x.n}).concat(SC.map(function(x){return'scr:'+x.n}));P.sig=P.names.join('|');
   if(!L.length)return'<p class=snde>Nobody else is on the floor right now. When teammates walk on, each one gets a slider here, remembered by name.</p>';
-  return L.map(function(x,i){return prow(x.n,i,x.sp)}).join('')}
+  return L.map(function(x,i){return prow(x.n,i,x.sp)}).join('')+(SC.length?'<h5 class=sndsh>SHARED SCREENS</h5>'+SC.map(function(x,j){return prow('scr:'+x.n,L.length+j,false)}).join(''):'')}
  function html(){var al=false;try{al=!!D.snd}catch(e){}
   return'<div class=sndh><b>VOLUME</b><button type=button class=sndx onclick="SNDX.close()" aria-label="Close">&times;</button></div>'+
    '<div class=snds><h5>PORTAL</h5>'+row('m','Master','Everything in the portal')+row('mu','Music','Lobby and login songs')+row('fx','Effects &amp; alerts','Chimes, the bell, rockets, spoken alerts')+
    '<label class=sndt><input type=checkbox id=sndal'+(al?' checked':'')+' onchange="SNDX.alerts(this.checked)"> Play a sound for new alerts</label></div>'+
-   '<div class=snds><h5>SALES FLOOR</h5>'+row('vo','All voices','Everyone you hear on the floor')+'<div id=sndfl>'+floorHtml()+'</div></div>'+
+   '<div class=snds><h5>SALES FLOOR</h5>'+row('vo','All voices','Everyone you hear on the floor')+row('ss','Screen share audio','Sound from screens people share to the TV')+'<div id=sndfl>'+floorHtml()+'</div></div>'+
    '<div class=sndf><small>Saved on this device</small><button type=button class="btn o" onclick="SNDX.reset()">Reset</button></div>'}
  function box(){var e=document.getElementById('sndp');if(!e){e=document.createElement('div');e.id='sndp';e.className='sndp';e.setAttribute('role','dialog');e.setAttribute('aria-label','Volume');e.tabIndex=-1;e.hidden=true;document.body.appendChild(e);
   e.addEventListener('pointerdown',function(ev){if(ev.target&&ev.target.type==='range')P.drag=1})}return e}
@@ -10670,7 +10672,7 @@ setInterval(()=>{try{if((VOX.pop==='toss'||VOX.pop==='yeet')&&typeof voOffice===
  X.pmute=function(i){var n=P.names[i];if(!n)return;if(S.px[n])delete S.px[n];else S.px[n]=1;var v=S.p[n]===undefined?100:S.p[n];if(!S.px[n]&&v===0)v=S.p[n]=50;
   var r=q('.sndpr[data-i="'+i+'"]'),inp=r&&r.querySelector('input');if(inp)inp.value=v;upRow(r,v,!!S.px[n]);voices();save()};
  X.alerts=function(on){try{if(!!D.snd!==!!on)toggleSnd()}catch(e){}};
- X.reset=function(){S={v:{m:100,mu:100,fx:100,vo:100},x:{},p:{},px:{}};applyAll();save();var e=document.getElementById('sndp');if(e&&P.open)e.innerHTML=html();btns()};
+ X.reset=function(){S={v:{m:100,mu:100,fx:100,vo:100,ss:100},x:{},p:{},px:{}};applyAll();save();var e=document.getElementById('sndp');if(e&&P.open)e.innerHTML=html();btns()};
  X.real=function(el){return OK?rv(el):el.volume};X.state=function(){return JSON.parse(JSON.stringify(S))};X.gain=fxGain;X.apply=applyAll;
 
  /* ---- buttons: header (before the bell) and the Sales Floor (before Devices) ---- */
@@ -11092,6 +11094,26 @@ function cpImage(a,text){const no=()=>toast('Your browser blocked copying the pi
  try{if(!navigator.clipboard||!navigator.clipboard.write||typeof ClipboardItem==='undefined')return no();const parts={'image/png':cpImgBlob(a)};if(text)parts['text/plain']=new Blob([text],{type:'text/plain'});
   navigator.clipboard.write([new ClipboardItem(parts)]).then(()=>toast(text?'Picture and text copied':'Picture copied',1),no)}catch(e){no()}}
 function chCopyImg(id){const a=chAtt(id);if(a)cpImage(a,'')}
+</script>
+<script>
+/*LNIPG: Insurance Product Guide is "study the document": opening the PDF completes the section and the next one is right there */
+var LNDOCONLY=['bp-insurance-product-guide'];
+function lnDocOnlyFix(){LNM.forEach(m=>{if(LNDOCONLY.indexOf(m.id)<0||!m.bp)return;m.doc=1;m.wo=1;m.quiz=null;if(m.slides)m.slides=m.slides.slice(0,1);m.min=Math.min(m.min||5,5)})}
+(function(){try{lnDocOnlyFix()}catch(e){}
+ if(typeof lnBpBuild==='function'){const _b=lnBpBuild;lnBpBuild=function(){const r=_b.apply(this,arguments);try{lnDocOnlyFix()}catch(e){}return r}}
+ if(typeof lnDpFull==='function'){const _f=lnDpFull;lnDpFull=function(i){const r=_f.apply(this,arguments);try{const m=LNM.find(x=>x.id===LN.id);
+   if(m&&m.doc&&LN.mode!=='result'){const p=lnPass(m,1,1);LN.res={pass:true,sc:1,n:1,need:0,first:p.first,xp:p.xp};LN.mode='result';LN.anim=1;lnR(1);toast(m.t+' complete',1)}}catch(e){}return r}}
+ if(typeof lnDpHtml==='function'){const _h=lnDpHtml;lnDpHtml=function(m){let h=_h.apply(this,arguments);if(m&&m.doc)h=h.replace(/Read (all <b>\d+<\/b> pages|the page) first\. The walkthrough and the questions cover what is in it\./,'Tap the document to open and study it. Opening it completes this section.');return h}}
+ if(typeof lnJourney==='function'){const _j=lnJourney;lnJourney=function(m,part){if(m&&m.doc)return`<div class=lnjy>${['Study the document','Complete'].map((n,i)=>`<span class="${i<part?'dd':i===part?'on':''}"><b>${i<part?'&#10003;':i+1}</b>${n}</span>`).join('')}</div>`;return _j.apply(this,arguments)}}})();
+</script>
+<script>
+
+/*SCRAUD: screen share sound. The sharer picks a tab (with "Also share tab audio") or the whole screen (with "Also share system audio");
+  the sound rides along with the picture. Screen sound never drives anyone's mouth or mood on the floor. */
+function scrAudioHint(s){try{const a=s&&s.getAudioTracks?s.getAudioTracks():[];if(a.length){toast('Sharing your screen with sound. Everyone can set its volume in the volume mixer.',1)}
+ else toast('Sharing without sound. To include sound, share a Chrome tab and turn on "Also share tab audio", or share your entire screen with "Also share system audio".')}catch(e){}}
+(function(){const w=setInterval(()=>{if(typeof voApi==='undefined'||!voApi.audio)return;clearInterval(w);const _a=voApi.audio;
+ voApi.audio=function(id){try{const x=((vcList().find(p=>p.peer===id)||{}).presence)||{},m=VC.rs[id]||{};for(const k in m){if(k===x.ss)continue;const st=m[k];if(st&&st.getAudioTracks&&st.getAudioTracks().length)return st}return null}catch(e){return _a.apply(this,arguments)}}},300)})();
 </script>
 
 <script>
