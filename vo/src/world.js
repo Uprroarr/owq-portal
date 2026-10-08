@@ -15,6 +15,9 @@ export const FLOORS = {
   g: {y: RANGEY, name: 'FIRING RANGE', sub: 'Target practice with your blaster'},
 };
 export const LAYER_OUT = 2;   // outdoor things: not drawn in the floor reflection
+// Ring Run course for planes (the city keeps clear of every ring), and the runway heading east off the Sky Park
+export const RINGS = [[120, 30, -60], [240, 60, -10], [300, 40, 140], [180, 15, 260], [20, 50, 300], [-150, 80, 240], [-260, 40, 80], [-230, 20, -120], [-90, 55, -250], [70, 35, -230], [150, 25, -150], [60, 18, -40]];
+const RUNWAY_Z = -14;
 
 // a cheap hash used by the shaders and the city layout
 function rnd(seed) { let s = seed >>> 0 || 1; return () => { s ^= s << 13; s ^= s >>> 17; s ^= s << 5; return (s >>> 0) / 4294967296; }; }
@@ -131,6 +134,8 @@ export class World {
     const R = rnd(2026), B = 74, half = 13;
     const clearOf = (x, z, rad) => {
       if (x > -70 && x < 55 && z > -85 && z < 45) return false;          // the tower, the Sky Park and its home-run field
+      if (x > 15 && x < 760 && Math.abs(z - RUNWAY_Z) < 34 + rad * .6) return false;   // a wide boulevard east: planes take off down it
+      for (const r of RINGS) if ((r[0] - x) * (r[0] - x) + (r[2] - z) * (r[2] - z) < (rad + 26) * (rad + 26)) return false;
       for (let i = 0; i < SKY.n; i += 3) { const p = SKY.S[i].p; if ((p.x - x) * (p.x - x) + (p.z - z) * (p.z - z) < rad * rad) return false; }
       for (const p of SKY.pylons) if ((p.x - x) * (p.x - x) + (p.z - z) * (p.z - z) < (rad * .7) * (rad * .7)) return false;
       return true;
@@ -146,13 +151,17 @@ export class World {
         const near = Math.max(0, 1 - dist / 900);
         let h = 30 + Math.pow(R(), 1.6) * 120 + near * near * 140;
         if (R() < .06) h += 90;
+        // close to the tower the rooftops stay below the Sky Deck and the Sky Park (open sky for planes, the deck
+        // hangs over the city); the tall skyline rises further out
+        const cap = dist < 380 ? 106 : dist < 480 ? 106 + (dist - 380) * 1.6 : 1e9;
+        if (h > cap) h = cap - R() * 26;
         const rad = Math.max(w, d) * .72 + 14;   // corners included: at least ~9 m of air between any building and the road
         if (!clearOf(x, z, rad)) continue;
         boxes.push([x, z, w, d, h]);
       }
     }
     // hero towers near the Sky Deck, standing just outside its corridor
-    [[-75, 20, 26, 26, 210], [-150, -60, 30, 30, 240], [-40, 95, 32, 28, 190], [-175, 55, 28, 34, 170], [-95, -110, 34, 30, 260], [20, 110, 30, 30, 160], [70, -40, 30, 30, 200]].forEach(b => { if (clearOf(b[0], b[1], Math.max(b[2], b[3]) * .72 + 12)) boxes.push(b); });
+    [[-75, 20, 26, 26, 210], [-150, -60, 30, 30, 240], [-40, 95, 32, 28, 190], [-175, 55, 28, 34, 170], [-95, -110, 34, 30, 260], [20, 110, 30, 30, 160]].forEach(b => { if (clearOf(b[0], b[1], Math.max(b[2], b[3]) * .72 + 12)) boxes.push(b); });
     this.blds = boxes;
     const im = new THREE.InstancedMesh(new THREE.BoxGeometry(1, 1, 1).translate(0, .5, 0), bm, boxes.length);
     const m4 = new THREE.Matrix4(), col = new THREE.Color(), pal = ['#2a3a6a', '#3a2550', '#1f3f4a', '#4a2030', '#2b2b3b', '#5a1a32'];

@@ -76,7 +76,8 @@ class Drive {
     const KM = {ArrowUp: 'up', w: 'up', W: 'up', ArrowDown: 'down', s: 'down', S: 'down', ArrowLeft: 'left', a: 'left', A: 'left', ArrowRight: 'right', d: 'right', D: 'right', ' ': 'brake'};
     const typing = e => { const t = e.target; return t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable); };
     addEventListener('keydown', e => {
-      if (!this.me || typing(e)) return;
+      if (e.__vo3 || !this.me || typing(e)) return;
+      if (/^(e|E|Escape|h|H|\[|\])$/.test(e.key) || KM[e.key]) e.__vo3 = 1;
       const k = KM[e.key]; if (k) { this.keys[k] = 1; e.preventDefault(); e.stopPropagation(); return; }
       if (e.key === '[' || e.key === ']') { this.setSens(this.sens + (e.key === ']' ? 1 : -1)); e.preventDefault(); return; }
       if (e.key === 'h' || e.key === 'H') { this.horn(); e.preventDefault(); }

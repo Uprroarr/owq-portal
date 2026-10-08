@@ -992,7 +992,7 @@ uniform sampler2D tRefl;uniform float uRK;varying vec4 vRU;varying vec3 vRW;`).r
   // ---------- overlay ----------
   tags(){const v=this._tv||(this._tv=new THREE.Vector3()),w=this.W,h=this.H;
     this.av.forEach(a=>{const e=this.ui.tag(a);a.headPos(v);v.y+=.4;const dist=v.distanceTo(this.cam.position);v.project(this.cam);
-      const vis=a.root.visible&&!a.leaving&&a._zv!==false&&v.z<1&&Math.abs(v.x)<1.08&&v.y<1.1&&v.y>-1.1;const x=(v.x*.5+.5)*w,y=(-v.y*.5+.5)*h;a._sx=x;a._sy=y;a._vis=vis;
+      const vis=a.root.visible&&!a.leaving&&a._zv!==false&&!(a.me&&(a.lane||a.bat))&&v.z<1&&Math.abs(v.x)<1.08&&v.y<1.1&&v.y>-1.1;const x=(v.x*.5+.5)*w,y=(-v.y*.5+.5)*h;a._sx=x;a._sy=y;a._vis=vis;
       this.ui.setTag(e,a,x,y,vis,clamp(10/dist,.6,1.3));
       if(a.camOn){let vid=null;try{vid=this.api.camVideo?this.api.camVideo(a.id,a.me):null}catch(x){}if(vid&&vid.parentNode!==e._c){e._c.appendChild(vid);this.play(vid)}}})}
   hud() {

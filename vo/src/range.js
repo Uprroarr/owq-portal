@@ -54,7 +54,8 @@ export class Range {
     O.cv.addEventListener('pointermove', e => { if (!this.lane) return; const r = O.cv.getBoundingClientRect(); this.mx = (e.clientX - r.left) / r.width; this.my = (e.clientY - r.top) / r.height; });
     O.cv.addEventListener('pointerdown', e => { if (!this.lane) return; const r = O.cv.getBoundingClientRect(); this.mx = (e.clientX - r.left) / r.width; this.my = (e.clientY - r.top) / r.height; this.fire(); });
     addEventListener('keydown', e => {
-      if (!this.lane) return; const t = e.target; if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable)) return;
+      if (e.__vo3 || !this.lane) return; const t = e.target; if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable)) return;
+      e.__vo3 = 1;
       if (e.key === ' ' || e.key === 'Enter') { this.fire(); e.preventDefault(); e.stopPropagation(); }
       else if (e.key === 'Escape' || e.key === 'q' || e.key === 'Q' || e.key === 'e' || e.key === 'E') { this.exit(); e.preventDefault(); e.stopPropagation(); }
       else if (/^(Arrow\w+|w|a|s|d|W|A|S|D)$/.test(e.key)) { const s = .03; if (/Left|a|A/.test(e.key)) this.mx -= s; if (/Right|d|D/.test(e.key)) this.mx += s; if (/Up|w|W/.test(e.key)) this.my -= s; if (/Down|s|S/.test(e.key)) this.my += s; this.mx = clamp(this.mx, .05, .95); this.my = clamp(this.my, .08, .92); e.preventDefault(); e.stopPropagation(); }
@@ -276,7 +277,7 @@ export class Range {
   best() { try { return +localStorage.getItem('owq_rangebest') || 0; } catch (e) { return 0; } }
   cam(P, T, F0) {
     const L = this.lane; if (!L) return 0; const l = L.l;
-    P.set(l.x + .42, Y + 1.72, l.z - .95); T.set(l.x + .1, Y + 1.45, 8); return clamp(F0 * .95, 40, 62);
+    P.set(l.x + .5, Y + 1.9, l.z - 1.55); T.set(l.x + .05, Y + 1.4, 8); return clamp(F0 * .95, 40, 62);
   }
   grab() { return !!this.lane; }
   zone(z) { if (z === this._z) return; this._z = z; this.group.visible = z === 'g'; }

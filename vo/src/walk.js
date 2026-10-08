@@ -77,7 +77,8 @@ export class Walk {
     const KM = {ArrowUp: 'up', w: 'up', W: 'up', ArrowDown: 'down', s: 'down', S: 'down', ArrowLeft: 'left', a: 'left', A: 'left', ArrowRight: 'right', d: 'right', D: 'right', Shift: 'run'};
     const typing = e => { const t = e.target; return t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable); };
     addEventListener('keydown', e => {
-      if (!this.me || typing(e) || this.O.modal || this.lock) return;
+      if (e.__vo3 || !this.me || typing(e) || this.O.modal || this.lock) return;
+      if (/^(e|E|Enter|q|Q|Escape| |[1-3])$/.test(e.key) || KM[e.key]) e.__vo3 = 1;
       if (this.elOpen) { if (e.key === 'Escape') { this.closeElev(); e.preventDefault(); } else if (/^[1-3]$/.test(e.key)) { const k = ['g', 'o', 'r'][+e.key - 1]; this.ride(k); e.preventDefault(); } return; }
       const k = KM[e.key]; if (k) { this.keys[k] = 1; e.preventDefault(); e.stopPropagation(); return; }
       if (e.key === ' ') { this.jump(); e.preventDefault(); e.stopPropagation(); }

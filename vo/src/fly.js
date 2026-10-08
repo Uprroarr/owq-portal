@@ -6,7 +6,7 @@ import * as THREE from 'three';
 import {cv, tex} from './tex.js';
 import {clamp, damp, lerp} from './util.js';
 import {EXT} from './cosm.js';
-import {ROOFY, GROUNDY, TOWER} from './world.js';
+import {ROOFY, GROUNDY, TOWER, RINGS} from './world.js';
 import {PARK} from './derby.js';
 import {steer0} from './drive.js';
 
@@ -47,7 +47,8 @@ export class Fly {
     u.querySelector('.vo3flx').onclick = e => { e.stopPropagation(); this.land(); };
     const KM = {ArrowUp: 'up', w: 'up', W: 'up', ArrowDown: 'down', s: 'down', S: 'down', ArrowLeft: 'left', a: 'left', A: 'left', ArrowRight: 'right', d: 'right', D: 'right', Shift: 'boost', ' ': 'slow'};
     addEventListener('keydown', e => {
-      if (!this.me) return; const t = e.target; if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable)) return;
+      if (e.__vo3 || !this.me) return; const t = e.target; if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable)) return;
+      if (/^(e|E|Escape|\[|\])$/.test(e.key) || KM[e.key]) e.__vo3 = 1;
       const k = KM[e.key]; if (k) { this.keys[k] = 1; e.preventDefault(); e.stopPropagation(); return; }
       if (e.key === '[' || e.key === ']') { this.setSens(this.sens + (e.key === ']' ? 1 : -1)); e.preventDefault(); return; }
       if (e.key === 'e' || e.key === 'E' || e.key === 'Escape') { this.land(); e.preventDefault(); e.stopPropagation(); }
@@ -72,8 +73,8 @@ export class Fly {
     const c = cv(1024, 256), g = c.getContext('2d'); g.font = '900 120px Verdana,sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.shadowColor = '#ff2d78'; g.shadowBlur = 40; g.fillStyle = '#fff0f6'; g.fillText('OWQ AIR', 512, 128);
     add(new THREE.PlaneGeometry(6, 1.5), new THREE.MeshBasicMaterial({map: tex(c, {mips: true}), transparent: true, depthWrite: false, color: new THREE.Color(2.2, 2.2, 2.2), toneMapped: false, side: THREE.DoubleSide}), PAD.x - 6.2, Y + 5.6, PAD.z, 0, Math.PI / 2, 0);
     // Ring Run: a loop of rings around the city and the tower
-    const RP = [[120, 30, -60], [240, 60, -10], [300, 40, 140], [180, 15, 260], [20, 50, 300], [-150, 80, 240], [-260, 40, 80], [-230, 20, -120], [-90, 55, -250], [70, 35, -230], [150, 25, -150], [60, 18, -40]];
-    const rm = new THREE.MeshBasicMaterial({color: new THREE.Color(3.6, 2.6, .6), toneMapped: false}), rn = new THREE.MeshBasicMaterial({color: new THREE.Color(.5, 3.2, 3.6), toneMapped: false});
+    const RP = RINGS;
+    const rm = new THREE.MeshBasicMaterial({color: new THREE.Color(3.6, 2.6, .6), toneMapped: false}), rn = new THREE.MeshBasicMaterial({color: new THREE.Color(.4, 2.3, 2.7), toneMapped: false});
     this.rings = RP.map((p, i) => {
       const n = RP[(i + 1) % RP.length], m = new THREE.Mesh(new THREE.TorusGeometry(9, .55, 8, 40), i ? rm : rn);
       m.position.set(p[0], p[1], p[2]); m.lookAt(n[0], n[1], n[2]); G.add(m); return {m, p: m.position, i};
@@ -145,7 +146,7 @@ export class Fly {
     if (f.y > 650) { f.y = 650; f.pitch = Math.min(f.pitch, 0); }
     if (this.hit(f)) { O.fx.sparkle(f.x, f.y, f.z, 60, [1, .6, .3]); O.sfx('boom'); this.big('CRASH!'); this.land(1); return; }
     // rings
-    const R = this.rings[this.ri]; if (R && R.p.distanceTo(this._p || (this._p = new THREE.Vector3(f.x, f.y, f.z)).set(f.x, f.y, f.z)) < 9) {
+    const R = this.rings[this.ri], P = this._p || (this._p = new THREE.Vector3()); P.set(f.x, f.y, f.z); if (R && R.p.distanceTo(P) < 9) {
       if (this.ri === 0) this.rt0 = t; this.ri++; O.sfx('ding');
       if (this.ri >= this.rings.length) { const tm = t - this.rt0; this.big('RING RUN ' + tm.toFixed(1) + 's'); O.sfx('chaching'); try { O.api.score && O.api.score('rings', Math.max(1, 1000 - Math.round(tm))); } catch (e) {} try { const b = +localStorage.getItem('owq_ringbest') || 0; if (!b || tm < b) localStorage.setItem('owq_ringbest', tm.toFixed(2)); } catch (e) {} this.ri = 0; }
       else this.big('RING ' + this.ri + ' / ' + this.rings.length);
@@ -202,7 +203,7 @@ export class Fly {
     this.rE.textContent = (this.ri ? 'RING RUN: ' + this.ri + ' / ' + this.rings.length : 'RING RUN: FLY THROUGH THE BLUE RING TO START') + (b ? '  ·  BEST ' + b.toFixed(1) + 's' : '');
     this.rings.forEach((r, i) => { r.m.material = i === this.ri ? this.nextM() : this.goldM(); });
   }
-  nextM() { return this._nm || (this._nm = new THREE.MeshBasicMaterial({color: new THREE.Color(.5, 3.2, 3.6), toneMapped: false})); }
+  nextM() { return this._nm || (this._nm = new THREE.MeshBasicMaterial({color: new THREE.Color(.4, 2.3, 2.7), toneMapped: false})); }
   goldM() { return this._gm || (this._gm = new THREE.MeshBasicMaterial({color: new THREE.Color(3.6, 2.6, .6), toneMapped: false, transparent: true, opacity: .7})); }
   big(t) { const e = this.bE; e.textContent = t; e.classList.add('on'); clearTimeout(this._bt); this._bt = setTimeout(() => e.classList.remove('on'), 1200); }
   cam(P, T, F0) {

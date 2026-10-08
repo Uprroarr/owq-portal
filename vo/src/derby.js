@@ -42,7 +42,8 @@ export class Derby {
     const sw = u.querySelector('.vo3hrs'); sw.addEventListener('pointerdown', e => { e.preventDefault(); e.stopPropagation(); sw.classList.add('on'); this.swing(); }); sw.addEventListener('pointerup', () => sw.classList.remove('on'));
     u.querySelector('.vo3hrx').onclick = e => { e.stopPropagation(); this.finish(true); };
     addEventListener('keydown', e => {
-      if (!this.turn) return; const t = e.target; if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable)) return;
+      if (e.__vo3 || !this.turn) return; const t = e.target; if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable)) return;
+      e.__vo3 = 1;
       if (e.key === ' ' || e.key === 'Enter') { this.swing(); e.preventDefault(); e.stopPropagation(); }
       else if (e.key === 'Escape' || e.key === 'q' || e.key === 'Q') { this.finish(true); e.preventDefault(); e.stopPropagation(); }
       else if (/^(w|a|s|d|W|A|S|D|Arrow\w+|e|E)$/.test(e.key)) { e.preventDefault(); e.stopPropagation(); }
