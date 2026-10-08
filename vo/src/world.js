@@ -217,7 +217,7 @@ export class World {
     if (this.shell) this.shell.visible = outside;
     O.room.backdrop && (O.room.backdrop.visible = !outside && z !== 'g');
     // outdoors: moonlight and a violet sky light; the range downstairs gets an even work light
-    this.moon.intensity = z === 'r' ? 1.5 : outside ? 1.1 : z === 'g' ? .7 : 0; this.hemi.intensity = z === 'r' ? 1.05 : outside ? .55 : z === 'g' ? 1.15 : 0;
+    this.moon.intensity = z === 'r' ? 1.5 : outside ? 1.1 : z === 'g' ? .7 : 0; this.hemi.intensity = z === 'r' ? 1.05 : outside ? .55 : z === 'g' ? 1.45 : 0;
     this.hemi.color.set(z === 'g' ? '#fff1e2' : z === 'r' ? '#d9ddff' : '#6a5cff'); this.hemi.groundColor.set(z === 'g' ? '#3a2a30' : z === 'r' ? '#2a1a22' : '#2a0912');
     O.scene.fog.near = outside ? FOG.near : 1e5; O.scene.fog.far = outside ? FOG.far : 2e5;
     if (O.onZone) O.onZone(z);

@@ -152,8 +152,9 @@ export function buildSky(parent) {
   // road: dark asphalt, crimson edge lines, white dashes
   const road = noiseCv(256, 128, '#1b1b21', 20, (x, w, h) => {
     x.fillStyle = 'rgba(255,255,255,.08)'; for (let i = 0; i < 40; i++) x.fillRect(Math.random() * w, Math.random() * h, 2, 2);
-    x.fillStyle = '#ff1f4f'; x.fillRect(0, 4, w, 5); x.fillRect(0, h - 9, w, 5);
-    x.fillStyle = 'rgba(255,255,255,.75)'; x.fillRect(0, h / 2 - 2, w * .45, 4);
+    // canvas x runs across the road, y along it (one 12 m tile): crimson edge lines and a dashed white centre line
+    x.fillStyle = '#ff1f4f'; x.fillRect(5, 0, 5, h); x.fillRect(w - 10, 0, 5, h);
+    x.fillStyle = 'rgba(255,255,255,.8)'; x.fillRect(w / 2 - 2, 0, 4, h * .45);
   });
   const roadT = rep(road); roadT.repeat.set(1, 1);
   const roadM = new THREE.MeshStandardMaterial({map: roadT, roughness: .62, metalness: .15, emissiveMap: roadT, emissive: new THREE.Color('#ffffff'), emissiveIntensity: .55});   // lane paint reads at night

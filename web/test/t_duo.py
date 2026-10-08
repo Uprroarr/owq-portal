@@ -6,7 +6,7 @@ import lgx
 from playwright.sync_api import sync_playwright
 PORT=8884;SITE=os.environ.get('SITE',SP+'/web/test/site_w');OUT=SP+'/web/test/shots'
 URL='http://127.0.0.1:%d/index.html'%PORT
-FLAGS=['--no-sandbox','--no-proxy-server','--use-angle=swiftshader','--use-gl=angle','--enable-unsafe-swiftshader','--ignore-gpu-blocklist','--use-fake-device-for-media-stream','--use-fake-ui-for-media-stream','--autoplay-policy=no-user-gesture-required']
+FLAGS=['--disable-background-timer-throttling','--disable-backgrounding-occluded-windows','--disable-renderer-backgrounding','--no-sandbox','--no-proxy-server','--use-angle=swiftshader','--use-gl=angle','--enable-unsafe-swiftshader','--ignore-gpu-blocklist','--use-fake-device-for-media-stream','--use-fake-ui-for-media-stream','--autoplay-policy=no-user-gesture-required']
 srv=subprocess.Popen(['python3','-m','http.server',str(PORT),'--bind','127.0.0.1'],cwd=SITE,stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL)
 time.sleep(1)
 res=[]
@@ -44,34 +44,46 @@ try:
   ok(until(A,"(()=>{const m=VO3.dbg().meAv;return m&&m.mode==='seated'})()",300) and until(B,"(()=>{const m=VO3.dbg().meAv;return m&&m.mode==='seated'})()",300),'setup: Cole and John are seated')
   A.evaluate("voApi.setLook('W8')");A.wait_for_timeout(1500)
   # John walks; Cole sees him
-  B.evaluate("(()=>{const O=VO3.dbg();O.cardA=O.meAv;O.cardAct('walk')})()")
-  B.evaluate("(()=>{const w=VO3.dbg().meAv.wk;w.x=-4;w.z=1.5})()");B.wait_for_timeout(1500)
+  B.bring_to_front();B.evaluate("(()=>{const O=VO3.dbg();O.cardA=O.meAv;O.cardAct('walk')})()");B.wait_for_timeout(800)
+  B.evaluate("(()=>{const w=VO3.dbg().meAv.wk;w.x=-4;w.z=1.5})()");B.wait_for_timeout(2500)
+  print('John on his own screen',B.evaluate("(()=>{const w=VO3.dbg().meAv.wk;return w&&{x:w.x,z:w.z,f:w.f}})()"),flush=True)
+  A.bring_to_front()
   seen=until(A,"(()=>{const a=[...VO3.dbg().av.values()].find(x=>x.nm==='John Montini');return a&&a.wk&&a.mode==='free'&&Math.abs(a.root.position.x+4)<.6})()",15)
   ok(seen,'Cole sees John get up and walk to where he is',A.evaluate("(()=>{const a=[...VO3.dbg().av.values()].find(x=>x.nm==='John Montini');return a&&{m:a.mode,x:a.root.position.x,z:a.root.position.z,wk:a.p&&a.p.wk}})()"))
   # Cole drives into John
-  A.evaluate("voDrive()");A.wait_for_timeout(1200)
+  A.evaluate("voDrive()");A.wait_for_timeout(1500)
+  B.bring_to_front();ok(until(B,"(()=>{const a=[...VO3.dbg().av.values()].find(x=>x.nm==='Cole Leckey');return a&&a.drv})()",15),'John sees Cole\'s car');A.bring_to_front()
   A.evaluate("(()=>{const d=VO3.dbg().drive.me.drv;d.x=-7.2;d.z=1.5;d.h=0;d.v=6})()")
   A.keyboard.down('w');hitA=until(A,"(()=>{const a=[...VO3.dbg().av.values()].find(x=>x.nm==='John Montini');return a&&a.knd})()",12);A.keyboard.up('w')
   ok(hitA,'driving into John knocks him over on Cole\'s screen')
-  hitB=until(B,"(()=>{const a=VO3.dbg().meAv;return a&&(a.knd||VO3.dbg().walk.kn>0)})()",12)
+  B.bring_to_front();hitB=until(B,"(()=>{const a=VO3.dbg().meAv;return a&&(a.knd||VO3.dbg().walk.kn>0)})()",15)
   ok(hitB,'and John sees himself get knocked over too')
   B.wait_for_timeout(800);B.screenshot(path=OUT+'/duo_knock_john.png',timeout=180000)
-  A.keyboard.press('e');A.wait_for_timeout(1200)
+  A.bring_to_front();A.keyboard.press('e');A.wait_for_timeout(1200)
   # Home Run Derby queue
-  for P in (A,B):P.evaluate("(()=>{const W=VO3.dbg().walk;if(!W.me){const O=VO3.dbg();O.cardA=O.meAv;O.cardAct('walk')}})()")
-  A.wait_for_timeout(800)
-  for P in (A,B):P.evaluate("(()=>{const W=VO3.dbg().walk;W.me.wk.x=8;W.me.wk.z=-6.4;W.ride('r')})()")
-  A.wait_for_timeout(1500)
-  A.evaluate("(()=>{const W=VO3.dbg().walk,w=W.me.wk;w.x=-15.6;w.z=18.6})()");A.wait_for_timeout(500);A.evaluate("VO3.dbg().walk.use()")
+  for P in (A,B):
+    P.bring_to_front();P.evaluate("(()=>{const W=VO3.dbg().walk;if(!W.me){const O=VO3.dbg();O.cardA=O.meAv;O.cardAct('walk')}})()");P.wait_for_timeout(800)
+    P.evaluate("(()=>{const W=VO3.dbg().walk;W.me.wk.x=8;W.me.wk.z=-6.4;W.ride('r')})()");P.wait_for_timeout(2500)
+  A.bring_to_front();A.evaluate("(()=>{const W=VO3.dbg().walk,w=W.me.wk;w.x=-15.6;w.z=18.6})()");A.wait_for_timeout(800);A.evaluate("VO3.dbg().walk.use()")
   ok(until(A,"!!VO3.dbg().derby.turn",15),'Cole presses START and bats')
-  B.evaluate("(()=>{const W=VO3.dbg().walk,w=W.me.wk;w.x=-15.6;w.z=18.8})()");B.wait_for_timeout(800)
-  pt=B.evaluate("(()=>{const p=VO3.dbg().walk.prompt();return p&&p.t})()");ok(pt and 'QUEUE' in pt,'John sees JOIN THE DERBY QUEUE while Cole bats',pt)
+  A.wait_for_timeout(1500)
+  B.bring_to_front();B.evaluate("(()=>{const W=VO3.dbg().walk,w=W.me.wk;w.x=-15.6;w.z=18.8})()");B.wait_for_timeout(1500)
+  pt=None
+  for k in range(20):
+    pt=B.evaluate("(()=>{const p=VO3.dbg().walk.prompt();return p&&p.t})()")
+    if pt and 'QUEUE' in pt:break
+    B.wait_for_timeout(500)
+  ok(pt and 'QUEUE' in pt,'John sees JOIN THE DERBY QUEUE while Cole bats',pt)
   B.evaluate("VO3.dbg().walk.use()");B.wait_for_timeout(1500)
-  q=A.evaluate("(()=>{const s=VO3.dbg().derby.state();return s.queue.map(x=>x.nm)})()");ok('John Montini' in q,'Cole\'s scoreboard shows John on deck',q)
-  A.evaluate("VO3.dbg().derby.finish()")
-  ok(until(B,"!!VO3.dbg().derby.turn",20),'when Cole is done, John is up')
-  ok(until(A,"(()=>{const s=VO3.dbg().derby.state();return s.batter&&s.batter.nm==='John Montini'})()",10),'and Cole sees John at bat')
-  B.evaluate("VO3.dbg().derby.finish()")
+  B.screenshot(path=OUT+'/duo_park_john.png',timeout=180000)
+  A.bring_to_front()
+  ok(until(A,"(()=>{const s=VO3.dbg().derby.state();return s.queue.some(x=>x.nm==='John Montini')})()",15),'Cole\'s scoreboard shows John on deck',A.evaluate("(()=>{const s=VO3.dbg().derby.state();return s.queue.map(x=>x.nm)})()"))
+  A.screenshot(path=OUT+'/duo_park_cole.png',timeout=180000)
+  A.evaluate("VO3.dbg().derby.finish()");A.wait_for_timeout(1500)
+  B.bring_to_front();ok(until(B,"!!VO3.dbg().derby.turn",20),'when Cole is done, John is up')
+  B.wait_for_timeout(1000)
+  A.bring_to_front();ok(until(A,"(()=>{const s=VO3.dbg().derby.state();return s.batter&&s.batter.nm==='John Montini'})()",15),'and Cole sees John at bat')
+  B.bring_to_front();B.evaluate("VO3.dbg().derby.finish()")
   for t,e in errs.items():ok(not e,'no page errors on '+t,e[:3])
   print('%d/%d'%(sum(res),len(res)))
   b.close()
