@@ -1,11 +1,11 @@
 import {clamp, damp, sstep} from './util.js';
 
-const MOODS=['hype','laugh','focus','fire','calm'];
+const MOODS=['hype','laugh','focus','fire','calm','yell'];
 const KEY='owq_vtone';
 let SAVED=null;
 function store(){if(SAVED)return SAVED;SAVED={};try{const v=JSON.parse(localStorage.getItem(KEY)||'{}');if(v&&typeof v==='object')SAVED=v}catch(e){}return SAVED}
 function persist(){try{const o=store(),ks=Object.keys(o);if(ks.length>40)delete o[ks[0]];localStorage.setItem(KEY,JSON.stringify(o))}catch(e){}}
-const zero=()=>({hype:0,laugh:0,focus:0,fire:0,calm:0});
+const zero=()=>({hype:0,laugh:0,focus:0,fire:0,calm:0,yell:0});
 const W=2.4;
 const st=f=>12*Math.log2(f/55);
 // pitch in semitones
@@ -40,6 +40,9 @@ class Tone{
       tg.fire=clamp(.45*dn+.35*lo+.35*harsh,0,1)*(1-up)*(1-.5*vari)*conf;
       tg.focus=stdy*(1-lo)*(1-quiet)*(.5+.5*dn)*(1-up)*conf;
       tg.calm=quiet*(.45+.55*stdy)*(1-.5*up)*conf;
+      // yelling: a lot louder than this person normally talks, usually harsher too; it wins over the others
+      tg.yell=clamp(sstep(1.5,2.2,R)*(.65+.35*harsh)+.25*sstep(2.2,3,R),0,1)*conf;
+      if(tg.yell>.35){for(const k of MOODS)if(k!=='yell')tg[k]*=.35}
       this.f={R:+R.toFixed(2),H:+H.toFixed(2),rel:+rel.toFixed(1),sd:+sd.toFixed(1),vf:+vf.toFixed(2)};
       // laughing: six or more quick, very even bursts, well above the usual pitch (laughs sit much higher than talking)
       if(this.laughing(t)&&(rel>4.5||(vf<.4&&rel>1.5)))this.lgh=1.1}

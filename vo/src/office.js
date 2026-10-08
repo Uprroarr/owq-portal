@@ -18,7 +18,12 @@ import {AISLE, BELLP, BOARD, COLX, ELEV, SEATS, TVP, pathIn, pathOut} from './la
 import {clamp, damp, hash, lerp, now, rng, sstep} from './util.js';
 import {cv, tex} from './tex.js';
 import {Drive} from './drive.js';
-import {TY, buildDoor, buildTrack} from './track.js';
+import {buildSky, buildDoorway} from './sky.js';
+import {World, LAYER_OUT, FLOORS} from './world.js';
+import {Walk} from './walk.js';
+import {Derby} from './derby.js';
+import {Range} from './range.js';
+import {Fly} from './fly.js';
 import {buildBoard} from './board.js';
 import {Arcade} from './arcade.js';
 import {Crates} from './crate.js';
@@ -59,7 +64,7 @@ const RM=()=>{try{return !!(OF&&OF.api&&OF.api.reduced&&OF.api.reduced())}catch(
 function supported(){if(SUP!==null)return SUP;try{const c=document.createElement('canvas');const g=c.getContext('webgl2');SUP=!!g;if(g){const l=g.getExtension('WEBGL_lose_context');l&&l.loseContext()}}catch(e){SUP=false}return SUP}
 class Office {
     constructor() {
-      injectCSS(), this.el = document.createElement("div"), this.el.className = "vo3", this.cv = document.createElement("canvas"), this.cv.className = "vo3c", this.cv.tabIndex = 0, this.cv.setAttribute("aria-label", "3D sales floor. Drag to look around, scroll to zoom, click a teammate or the TV."), this.el.appendChild(this.cv), this.ui = new Overlay(this.el, this), this.av = new Map, this.lv = new Levels, this.mountT = 0, this.running = false, this.t = now(), this.opts = { auto: true, sfx: true }, this.demo = false, this.tvOn = false, this.screens = [], this.dir = { P: new THREE.Vector3(0, 4.4, 14.2), T: new THREE.Vector3(0, 1.7, -1.9), F: 34, yaw: 0, pitch: 0, zoom: 1, manualT: 0, focus: null, focusT: 0, spk: null, spkT: 0 }, this.init3d(), this.bindInput(), this.arc = new Arcade(this), this.crate = new Crates(this);
+      injectCSS(), this.el = document.createElement("div"), this.el.className = "vo3", this.cv = document.createElement("canvas"), this.cv.className = "vo3c", this.cv.tabIndex = 0, this.cv.setAttribute("aria-label", "3D sales floor. Drag to look around, scroll to zoom, click a teammate or the TV."), this.el.appendChild(this.cv), this.ui = new Overlay(this.el, this), this.av = new Map, this.lv = new Levels, this.mountT = 0, this.running = false, this.t = now(), this.opts = { auto: true, sfx: true }, this.demo = false, this.tvOn = false, this.screens = [], this.dir = { P: new THREE.Vector3(0, 4.4, 14.2), T: new THREE.Vector3(0, 1.7, -1.9), F: 34, yaw: 0, pitch: 0, zoom: 1, manualT: 0, focus: null, focusT: 0, spk: null, spkT: 0 }, this.sys = [], this.init3d(), this.bindInput(), this.arc = new Arcade(this), this.crate = new Crates(this), this.walk = new Walk(this);
     }
   init3d() {
       let $ = this.r = new THREE.WebGLRenderer({ canvas: this.cv, antialias: false, alpha: false, powerPreference: "high-performance", stencil: false });
@@ -67,11 +72,15 @@ class Office {
       let J = this.scene = new THREE.Scene;
       J.background = new THREE.Color(328458);
       let Q = new THREE.PMREMGenerator($);
-      J.environment = Q.fromScene(new RoomEnvironment, 0.04).texture, J.environmentIntensity = 0.3, Q.dispose(), this.cam = new THREE.PerspectiveCamera(34, 1.7777777777777777, 0.1, 260), this.cam.layers.enable(1), this.cam.position.copy(this.dir.P), this.cam.lookAt(this.dir.T), this.room = buildRoom(J), this.tv = new TV(this.room.group), this.fx = new FX(this.room.group);
+      J.environment = Q.fromScene(new RoomEnvironment, 0.04).texture, J.environmentIntensity = 0.3, Q.dispose(), this.cam = new THREE.PerspectiveCamera(34, 1.7777777777777777, 0.1, 4200), this.cam.layers.enable(1), this.cam.layers.enable(LAYER_OUT), this.cam.position.copy(this.dir.P), this.cam.lookAt(this.dir.T), this.room = buildRoom(J), this.tv = new TV(this.room.group), this.fx = new FX(this.room.group);
       try {
-        this.track = buildTrack(this.room.group), buildDoor(this.room.group);
+        this.wld = new World(this);
+        this.track = buildSky(this.wld.group), this.wld.out(this.track.group), buildDoorway(this.room.group);
+        this.derby = new Derby(this, this.wld.group), this.wld.out(this.derby.group), this.sys.push(this.derby);
+        this.range = new Range(this, this.room.group), this.sys.push(this.range);
+        this.fly = new Fly(this, this.wld.group), this.wld.out(this.fly.group), this.sys.push(this.fly);
       } catch (K) {
-        this.track = null;
+        console.warn('VO3 world', K), this.track = null;
       }
       this.drive = new Drive(this);
       try {
@@ -127,6 +136,10 @@ uniform sampler2D tRefl;uniform float uRK;varying vec4 vRU;varying vec3 vRW;`).r
       let Q = this.world();
       if (this.av.forEach((Z) => Z.update(J, $, Q)), this.drive)
         this.drive.tick(J, $);
+      if (this.walk)
+        this.walk.tick(J, $);
+      this.steam(J);
+      this.sys.forEach((Z) => Z.tick && Z.tick(J, $));
       if (this.track && (this._bT = (this._bT || 0) - J) <= 0)
         this._bT = 2, this.track.board(this.drive.boardRows());
       if (this.plankTick(J, $), this.yeetTick(J, $), this.thanksTick(J, $), this.shakeTick(J, $), this.screwTick(J), this.nukeTick(J), rgbTick($), this.bpTick(J, $), this.tossTick(J, $), this.desks(J, $), this.room.update(J, $), this.tv.update(J, $, this.tvData()), this.fx.update(J), this.brdTick($), this.arc)
@@ -137,7 +150,7 @@ uniform sampler2D tRefl;uniform float uRK;varying vec4 vRU;varying vec3 vRW;`).r
         return;
       if (this.brdOpen && !this.fast)
         return;
-      if (this.refl(), this.grade.uniforms.uT.value = $ % 97, this.comp.render(J), this.arc)
+      if (this.wld && (this.wld.update(J, $), this.zoneVis()), this.wld && this.wld.zone !== "o" ? this.reflU && (this.reflU.uRK.value = 0) : this.refl(), this.grade.uniforms.uT.value = $ % 97, this.comp.render(J), this.arc)
         this.arc.place();
       if (FCB)
         try {
@@ -211,6 +224,10 @@ uniform sampler2D tRefl;uniform float uRK;varying vec4 vRU;varying vec3 vRW;`).r
           E.setLook(q.ava || ""), this.warm(E.rig);
         if (this.drive && !E.me && !E.bot)
           this.drive.remote(E, q.dv);
+        if (this.walk && !E.me && !E.bot && !q.dv)
+          this.walk.remote(E, q.wk);
+        if (!E.me && !E.bot)
+          this.sys.forEach((Z) => Z.remote && Z.remote(E, q));
         else if (E.me && q.dv && !this.drive.me)
           try {
             this.api.drive && this.api.drive(null);
@@ -371,7 +388,7 @@ uniform sampler2D tRefl;uniform float uRK;varying vec4 vRU;varying vec3 vRW;`).r
     x.strokeStyle='#ff1f4f';x.lineWidth=3;x.beginPath();for(let i=0;i<=60;i++){const px=24+i*20.6,py=640-Math.sin(i*.25+t*.6)*28-i*1.2;i?x.lineTo(px,py):x.moveTo(px,py)}x.stroke();x.fillStyle='#8a93a6';x.font='600 14px Verdana,sans-serif';x.fillText('Close rate trend',24,548);
     const cx2=(t*140)%W,cy2=300+Math.sin(t*1.3)*120;x.fillStyle='#fff';x.beginPath();x.moveTo(cx2,cy2);x.lineTo(cx2+14,cy2+34);x.lineTo(cx2+20,cy2+20);x.lineTo(cx2+34,cy2+16);x.closePath();x.fill()}
   // ---------- emotes ----------
-  busy(a){return !!(a&&(a.drv||a.toss||a.plank||a.yeet||a.yeetA||a.thanks||a.shakeA||a.shakeB))}
+  busy(a,ctx){return !!(a&&(a.drv||a.toss||a.plank||a.yeet||a.yeetA||a.thanks||a.shakeA||a.shakeB||(ctx!=='drive'&&a.wk)||a.fly||a.bat||a.lane||a.knd))}
   emote(k){const me=this.meAv;if((k==='plank'||k==='thanks')&&!this.plankOk(me)){this.ui.toast(me?'Sit back down at your desk first.':'Walk onto the floor first.');return}try{const n=this.api.emote?this.api.emote(k):null;if(me&&n!=null)me.localEm=n}catch(e){}if(me)this.playEmote(me,k);else if(k==='bell')this.ringBell('','')}
   playEmote($, J, Q) {
       if (J === "nuke") {
@@ -911,11 +928,20 @@ uniform sampler2D tRefl;uniform float uRK;varying vec4 vRU;varying vec3 vRW;`).r
       let z = this.drive && this.drive.cam(K, V);
       if (z)
         X = clamp(Y * 1.25, 44, 72);
+      let wkc = !z && this.walk && this.walk.cam(K, V);
+      if (wkc)
+        X = clamp(Y * 1.2, 46, 70), z = true;
+      for (const S0 of this.sys)
+        if (!z && S0.cam) {
+          let f0 = S0.cam(K, V, Y, Z);
+          if (f0)
+            X = f0, z = true;
+        }
       let M = this.arc && this.arc.cam(K, V, Z);
       if (M)
         X = M;
-      if (this.drive && this.drive.snap)
-        this.drive.snap = 0, Q.P.copy(K), Q.T.copy(V), Q.F = X;
+      if (this.drive && this.drive.snap || this.walk && this.walk.snap || this.sys.some((S0) => S0.snap))
+        this.drive.snap = 0, this.walk.snap = 0, this.sys.forEach((S0) => S0.snap = 0), Q.P.copy(K), Q.T.copy(V), Q.F = X;
       if (this.dbgCam) {
         if (K.copy(this.dbgCam.P), V.copy(this.dbgCam.T), this.dbgCam.F)
           X = this.dbgCam.F;
@@ -933,7 +959,7 @@ uniform sampler2D tRefl;uniform float uRK;varying vec4 vRU;varying vec3 vRW;`).r
       let g = this._o || (this._o = new THREE.Vector3);
       g.copy(Q.P).sub(Q.T);
       let R = this._sp || (this._sp = new THREE.Spherical);
-      if (R.setFromVector3(g), R.theta += Q.yaw, R.phi = clamp(R.phi + Q.pitch, 0.62, 1.55), R.radius *= Q.zoom, g.setFromSpherical(R), this.cam.position.copy(Q.T).add(g), this.cam.lookAt(Q.T), this.cam.fov = Q.F, this.cam.updateProjectionMatrix(), this.shk > 0) {
+      if (R.setFromVector3(g), z ? 0 : (R.theta += Q.yaw, R.phi = clamp(R.phi + Q.pitch, 0.62, 1.55), R.radius *= Q.zoom), g.setFromSpherical(R), this.cam.position.copy(Q.T).add(g), this.cam.lookAt(Q.T), this.cam.fov = Q.F, this.cam.updateProjectionMatrix(), this.shk > 0) {
         if (this.shk = Math.max(0, this.shk - $ * 1.7), !RM()) {
           let C = this.shk * this.shk * 0.09;
           this.cam.position.x += (Math.random() - 0.5) * C, this.cam.position.y += (Math.random() - 0.5) * C;
@@ -952,10 +978,20 @@ uniform sampler2D tRefl;uniform float uRK;varying vec4 vRU;varying vec3 vRW;`).r
     cp.multiplyScalar(2/cp.dot(q));pm.elements[2]=cp.x;pm.elements[6]=cp.y;pm.elements[10]=cp.z+1;pm.elements[14]=cp.w;
     const f=this.room.floor,il=this.room.inlay;f.visible=il.visible=false;const sa=this.r.shadowMap.autoUpdate;this.r.shadowMap.autoUpdate=false;
     this.r.setRenderTarget(this.rRT);this.r.render(this.scene,v);this.r.setRenderTarget(null);this.r.shadowMap.autoUpdate=sa;f.visible=il.visible=true}
+  // steam out of the ears of anyone yelling
+  steam(dt){const v=this._stv||(this._stv=new THREE.Vector3());this.av.forEach(a=>{const y=a.md&&a.md.yell||0;if(y<.45||!a.root.visible||Math.random()>dt*9*y)return;a.headPos(v);const sd=Math.random()<.5?-1:1,c=Math.cos(a.root.rotation.y),s=Math.sin(a.root.rotation.y);this.fx.sparkle(v.x+c*.28*sd,v.y+.02,v.z-s*.28*sd,3,[.92,.92,.95])})}
+  // which floor each person is on, and which floors the camera can see from where it is
+  floorOf(a){if(a.fly)return 'd';if(a.wk)return a.wk.f;if(a.drv)return a.drv.k?'d':'o';return a.flr||'o'}
+  zoneVis(){const z=this.wld.zone,see={o:{o:1,d:1},g:{g:1},r:{r:1,d:1},d:{d:1,r:1,o:1}}[z]||{o:1};
+    this.av.forEach(a=>{const v=!!see[this.floorOf(a)];a._zv=v;if(!v&&a.root.visible){a.root.visible=false;a._zh=1}else if(v&&a._zh){a.root.visible=true;a._zh=0}if(a.drv&&a.drv.car)a.drv.car.visible=v});
+    const st=this.room.static;if(st&&this._stz!==z){this._stz=z;const show=z==='o'||z==='d';st.forEach(m=>m.visible=show)}
+    this.sys.forEach(S0=>S0.zone&&S0.zone(z))}
+  // other systems (Sky Park, range, planes) answer questions from walking
+  hook(name,...args){for(const S0 of this.sys){if(S0[name]){const r=S0[name](...args);if(r)return r}}return null}
   // ---------- overlay ----------
   tags(){const v=this._tv||(this._tv=new THREE.Vector3()),w=this.W,h=this.H;
     this.av.forEach(a=>{const e=this.ui.tag(a);a.headPos(v);v.y+=.4;const dist=v.distanceTo(this.cam.position);v.project(this.cam);
-      const vis=a.root.visible&&!a.leaving&&((a.drv&&a.drv.k?1:0)===(this.cam.position.y<TY/2?1:0))&&v.z<1&&Math.abs(v.x)<1.08&&v.y<1.1&&v.y>-1.1;const x=(v.x*.5+.5)*w,y=(-v.y*.5+.5)*h;a._sx=x;a._sy=y;a._vis=vis;
+      const vis=a.root.visible&&!a.leaving&&a._zv!==false&&v.z<1&&Math.abs(v.x)<1.08&&v.y<1.1&&v.y>-1.1;const x=(v.x*.5+.5)*w,y=(-v.y*.5+.5)*h;a._sx=x;a._sy=y;a._vis=vis;
       this.ui.setTag(e,a,x,y,vis,clamp(10/dist,.6,1.3));
       if(a.camOn){let vid=null;try{vid=this.api.camVideo?this.api.camVideo(a.id,a.me):null}catch(x){}if(vid&&vid.parentNode!==e._c){e._c.appendChild(vid);this.play(vid)}}})}
   hud() {
@@ -994,8 +1030,15 @@ uniform sampler2D tRefl;uniform float uRK;varying vec4 vRU;varying vec3 vRW;`).r
       }), $.addEventListener("pointermove", (Z) => {
         if (J) {
           let U = Z.clientX - J.x, q = Z.clientY - J.y;
-          if (Math.abs(U) + Math.abs(q) > 5)
-            J.mv = true, $.classList.add("drag"), this.dir.manualT = this.t + 10, this.dir.yaw = clamp(J.yaw - U * 0.004, -0.45, 0.45), this.dir.pitch = clamp(J.pitch - q * 0.003, -0.25, 0.2);
+          if (Math.abs(U) + Math.abs(q) > 5) {
+            if (J.mv = true, $.classList.add("drag"), this.walk && this.walk.me) {
+              this.walk.drag(Z.clientX - (J.lx ?? J.x), Z.clientY - (J.ly ?? J.y)), J.lx = Z.clientX, J.ly = Z.clientY;
+              return;
+            }
+            if (this.sys.some((S0) => S0.drag && S0.drag(Z.clientX - (J.lx ?? J.x), Z.clientY - (J.ly ?? J.y))))
+              return J.lx = Z.clientX, J.ly = Z.clientY, void 0;
+            this.dir.manualT = this.t + 10, this.dir.yaw = clamp(J.yaw - U * 0.004, -0.45, 0.45), this.dir.pitch = clamp(J.pitch - q * 0.003, -0.25, 0.2);
+          }
         } else if (!(this.arc && this.arc.on)) {
           let U = this.pick(Z);
           $.classList.toggle("ptr", !!U);
@@ -1005,7 +1048,7 @@ uniform sampler2D tRefl;uniform float uRK;varying vec4 vRU;varying vec3 vRW;`).r
         if (!J)
           return;
         let U = J;
-        if (J = null, $.classList.remove("drag"), !U.mv)
+        if (J = null, $.classList.remove("drag"), !U.mv && !this.sys.some((S0) => S0.grab && S0.grab()))
           this.click(this.pick(Z));
       };
       $.addEventListener("pointerup", Q), $.addEventListener("pointercancel", () => {
@@ -1013,6 +1056,8 @@ uniform sampler2D tRefl;uniform float uRK;varying vec4 vRU;varying vec3 vRW;`).r
       }), $.addEventListener("wheel", (Z) => {
         if (Z.preventDefault(), this.arc && this.arc.on)
           return;
+        if (this.walk && this.walk.me)
+          return this.walk.zoom(Math.exp(Z.deltaY * 0.0012));
         this.dir.manualT = this.t + 10, this.dir.zoom = clamp(this.dir.zoom * Math.exp(Z.deltaY * 0.0012), 0.55, 1.2);
       }, { passive: false }), $.addEventListener("dblclick", () => {
         this.dir.manualT = 0, this.dir.focus = null;
@@ -1085,7 +1130,7 @@ uniform sampler2D tRefl;uniform float uRK;varying vec4 vRU;varying vec3 vRW;`).r
         this.arc.enter();
         return;
       }
-      let J = $.a, Q = J.bot ? "Demo teammate" : J.muted ? "Muted" : J.L > 0.12 ? "Talking now" : J.camOn ? "Camera on" : "On the floor", Z = J.me ? [...J.look && J.look.W > 0 ? [{ k: "drive", t: J.drv ? "Get out of my car" : "Drive my car" }] : [], { k: "arcade", t: "Play a game at my desk" }, { k: "look", t: "Change my look" }, { k: "wave", t: "Wave" }, { k: "cheer", t: "Celebrate" }, { k: "plank", t: "Walk the plank" }] : [...J.p && J.p.aq && J.p.aq.st === "w" ? [{ k: "arcjoin", t: "Play " + ({ paddle: "Paddle Duel", snake: "Snake", trivia: "Policy Trivia" }[J.p.aq.g] || "a game") + " with " + String(J.nm).split(" ")[0] }] : [], { k: "wave", t: "Wave at " + String(J.nm).split(" ")[0] }, { k: "focus", t: "Focus camera" }, { k: "hype", t: "Hype them up" }, { k: "yeet", t: "Throw across the room" }, { k: "toss", t: "Toss out the window" }];
+      let J = $.a, Q = J.bot ? "Demo teammate" : J.muted ? "Muted" : J.L > 0.12 ? "Talking now" : J.camOn ? "Camera on" : "On the floor", Z = J.me ? [{ k: "walk", t: J.wk ? "Back to my desk" : "Walk around (WASD)" }, ...J.look && J.look.W > 0 ? [{ k: "drive", t: J.drv ? "Get out of my car" : "Drive my car" }] : [], ...J.wk ? [] : [{ k: "arcade", t: "Play a game at my desk" }], { k: "look", t: "Change my look" }, { k: "wave", t: "Wave" }, { k: "cheer", t: "Celebrate" }, { k: "plank", t: "Walk the plank" }] : [...J.p && J.p.aq && J.p.aq.st === "w" ? [{ k: "arcjoin", t: "Play " + ({ paddle: "Paddle Duel", snake: "Snake", trivia: "Policy Trivia" }[J.p.aq.g] || "a game") + " with " + String(J.nm).split(" ")[0] }] : [], { k: "wave", t: "Wave at " + String(J.nm).split(" ")[0] }, { k: "focus", t: "Focus camera" }, { k: "hype", t: "Hype them up" }, { k: "yeet", t: "Throw across the room" }, { k: "toss", t: "Toss out the window" }];
       this.ui.showCard(Object.assign({}, J, { status: Q, nm: J.nm, me: J.me, id: J.id }), J._sx, J._sy - 8, Z), this.cardA = J;
     }
   cardAct($, J) {
@@ -1094,6 +1139,13 @@ uniform sampler2D tRefl;uniform float uRK;varying vec4 vRU;varying vec3 vRW;`).r
         return;
       if ($ === "arcade") {
         this.ui.hideCard(), this.arc.enter();
+        return;
+      }
+      if ($ === "walk") {
+        if (this.ui.hideCard(), this.walk.me)
+          this.walk.stop();
+        else if (!this.walk.start())
+          this.ui.toast("Sit at your desk first, then get up and walk.");
         return;
       }
       if ($ === "arcjoin") {

@@ -74,7 +74,7 @@ class Avatar {
     this.root=new THREE.Group();this.root.name='avatar';this.lookStr='';this.L=0;this.Ls=0;this.hf=.5;this.talkT=0;this.quietT=9;this.muted=false;this.hand=false;this.emo=null;
     this.mode='seated';this.sitK=1;this.standK=0;this.path=null;this.pi=0;this.walkPh=0;this.speed=2.1;this.onArrive=null;this.alpha=1;this.gone=false;
     this.blinkT=1+this.rand()*3;this.blink=0;this.typeT=this.rand()*4;this.typing=this.rand()<.6;this.nextIdle=4+this.rand()*8;this.idleK=null;this.idleT=0;
-    this.pk=0;this.dip=0;this.thx=0;this.md={hype:0,laugh:0,focus:0,fire:0,calm:0};this.mdOv=null;this.pmp=0;this.pmpN=0;this.gaze=new THREE.Vector3(0,1.5,12);this.gz={x:0,y:0};this.lookBack=0;this.nod=0;this.gest=0;
+    this.pk=0;this.dip=0;this.thx=0;this.md={hype:0,laugh:0,focus:0,fire:0,calm:0,yell:0};this.mdOv=null;this.pmp=0;this.pmpN=0;this.gaze=new THREE.Vector3(0,1.5,12);this.gz={x:0,y:0};this.lookBack=0;this.nod=0;this.gest=0;
     this.P={};this.T={};this._v=new THREE.Vector3();this._w=new THREE.Vector3();
     this.setLook(o.look||'');}
   setLook(code){if(code===this.lookStr&&this.rig)return;this.lookStr=code;const keep=this.rig?{p:this.root.position.clone(),r:this.root.rotation.y}:null;
@@ -250,6 +250,8 @@ class Avatar {
       let C = this.headP = new THREE.Group;
       C.position.y = 0.5, M.add(C);
       let p = this.head = new THREE.Mesh(G("head", () => sph(R, 44, 30)), V);
+      // red face when someone is yelling (its own material, so only this person blushes)
+      this.flush = new THREE.Mesh(G("flush", () => sph(R * 1.014, 32, 22)), new THREE.MeshBasicMaterial({ color: "#ff1a1a", transparent: true, opacity: 0, depthWrite: false })), this.flush.visible = false, p.add(this.flush);
       p.position.y = 0.2, p.scale.set(1, 0.95, 0.96), p.castShadow = true, C.add(p), [-1, 1].forEach(($0) => {
         let j = new THREE.Mesh(G("ear", () => sph(0.055, 14, 10)), V);
         j.position.set($0 * 0.255, -0.01, -0.005), j.scale.set(0.45, 1, 0.75), p.add(j);
@@ -506,9 +508,10 @@ class Avatar {
         G__L.lsx = lerp(G__L.lsx, -0.95, n), G__L.lex = lerp(G__L.lex, -1.45, n);
       }
       let O = { hip: 0.58, tx: 0.02, ty: 0, tz: 0, hx: 0, hy: 0, hz: 0, lsx: 0, lsz: 0.13, lex: -0.12, lez: 0, rsx: 0, rsz: -0.13, rex: -0.12, rez: 0, ltx: 0, lkx: 0, rtx: 0, rkx: 0, lift: 0, sway: 0, hpz: 0, ltz: 0, rtz: 0 };
-      if (Y || this.mode === "walk") {
-        let x = this.walkPh, n = Math.sin(x);
-        O.ltx = -0.55 * n, O.rtx = 0.55 * n, O.lkx = 0.65 * Math.max(0, Math.sin(x + 1.2)), O.rkx = 0.65 * Math.max(0, Math.sin(x + 1.2 + Math.PI)), O.lsx = 0.48 * n, O.rsx = -0.48 * n, O.lex = -0.35, O.rex = -0.35, O.lift = 0.028 * Math.abs(Math.cos(x)), O.tx = 0.07;
+      if (Y || this.mode === "walk" || this.mv) {
+        // free walking (walk.js) sets mv and walkPh itself; runK makes the stride longer
+        let x = this.walkPh, n = Math.sin(x), rk = 1 + 0.55 * (this.runK || 0);
+        O.ltx = -0.55 * n * rk, O.rtx = 0.55 * n * rk, O.lkx = 0.65 * rk * Math.max(0, Math.sin(x + 1.2)), O.rkx = 0.65 * rk * Math.max(0, Math.sin(x + 1.2 + Math.PI)), O.lsx = 0.48 * n * rk, O.rsx = -0.48 * n * rk, O.lex = -0.35 - 0.5 * (this.runK || 0), O.rex = -0.35 - 0.5 * (this.runK || 0), O.lift = 0.028 * rk * Math.abs(Math.cos(x)), O.tx = 0.07 + 0.12 * (this.runK || 0);
       }
       for (let x in G__L)
         Z[x] = lerp(G__L[x], O[x], N);
@@ -596,7 +599,11 @@ class Avatar {
         this.rig.rotation.y = this._spin || 0;
       else if (this.rig.rotation.y)
         this.rig.rotation.y = 0, this._spin = 0;
-      let I = this.md, B = (1 - X) * (1 - clamp(this.pk || 0, 0, 1)) * (K ? 0 : 1), k = B * (Y || this.mode === "walk" || this.hand ? 0 : 1), z = I.hype * B, M = I.laugh * B, v = I.focus * B, g = I.fire * B, R__L = I.calm * B;
+      let I = this.md, B = (1 - X) * (1 - clamp(this.pk || 0, 0, 1)) * (K ? 0 : 1), k = B * (Y || this.mode === "walk" || this.mv || this.hand ? 0 : 1), z = I.hype * B, M = I.laugh * B, v = I.focus * B, g = I.fire * B, R__L = I.calm * B, yl = (I.yell || 0) * B;
+      // yelling: lean in, shake the head, fists up
+      let yk = (I.yell || 0) * k;
+      if (yk > 0)
+        Z.tx += 0.12 * yk, Z.hx += 0.1 * yk + Math.sin(J * 21) * 0.05 * yk, Z.hy += Math.sin(J * 13) * 0.07 * yk, Z.rsx = lerp(Z.rsx, -0.95, yk * 0.6), Z.lsx = lerp(Z.lsx, -0.95, yk * 0.6), Z.rex = lerp(Z.rex, -1.9, yk * 0.6), Z.lex = lerp(Z.lex, -1.9, yk * 0.6);
       if (k > 0) {
         let x = I.hype * k, n = I.laugh * k, X0 = I.focus * k, Z0 = I.fire * k, S = I.calm * k;
         if (x > 0)
@@ -664,10 +671,13 @@ class Avatar {
       if (Z.hy += e, Z.hx += V0 * 0.85, Q.focusSpeaker && Q.focusSpeaker !== this && Q.focusSpeaker.talkT > 1.6)
         this.nod += $, Z.hx += Math.sin(this.nod * 6.5) * 0.045 * sstep(0, 1, Math.sin(this.nod * 0.7 + this.seed) * 0.5 + 0.5) * (1 - C);
       Z.hx += Math.sin(J * 7.3) * 0.035 * this.L, Z.hz += Math.sin(J * 3.1 + this.seed) * 0.04 * this.L;
-      let l = this.P, A0 = Y ? 40 : C > 0 ? 26 : 13;
+      // other systems (walking, knockdowns, batting, aiming) can take over the body pose here
+      if (this.poseFx)
+        this.poseFx(Z, $, J, this);
+      let mv = Y || !!this.mv, l = this.P, A0 = mv ? 40 : C > 0 ? 26 : this.poseK || 13;
       for (let x in Z) {
         let n = Z[x];
-        l[x] = l[x] === undefined ? n : damp(l[x], n, (x[1] === "t" || x[1] === "k") && Y ? 40 : A0, $);
+        l[x] = l[x] === undefined ? n : damp(l[x], n, (x[1] === "t" || x[1] === "k") && mv ? 40 : A0, $);
       }
       if (this.hip.position.y = l.hip + l.lift, this.hip.position.x = l.sway, this.hip.position.z = l.hpz, this.torso.rotation.set(l.tx, l.ty, l.tz), this.headP.rotation.set(l.hx, l.hy, l.hz, "YXZ"), this.sh[0].rotation.set(l.lsx, 0, l.lsz), this.el[0].rotation.set(l.lex, 0, l.lez), this.sh[1].rotation.set(l.rsx, 0, l.rsz), this.el[1].rotation.set(l.rex, 0, l.rez), this.th[0].rotation.x = l.ltx, this.kn[0].rotation.x = l.lkx, this.th[1].rotation.x = l.rtx, this.kn[1].rotation.x = l.rkx, this.th[0].rotation.z = l.ltz, this.th[1].rotation.z = l.rtz, this.blinkT -= $, this.blinkT <= 0) {
         if (this.blink = 0.14, this.blinkT = 1.8 + U() * 4.2, U() < 0.18)
@@ -685,7 +695,7 @@ class Avatar {
         this._by -= 0.012 * C, this._br += 0.2 * C;
       if (W === "detonate")
         this._by -= 0.012 * X, this._br -= 0.3 * X;
-      this._by += 0.02 * z + 0.01 * M - 0.009 * v - 0.02 * g + 0.002 * R__L, this._br += -0.13 * v - 0.34 * g + 0.06 * z, this.gz.x = damp(this.gz.x, G0, 10, $), this.gz.y = damp(this.gz.y, $0, 10, $), this.placeFace(this.gz.x, this.gz.y);
+      this._by += 0.02 * z + 0.01 * M - 0.009 * v - 0.02 * g + 0.002 * R__L - 0.022 * yl, this._br += -0.13 * v - 0.34 * g + 0.06 * z - 0.42 * yl, this.gz.x = damp(this.gz.x, G0, 10, $), this.gz.y = damp(this.gz.y, $0, 10, $), this.placeFace(this.gz.x, this.gz.y);
       let j = clamp((this.L - 0.05) / 0.55, 0, 1);
       j = Math.pow(j, 0.8);
       let u = 0.05 * (0.86 + 0.3 * this.hf - 0.12 * j), Q0 = 0.006 + 0.075 * j, K0 = 0.55 - 0.2 * j;
@@ -701,6 +711,8 @@ class Avatar {
       if (j < 0.02 && !T0)
         K0 = 0.85;
       if (B > 0) {
+        if (yl > 0)
+          u = lerp(u, 0.066, yl), Q0 = Math.max(Q0, 0.085 * yl), K0 = lerp(K0, 1.5, yl);
         if (K0 = lerp(K0, 1.2, z), u += 0.009 * z, Q0 = Math.max(Q0, 0.026 * z), K0 = lerp(K0, 0.45, v * (1 - j)), u *= 1 - 0.06 * v, K0 = lerp(K0, -0.45, g), u = lerp(u, 0.053, g * 0.6), K0 = lerp(K0, 1, R__L), M > 0)
           Q0 = lerp(Q0, 0.058 + 0.016 * Math.sin(J * 21), M), u = lerp(u, 0.058, M), K0 = lerp(K0, 1.05, M);
       }
@@ -719,6 +731,10 @@ class Avatar {
       }
       if (this.auraUp)
         this.auraUp(J, $, this.muted ? 0 : this.L);
+      if (this.flush) {
+        let fo = this.fo = damp(this.fo || 0, yl * 0.52, 5, $);
+        this.flush.material.opacity = fo, this.flush.visible = fo > 0.01;
+      }
       let N0 = this.micMat.color;
       if (this.muted)
         N0.setRGB(1.6, 0.12, 0.15);
