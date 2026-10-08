@@ -1,22 +1,34 @@
-// OWQ Speedway: an indoor race track one level below the Sales Floor. You drive out through the garage door in the
-// front-left corner of the office and come out in the track's pit tunnel; the tunnel's far end takes you back.
-// Everything here is unlit (baked look + glow) so it adds no lights to the office.
 import * as THREE from 'three';
-import {cv,tex} from './tex.js';
+import {cv, tex} from './tex.js';
 
-export const TY=-40;                         // track floor height (below the office, never seen from it)
-export const TRK={SL:20,RAD:14,HW:4.5,BAR:5.6,TUN:{x:3,z0:14,z1:27}};
-export const DOOR={x:-9,z0:2.5,z1:4.7};    // garage door in the office's left wall
-// distance from the track's centre line (0 on the racing line, TRK.HW at the track edge)
-export function tdist(x,z){const{SL,RAD}=TRK;if(Math.abs(x)<=SL)return Math.abs(Math.abs(z)-RAD);const cx=Math.sign(x)*SL;return Math.abs(Math.hypot(x-cx,z)-RAD)}
-export function trackHit(x,z,r){const{BAR,TUN}=TRK;if(Math.abs(x)<TUN.x-r&&z>TUN.z0&&z<TUN.z1+1)return false;return tdist(x,z)>BAR-r-.15}
-// centre line, counter-clockwise seen from above; n = outward normal
-function loop(step=.5){const{SL,RAD}=TRK,P=[];
-  for(let x=-SL;x<SL;x+=step)P.push([x,-RAD,0,-1]);
-  for(let a=-Math.PI/2;a<Math.PI/2;a+=step/RAD)P.push([SL+RAD*Math.cos(a),RAD*Math.sin(a),Math.cos(a),Math.sin(a)]);
-  for(let x=SL;x>-SL;x-=step)P.push([x,RAD,0,1]);
-  for(let a=Math.PI/2;a<Math.PI*1.5;a+=step/RAD)P.push([-SL+RAD*Math.cos(a),RAD*Math.sin(a),Math.cos(a),Math.sin(a)]);
-  P.push(P[0]);return P}
+const TY=-40;
+const TRK={SL:20,RAD:14,HW:4.5,BAR:5.6,TUN:{x:3,z0:14,z1:27}};
+var DOOR = { x: -10, z0: 2.5, z1: 4.7 };
+function tdist($, J) {
+    let { SL: Q, RAD: Z } = TRK;
+    if (Math.abs($) <= Q)
+      return Math.abs(Math.abs(J) - Z);
+    let U = Math.sign($) * Q;
+    return Math.abs(Math.hypot($ - U, J) - Z);
+  }
+function trackHit($, J, Q) {
+    let { BAR: Z, TUN: U } = TRK;
+    if (Math.abs($) < U.x - Q && J > U.z0 && J < U.z1 + 1)
+      return false;
+    return tdist($, J) > Z - Q - 0.15;
+  }
+function loop($ = 0.5) {
+    let { SL: J, RAD: Q } = TRK, Z = [];
+    for (let U = -J;U < J; U += $)
+      Z.push([U, -Q, 0, -1]);
+    for (let U = -Math.PI / 2;U < Math.PI / 2; U += $ / Q)
+      Z.push([J + Q * Math.cos(U), Q * Math.sin(U), Math.cos(U), Math.sin(U)]);
+    for (let U = J;U > -J; U -= $)
+      Z.push([U, Q, 0, 1]);
+    for (let U = Math.PI / 2;U < Math.PI * 1.5; U += $ / Q)
+      Z.push([-J + Q * Math.cos(U), Q * Math.sin(U), Math.cos(U), Math.sin(U)]);
+    return Z.push(Z[0]), Z;
+  }
 // a flat ribbon between two offsets from the centre line (u runs along the length)
 function ribbon(P,o0,o1,y,us){const pos=[],uv=[],idx=[];let L=0;
   P.forEach((p,i)=>{if(i)L+=Math.hypot(p[0]-P[i-1][0],p[1]-P[i-1][1]);
@@ -34,66 +46,94 @@ function noiseCv(w,h,base,amp,f){const c=cv(w,h),x=c.getContext('2d');x.fillStyl
 function rep(c,u,v){const t=tex(c,{mips:true});t.wrapS=t.wrapT=THREE.RepeatWrapping;if(u)t.repeat.set(u,v||u);return t}
 function sign(txt,w,h,col,glow,font){const c=cv(1024,Math.round(1024*h/w)),x=c.getContext('2d');x.clearRect(0,0,c.width,c.height);x.font=font||`900 ${Math.round(c.height*.62)}px Verdana,sans-serif`;
   x.textAlign='center';x.textBaseline='middle';x.shadowColor=glow;x.shadowBlur=c.height*.18;x.fillStyle=col;x.fillText(txt,c.width/2,c.height/2);x.shadowBlur=0;x.fillText(txt,c.width/2,c.height/2);return c}
-export function buildTrack(root){const G=new THREE.Group();G.name='speedway';G.position.y=TY;root.add(G);const{SL,RAD,HW,BAR,TUN}=TRK,P=loop();
-  const add=(geo,mat,x=0,y=0,z=0,rx=0,ry=0)=>{const m=new THREE.Mesh(geo,mat);m.position.set(x,y,z);m.rotation.set(rx,ry,0);m.matrixAutoUpdate=false;m.updateMatrix();G.add(m);return m};
-  // hall
-  add(new THREE.PlaneGeometry(100,72),B({map:rep(noiseCv(256,256,'#26262c',22),12,9),color:new THREE.Color(.9,.9,.95)}),0,0,4,-Math.PI/2);
-  const wallC=noiseCv(512,128,'#120a10',10,(x,w,h)=>{const g=x.createLinearGradient(0,0,0,h);g.addColorStop(0,'rgba(255,31,79,.0)');g.addColorStop(1,'rgba(255,31,79,.16)');x.fillStyle=g;x.fillRect(0,0,w,h);x.fillStyle='#ff1f4f';x.fillRect(0,h*.8,w,3)});
-  const wm=B({map:rep(wallC,6,1)});[[0,5,-32,0,100],[0,5,40,Math.PI,100],[-50,5,4,Math.PI/2,72],[50,5,4,-Math.PI/2,72]].forEach(([x,y,z,r,w])=>add(new THREE.PlaneGeometry(w,10),wm,x,y,z,0,r));
-  add(new THREE.PlaneGeometry(100,72),B({color:0x07060a}),0,10,4,Math.PI/2);
-  const led=B({color:new THREE.Color(3.2,3.1,3)});for(let x=-40;x<=40;x+=10)add(new THREE.BoxGeometry(.25,.08,60),led,x,9.9,4);
-  // track: asphalt, centre dashes, curbs, barriers
-  const asp=noiseCv(256,256,'#1d1e23',26,(x,w,h)=>{x.fillStyle='rgba(255,255,255,.55)';x.fillRect(0,0,6,h);x.fillRect(w-6,0,6,h);x.fillStyle='rgba(255,255,255,.35)';x.fillRect(w*.3,h/2-3,w*.4,6)});
-  add(ribbon(P,-HW,HW,.01,9),B({map:rep(noiseCv(256,64,'#1d1e23',26,(x,w,h)=>{x.fillStyle='rgba(255,255,255,.5)';x.fillRect(0,0,w,3);x.fillRect(0,h-3,w,3);x.fillStyle='rgba(255,210,90,.55)';for(let i=0;i<2;i++)x.fillRect(i*w/2,h/2-2,w*.28,4)}))}));
-  const curb=cv(64,8),cx=curb.getContext('2d');cx.fillStyle='#e8e8ec';cx.fillRect(0,0,64,8);cx.fillStyle='#ff1f4f';cx.fillRect(0,0,32,8);
-  const cm=B({map:rep(curb),color:new THREE.Color(1.15,1.15,1.15)});add(ribbon(P,HW,HW+.8,.02,1.6),cm);add(ribbon(P,-HW-.8,-HW,.02,1.6),cm);
-  const bar=cv(512,64),bx=bar.getContext('2d');bx.fillStyle='#0c0b0f';bx.fillRect(0,0,512,64);bx.fillStyle='#ff1f4f';bx.fillRect(0,0,512,5);bx.fillRect(0,59,512,5);
-  bx.font='900 34px Verdana,sans-serif';bx.textBaseline='middle';bx.fillStyle='#fff';bx.fillText('ONLY WINNERS',20,33);bx.fillStyle='#ff6f8d';bx.fillText('OWQ SPEEDWAY',282,33);
-  const bm=B({map:rep(bar),color:new THREE.Color(1.3,1.3,1.3)});
-  const gap=(x,z)=>z>0&&Math.abs(x)<TUN.x&&Math.abs(z-RAD)<HW+2;
-  add(wall(loop(),BAR,0,1.1,7,gap),bm);add(wall(loop(),-BAR,0,1.1,-7),bm);
-  // inner field: grass-dark with the logo
-  const inf=cv(1024,512),ix=inf.getContext('2d');ix.fillStyle='#101014';ix.fillRect(0,0,1024,512);ix.strokeStyle='rgba(255,31,79,.35)';ix.lineWidth=3;for(let i=0;i<1024;i+=32){ix.beginPath();ix.moveTo(i,0);ix.lineTo(i-256,512);ix.stroke()}
-  ix.font='italic 900 120px Verdana,sans-serif';ix.textAlign='center';ix.textBaseline='middle';ix.shadowColor='#ff1f4f';ix.shadowBlur=40;ix.fillStyle='#fff';ix.fillText('ONLY WINNERS',512,256);
-  add(new THREE.PlaneGeometry(2*SL+2*(RAD-BAR)-1,2*(RAD-BAR)-1),B({map:tex(inf,{mips:true}),color:new THREE.Color(1.1,1.1,1.1)}),0,.005,0,-Math.PI/2);
-  // start / finish line on the bottom straight (x = 0)
-  const ch=cv(64,256),chx=ch.getContext('2d');for(let i=0;i<4;i++)for(let j=0;j<16;j++){chx.fillStyle=(i+j)%2?'#111':'#f2f2f2';chx.fillRect(i*16,j*16,16,16)}
-  add(new THREE.PlaneGeometry(1.2,2*HW),B({map:tex(ch,{mips:true})}),0,.03,-RAD,-Math.PI/2);
-  // gantry over the start line
-  const gm=B({color:0x18161c});add(new THREE.BoxGeometry(.4,6,.4),gm,0,3,-RAD-BAR-.6);add(new THREE.BoxGeometry(.4,6,.4),gm,0,3,-RAD+BAR+.6);add(new THREE.BoxGeometry(.6,.9,2*BAR+1.6),gm,0,6.2,-RAD);
-  const gs=sign('START  ·  FINISH',8,1,'#ffffff','#ff1f4f');const gsm=B({map:tex(gs,{mips:true}),transparent:true,depthWrite:false,color:new THREE.Color(2,2,2)});
-  add(new THREE.PlaneGeometry(9,1.1),gsm,.31,6.2,-RAD,0,Math.PI/2);add(new THREE.PlaneGeometry(9,1.1),gsm,-.31,6.2,-RAD,0,-Math.PI/2);
-  // big neon over the far wall
-  add(new THREE.PlaneGeometry(26,4.2),B({map:tex(sign('OWQ SPEEDWAY',26,4.2,'#fff0f6','#ff2d78'),{mips:true}),transparent:true,depthWrite:false,blending:THREE.AdditiveBlending,color:new THREE.Color(2.4,2.4,2.4)}),0,6.6,-31.8);
-  // pit tunnel back up to the office
-  const tm=B({map:rep(noiseCv(256,64,'#0d0c10',12,(x,w,h)=>{x.fillStyle='#ff1f4f';for(let i=0;i<w;i+=64)x.fillRect(i,h*.45,30,6)}),3,1)});
-  const tl=TUN.z1-(RAD+BAR)+1.5,tz=(TUN.z1+RAD+BAR)/2+.6;
-  add(new THREE.PlaneGeometry(2*TUN.x,tl),B({map:rep(asp,1,3)}),0,.012,tz,-Math.PI/2);
-  add(new THREE.PlaneGeometry(tl,3.2),tm,-TUN.x,1.6,tz,0,Math.PI/2);add(new THREE.PlaneGeometry(tl,3.2),tm,TUN.x,1.6,tz,0,-Math.PI/2);add(new THREE.BoxGeometry(2*TUN.x+.4,.3,tl),B({color:0x0a090c}),0,3.3,tz);
-  const pg=cv(256,256),px=pg.getContext('2d'),gr=px.createRadialGradient(128,128,10,128,128,128);gr.addColorStop(0,'rgba(255,240,246,1)');gr.addColorStop(.5,'rgba(255,31,79,.8)');gr.addColorStop(1,'rgba(255,31,79,0)');px.fillStyle=gr;px.fillRect(0,0,256,256);
-  add(new THREE.PlaneGeometry(2*TUN.x,3.2),B({map:tex(pg,{mips:false}),transparent:true,depthWrite:false,blending:THREE.AdditiveBlending,color:new THREE.Color(2,2,2)}),0,1.6,TUN.z1+.9);
-  add(new THREE.PlaneGeometry(5.6,.9),B({map:tex(sign('▲ BACK TO THE OFFICE',5.6,.9,'#ffffff','#ff1f4f'),{mips:true}),transparent:true,depthWrite:false,color:new THREE.Color(2,2,2)}),0,2.75,TUN.z1+.7,0,Math.PI);
-  add(new THREE.PlaneGeometry(5.6,.9),B({map:tex(sign('PIT  ·  OWQ SPEEDWAY',5.6,.9,'#ffffff','#ff1f4f'),{mips:true}),transparent:true,depthWrite:false,color:new THREE.Color(2,2,2)}),0,3.9,RAD+BAR+.2,0,Math.PI);
-  // lap board
-  const lb=cv(1024,640),lbt=tex(lb,{mips:false});add(new THREE.PlaneGeometry(12,7.5),B({map:lbt}),-30,5.2,-31.7);
-  const lbx=lb.getContext('2d');const draw=(rows,live)=>{const x=lbx;x.fillStyle='#08060a';x.fillRect(0,0,1024,640);x.fillStyle='#ff1f4f';x.fillRect(0,0,1024,10);
-    x.font='900 54px Verdana,sans-serif';x.textAlign='left';x.textBaseline='alphabetic';x.fillStyle='#fff';x.fillText('FASTEST LAPS',44,90);x.font='700 26px Verdana,sans-serif';x.fillStyle='#ffb3c2';x.fillText(live||'Cross the line twice to set a time',46,132);
-    (rows.length?rows:[['No laps yet','',0]]).slice(0,7).forEach((r,i)=>{const y=200+i*62;x.fillStyle=i===0&&r[2]?'rgba(255,209,102,.16)':'rgba(255,255,255,.05)';x.fillRect(40,y-44,944,54);x.font='800 34px Verdana,sans-serif';
-      x.fillStyle=i===0&&r[2]?'#ffd166':'#fff';x.fillText((r[2]?(i+1)+'  ':'')+String(r[0]).toUpperCase().slice(0,22),60,y-6);x.textAlign='right';x.fillText(r[2]?r[2].toFixed(2)+'s':'',964,y-6);x.textAlign='left'});lbt.needsUpdate=true};
-  draw([]);
-  return{group:G,board:draw}}
-// the garage door in the office (front-left corner): a lit opening with a neon sign above it
-export function buildDoor(root){const G=new THREE.Group();G.name='trackdoor';root.add(G);const{x,z0,z1}=DOOR,w=z1-z0,zc=(z0+z1)/2;
-  const add=(geo,mat,px,py,pz,ry=0)=>{const m=new THREE.Mesh(geo,mat);m.position.set(px,py,pz);m.rotation.y=ry;G.add(m);return m};
-  const c=cv(256,256),g=c.getContext('2d'),gr=g.createLinearGradient(0,0,0,256);gr.addColorStop(0,'#050306');gr.addColorStop(1,'#1a0710');g.fillStyle=gr;g.fillRect(0,0,256,256);
-  g.strokeStyle='rgba(255,31,79,.55)';g.lineWidth=4;for(let i=1;i<6;i++){g.beginPath();g.moveTo(128-i*12,256);g.lineTo(128-i*4,60);g.stroke();g.beginPath();g.moveTo(128+i*12,256);g.lineTo(128+i*4,60);g.stroke()}
-  g.fillStyle='rgba(255,31,79,.9)';g.beginPath();g.moveTo(128,120);g.lineTo(98,160);g.lineTo(158,160);g.closePath();g.fill();
-  add(new THREE.PlaneGeometry(w,2.5),new THREE.MeshBasicMaterial({map:tex(c,{mips:false})}),x+.015,1.25,zc,Math.PI/2);
-  const fm=new THREE.MeshBasicMaterial({color:new THREE.Color(3,.35,.8),toneMapped:false});
-  add(new THREE.BoxGeometry(.06,2.6,.07),fm,x+.03,1.3,z0);add(new THREE.BoxGeometry(.06,2.6,.07),fm,x+.03,1.3,z1);add(new THREE.BoxGeometry(.06,.07,w+.07),fm,x+.03,2.6,zc);
-  const sc=cv(1024,256),s=sc.getContext('2d');s.font='900 120px Verdana,sans-serif';s.textAlign='center';s.textBaseline='middle';s.shadowColor='#ff2d78';s.shadowBlur=40;s.fillStyle='#fff0f6';s.fillText('RACE TRACK',512,128);
-  add(new THREE.PlaneGeometry(2.4,.6),new THREE.MeshBasicMaterial({map:tex(sc,{mips:true}),transparent:true,depthWrite:false,blending:THREE.AdditiveBlending,color:new THREE.Color(2.2,2.2,2.2),toneMapped:false}),x+.03,3.1,zc,Math.PI/2);
-  // chevrons on the floor leading to it
-  const ar=cv(128,128),a=ar.getContext('2d');a.strokeStyle='#ff1f4f';a.lineWidth=14;a.lineCap='round';[20,60].forEach(o=>{a.beginPath();a.moveTo(30+o*.3,100-o*.0);a.lineTo(64,40+o*.4);a.lineTo(98-o*.3,100);a.stroke()});
-  const am=new THREE.MeshBasicMaterial({map:tex(ar,{mips:true}),transparent:true,depthWrite:false,opacity:.55});
-  [1.0,2.1].forEach(d=>{const m=add(new THREE.PlaneGeometry(.8,.8),am,x+d,.006,zc);m.rotation.set(-Math.PI/2,0,Math.PI/2)});return G}
+function buildTrack($) {
+    let J = new THREE.Group;
+    J.name = "speedway", J.position.y = TY, $.add(J);
+    let { SL: Q, RAD: Z, HW: U, BAR: q, TUN: E } = TRK, Y = loop(), K = (G0, $0, j = 0, u = 0, Q0 = 0, K0 = 0, N0 = 0) => {
+      let x = new THREE.Mesh(G0, $0);
+      return x.position.set(j, u, Q0), x.rotation.set(K0, N0, 0), x.matrixAutoUpdate = false, x.updateMatrix(), J.add(x), x;
+    };
+    K(new THREE.PlaneGeometry(100, 72), B({ map: rep(noiseCv(256, 256, "#26262c", 22), 12, 9), color: new THREE.Color(0.9, 0.9, 0.95) }), 0, 0, 4, -Math.PI / 2);
+    let V = noiseCv(512, 128, "#120a10", 10, (G0, $0, j) => {
+      let u = G0.createLinearGradient(0, 0, 0, j);
+      u.addColorStop(0, "rgba(255,31,79,.0)"), u.addColorStop(1, "rgba(255,31,79,.16)"), G0.fillStyle = u, G0.fillRect(0, 0, $0, j), G0.fillStyle = "#ff1f4f", G0.fillRect(0, j * 0.8, $0, 3);
+    }), X = B({ map: rep(V, 6, 1) });
+    [[0, 5, -32, 0, 100], [0, 5, 40, Math.PI, 100], [-50, 5, 4, Math.PI / 2, 72], [50, 5, 4, -Math.PI / 2, 72]].forEach(([G0, $0, j, u, Q0]) => K(new THREE.PlaneGeometry(Q0, 10), X, G0, $0, j, 0, u)), K(new THREE.PlaneGeometry(100, 72), B({ color: 460298 }), 0, 10, 4, Math.PI / 2);
+    let W = B({ color: new THREE.Color(3.2, 3.1, 3) });
+    for (let G0 = -40;G0 <= 40; G0 += 10)
+      K(new THREE.BoxGeometry(0.25, 0.08, 60), W, G0, 9.9, 4);
+    let H = noiseCv(256, 256, "#1d1e23", 26, (G0, $0, j) => {
+      G0.fillStyle = "rgba(255,255,255,.55)", G0.fillRect(0, 0, 6, j), G0.fillRect($0 - 6, 0, 6, j), G0.fillStyle = "rgba(255,255,255,.35)", G0.fillRect($0 * 0.3, j / 2 - 3, $0 * 0.4, 6);
+    });
+    K(ribbon(Y, -U, U, 0.01, 9), B({ map: rep(noiseCv(256, 64, "#1d1e23", 26, (G0, $0, j) => {
+      G0.fillStyle = "rgba(255,255,255,.5)", G0.fillRect(0, 0, $0, 3), G0.fillRect(0, j - 3, $0, 3), G0.fillStyle = "rgba(255,210,90,.55)";
+      for (let u = 0;u < 2; u++)
+        G0.fillRect(u * $0 / 2, j / 2 - 2, $0 * 0.28, 4);
+    })) }));
+    let N = cv(64, 8), F = N.getContext("2d");
+    F.fillStyle = "#e8e8ec", F.fillRect(0, 0, 64, 8), F.fillStyle = "#ff1f4f", F.fillRect(0, 0, 32, 8);
+    let G = B({ map: rep(N), color: new THREE.Color(1.15, 1.15, 1.15) });
+    K(ribbon(Y, U, U + 0.8, 0.02, 1.6), G), K(ribbon(Y, -U - 0.8, -U, 0.02, 1.6), G);
+    let _ = cv(512, 64), D = _.getContext("2d");
+    D.fillStyle = "#0c0b0f", D.fillRect(0, 0, 512, 64), D.fillStyle = "#ff1f4f", D.fillRect(0, 0, 512, 5), D.fillRect(0, 59, 512, 5), D.font = "900 34px Verdana,sans-serif", D.textBaseline = "middle", D.fillStyle = "#fff", D.fillText("ONLY WINNERS", 20, 33), D.fillStyle = "#ff6f8d", D.fillText("OWQ SPEEDWAY", 282, 33);
+    let O = B({ map: rep(_), color: new THREE.Color(1.3, 1.3, 1.3) }), I = (G0, $0) => $0 > 0 && Math.abs(G0) < E.x && Math.abs($0 - Z) < U + 2;
+    K(wall(loop(), q, 0, 1.1, 7, I), O), K(wall(loop(), -q, 0, 1.1, -7), O);
+    let B__L = cv(1024, 512), k = B__L.getContext("2d");
+    k.fillStyle = "#101014", k.fillRect(0, 0, 1024, 512), k.strokeStyle = "rgba(255,31,79,.35)", k.lineWidth = 3;
+    for (let G0 = 0;G0 < 1024; G0 += 32)
+      k.beginPath(), k.moveTo(G0, 0), k.lineTo(G0 - 256, 512), k.stroke();
+    k.font = "italic 900 120px Verdana,sans-serif", k.textAlign = "center", k.textBaseline = "middle", k.shadowColor = "#ff1f4f", k.shadowBlur = 40, k.fillStyle = "#fff", k.fillText("ONLY WINNERS", 512, 256), K(new THREE.PlaneGeometry(2 * Q + 2 * (Z - q) - 1, 2 * (Z - q) - 1), B({ map: tex(B__L, { mips: true }), color: new THREE.Color(1.1, 1.1, 1.1) }), 0, 0.005, 0, -Math.PI / 2);
+    let z = cv(64, 256), M = z.getContext("2d");
+    for (let G0 = 0;G0 < 4; G0++)
+      for (let $0 = 0;$0 < 16; $0++)
+        M.fillStyle = (G0 + $0) % 2 ? "#111" : "#f2f2f2", M.fillRect(G0 * 16, $0 * 16, 16, 16);
+    K(new THREE.PlaneGeometry(1.2, 2 * U), B({ map: tex(z, { mips: true }) }), 0, 0.03, -Z, -Math.PI / 2);
+    let v = B({ color: 1578524 });
+    K(new THREE.BoxGeometry(0.4, 6, 0.4), v, 0, 3, -Z - q - 0.6), K(new THREE.BoxGeometry(0.4, 6, 0.4), v, 0, 3, -Z + q + 0.6), K(new THREE.BoxGeometry(0.6, 0.9, 2 * q + 1.6), v, 0, 6.2, -Z);
+    let g = sign("START  ·  FINISH", 8, 1, "#ffffff", "#ff1f4f"), R = B({ map: tex(g, { mips: true }), transparent: true, depthWrite: false, color: new THREE.Color(2, 2, 2) });
+    K(new THREE.PlaneGeometry(9, 1.1), R, 0.31, 6.2, -Z, 0, Math.PI / 2), K(new THREE.PlaneGeometry(9, 1.1), R, -0.31, 6.2, -Z, 0, -Math.PI / 2), K(new THREE.PlaneGeometry(26, 4.2), B({ map: tex(sign("OWQ SPEEDWAY", 26, 4.2, "#fff0f6", "#ff2d78"), { mips: true }), transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, color: new THREE.Color(2.4, 2.4, 2.4) }), 0, 6.6, -31.8);
+    let C = B({ map: rep(noiseCv(256, 64, "#0d0c10", 12, (G0, $0, j) => {
+      G0.fillStyle = "#ff1f4f";
+      for (let u = 0;u < $0; u += 64)
+        G0.fillRect(u, j * 0.45, 30, 6);
+    }), 3, 1) }), p = E.z1 - (Z + q) + 1.5, i = (E.z1 + Z + q) / 2 + 0.6;
+    K(new THREE.PlaneGeometry(2 * E.x, p), B({ map: rep(H, 1, 3) }), 0, 0.012, i, -Math.PI / 2), K(new THREE.PlaneGeometry(p, 3.2), C, -E.x, 1.6, i, 0, Math.PI / 2), K(new THREE.PlaneGeometry(p, 3.2), C, E.x, 1.6, i, 0, -Math.PI / 2), K(new THREE.BoxGeometry(2 * E.x + 0.4, 0.3, p), B({ color: 657676 }), 0, 3.3, i);
+    let e = cv(256, 256), V0 = e.getContext("2d"), l = V0.createRadialGradient(128, 128, 10, 128, 128, 128);
+    l.addColorStop(0, "rgba(255,240,246,1)"), l.addColorStop(0.5, "rgba(255,31,79,.8)"), l.addColorStop(1, "rgba(255,31,79,0)"), V0.fillStyle = l, V0.fillRect(0, 0, 256, 256), K(new THREE.PlaneGeometry(2 * E.x, 3.2), B({ map: tex(e, { mips: false }), transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, color: new THREE.Color(2, 2, 2) }), 0, 1.6, E.z1 + 0.9), K(new THREE.PlaneGeometry(5.6, 0.9), B({ map: tex(sign("▲ BACK TO THE OFFICE", 5.6, 0.9, "#ffffff", "#ff1f4f"), { mips: true }), transparent: true, depthWrite: false, color: new THREE.Color(2, 2, 2) }), 0, 2.75, E.z1 + 0.7, 0, Math.PI), K(new THREE.PlaneGeometry(5.6, 0.9), B({ map: tex(sign("PIT  ·  OWQ SPEEDWAY", 5.6, 0.9, "#ffffff", "#ff1f4f"), { mips: true }), transparent: true, depthWrite: false, color: new THREE.Color(2, 2, 2) }), 0, 3.9, Z + q + 0.2, 0, Math.PI);
+    let A0 = cv(1024, 640), J0 = tex(A0, { mips: false });
+    K(new THREE.PlaneGeometry(12, 7.5), B({ map: J0 }), -30, 5.2, -31.7);
+    let T0 = A0.getContext("2d"), L0 = (G0, $0) => {
+      let j = T0;
+      j.fillStyle = "#08060a", j.fillRect(0, 0, 1024, 640), j.fillStyle = "#ff1f4f", j.fillRect(0, 0, 1024, 10), j.font = "900 54px Verdana,sans-serif", j.textAlign = "left", j.textBaseline = "alphabetic", j.fillStyle = "#fff", j.fillText("FASTEST LAPS", 44, 90), j.font = "700 26px Verdana,sans-serif", j.fillStyle = "#ffb3c2", j.fillText($0 || "Cross the line twice to set a time", 46, 132), (G0.length ? G0 : [["No laps yet", "", 0]]).slice(0, 7).forEach((u, Q0) => {
+        let K0 = 200 + Q0 * 62;
+        j.fillStyle = Q0 === 0 && u[2] ? "rgba(255,209,102,.16)" : "rgba(255,255,255,.05)", j.fillRect(40, K0 - 44, 944, 54), j.font = "800 34px Verdana,sans-serif", j.fillStyle = Q0 === 0 && u[2] ? "#ffd166" : "#fff", j.fillText((u[2] ? Q0 + 1 + "  " : "") + String(u[0]).toUpperCase().slice(0, 22), 60, K0 - 6), j.textAlign = "right", j.fillText(u[2] ? u[2].toFixed(2) + "s" : "", 964, K0 - 6), j.textAlign = "left";
+      }), J0.needsUpdate = true;
+    };
+    return L0([]), { group: J, board: L0 };
+  }
+function buildDoor($) {
+    let J = new THREE.Group;
+    J.name = "trackdoor", $.add(J);
+    let { x: Q, z0: Z, z1: U } = DOOR, q = U - Z, E = (Z + U) / 2, Y = (D, O, I, B__L, k, z = 0) => {
+      let M = new THREE.Mesh(D, O);
+      return M.position.set(I, B__L, k), M.rotation.y = z, J.add(M), M;
+    }, K = cv(256, 256), V = K.getContext("2d"), X = V.createLinearGradient(0, 0, 0, 256);
+    X.addColorStop(0, "#050306"), X.addColorStop(1, "#1a0710"), V.fillStyle = X, V.fillRect(0, 0, 256, 256), V.strokeStyle = "rgba(255,31,79,.55)", V.lineWidth = 4;
+    for (let D = 1;D < 6; D++)
+      V.beginPath(), V.moveTo(128 - D * 12, 256), V.lineTo(128 - D * 4, 60), V.stroke(), V.beginPath(), V.moveTo(128 + D * 12, 256), V.lineTo(128 + D * 4, 60), V.stroke();
+    V.fillStyle = "rgba(255,31,79,.9)", V.beginPath(), V.moveTo(128, 120), V.lineTo(98, 160), V.lineTo(158, 160), V.closePath(), V.fill(), Y(new THREE.PlaneGeometry(q, 2.5), new THREE.MeshBasicMaterial({ map: tex(K, { mips: false }) }), Q + 0.015, 1.25, E, Math.PI / 2);
+    let W = new THREE.MeshBasicMaterial({ color: new THREE.Color(3, 0.35, 0.8), toneMapped: false });
+    Y(new THREE.BoxGeometry(0.06, 2.6, 0.07), W, Q + 0.03, 1.3, Z), Y(new THREE.BoxGeometry(0.06, 2.6, 0.07), W, Q + 0.03, 1.3, U), Y(new THREE.BoxGeometry(0.06, 0.07, q + 0.07), W, Q + 0.03, 2.6, E);
+    let H = cv(1024, 256), N = H.getContext("2d");
+    N.font = "900 120px Verdana,sans-serif", N.textAlign = "center", N.textBaseline = "middle", N.shadowColor = "#ff2d78", N.shadowBlur = 40, N.fillStyle = "#fff0f6", N.fillText("RACE TRACK", 512, 128), Y(new THREE.PlaneGeometry(2.4, 0.6), new THREE.MeshBasicMaterial({ map: tex(H, { mips: true }), transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, color: new THREE.Color(2.2, 2.2, 2.2), toneMapped: false }), Q + 0.03, 3.1, E, Math.PI / 2);
+    let F = cv(128, 128), G = F.getContext("2d");
+    G.strokeStyle = "#ff1f4f", G.lineWidth = 14, G.lineCap = "round", [20, 60].forEach((D) => {
+      G.beginPath(), G.moveTo(30 + D * 0.3, 100 - D * 0), G.lineTo(64, 40 + D * 0.4), G.lineTo(98 - D * 0.3, 100), G.stroke();
+    });
+    let _ = new THREE.MeshBasicMaterial({ map: tex(F, { mips: true }), transparent: true, depthWrite: false, opacity: 0.55 });
+    return [1, 2.1].forEach((D) => {
+      Y(new THREE.PlaneGeometry(0.8, 0.8), _, Q + D, 0.006, E).rotation.set(-Math.PI / 2, 0, Math.PI / 2);
+    }), J;
+  }
+
+export {DOOR, TRK, TY, buildDoor, buildTrack, trackHit};

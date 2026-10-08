@@ -1,20 +1,9 @@
 import {esc} from './util.js';
-import {SKIN,HAIRC,HAIRS,OUTS,OUTC,ACC,PANTS,OUTC_ALL} from './avatar.js';
-import {COS,SIGM,SIGE,SIGP,SIGS,BPEM} from './cosm.js';
+import {ACC, HAIRC, HAIRS, OUTC_ALL, PANTS, SKIN} from './avatar.js';
+import {BPEM, COS, CREM, SIGE, SIGM, SIGP, SIGS} from './cosm.js';
 
-export const IC={
- cam:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 7l-7 5 7 5V7z"/><rect x="1" y="5" width="15" height="14" rx="2"/></svg>',
- film:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7h18v12a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7z"/><path d="M3 7l3-4 4 1 4-1 4 1 3-1v4"/><path d="M7 3l2 4M12 3l2 4M17 3l2 4"/></svg>',
- snd:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5L6 9H2v6h4l5 4V5z"/><path d="M15.5 8.5a5 5 0 0 1 0 7M19 5a10 10 0 0 1 0 14"/></svg>',
- sndoff:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5L6 9H2v6h4l5 4V5z"/><path d="M23 9l-6 6M17 9l6 6"/></svg>',
- crowd:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3.5"/><path d="M2 20c0-3.9 3.1-6.5 7-6.5s7 2.6 7 6.5"/><circle cx="17.5" cy="9" r="2.6"/><path d="M17 13.6c3 .3 5 2.4 5 5.4"/></svg>',
- exp:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg>',
- shrink:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 14h6v6M20 10h-6V4M14 10l7-7M3 21l7-7"/></svg>',
- list:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg>',
- micoff:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M1 1l22 22"/><path d="M9 9v3a3 3 0 0 0 5.1 2.1M15 9.3V4a3 3 0 0 0-5.9-.6"/><path d="M17 16.9A7 7 0 0 1 5 12v-2M19 10v2c0 .8-.1 1.5-.4 2.2M12 19v4M8 23h8"/></svg>',
- x:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg>',
-};
-const CSS=`.vo3{position:absolute;inset:0;overflow:hidden;background:#07040a;font-family:Verdana,Geneva,sans-serif;color:#fff;-webkit-user-select:none;user-select:none;border-radius:inherit}
+var IC = { board: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8M12 16v4M7 12l3-3 2 2 4-4"/></svg>', cam: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 7l-7 5 7 5V7z"/><rect x="1" y="5" width="15" height="14" rx="2"/></svg>', film: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7h18v12a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7z"/><path d="M3 7l3-4 4 1 4-1 4 1 3-1v4"/><path d="M7 3l2 4M12 3l2 4M17 3l2 4"/></svg>', snd: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5L6 9H2v6h4l5 4V5z"/><path d="M15.5 8.5a5 5 0 0 1 0 7M19 5a10 10 0 0 1 0 14"/></svg>', sndoff: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5L6 9H2v6h4l5 4V5z"/><path d="M23 9l-6 6M17 9l6 6"/></svg>', crowd: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3.5"/><path d="M2 20c0-3.9 3.1-6.5 7-6.5s7 2.6 7 6.5"/><circle cx="17.5" cy="9" r="2.6"/><path d="M17 13.6c3 .3 5 2.4 5 5.4"/></svg>', exp: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg>', shrink: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 14h6v6M20 10h-6V4M14 10l7-7M3 21l7-7"/></svg>', list: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg>', micoff: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M1 1l22 22"/><path d="M9 9v3a3 3 0 0 0 5.1 2.1M15 9.3V4a3 3 0 0 0-5.9-.6"/><path d="M17 16.9A7 7 0 0 1 5 12v-2M19 10v2c0 .8-.1 1.5-.4 2.2M12 19v4M8 23h8"/></svg>', x: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg>' };
+var CSS = `.vo3{position:absolute;inset:0;overflow:hidden;background:#07040a;font-family:Verdana,Geneva,sans-serif;color:#fff;-webkit-user-select:none;user-select:none;border-radius:inherit}
 .vo3 .vo3c{position:absolute;inset:0;width:100%;height:100%;display:block;cursor:grab;touch-action:none;outline:none}
 .vo3 .vo3c.ptr{cursor:pointer}.vo3 .vo3c.drag{cursor:grabbing}
 .vo3l{position:absolute;inset:0;pointer-events:none;overflow:hidden}
@@ -61,14 +50,20 @@ const CSS=`.vo3{position:absolute;inset:0;overflow:hidden;background:#07040a;fon
 .vo3ti{text-decoration:none;font-size:8.5px;letter-spacing:.14em;padding:2px 6px;border-radius:6px;background:rgba(255,207,64,.16);color:#ffcf40;margin-left:4px}
 .vo3t.n1 .vo3n{border-color:#e3b04f;box-shadow:0 0 14px rgba(227,176,79,.5)}.vo3t.n1 .vo3n b{color:#ffe08a}.vo3t.n2 .vo3n{border-color:#14e6ff;box-shadow:0 0 16px rgba(20,230,255,.55)}.vo3t.n2 .vo3n b{color:#b6f6ff;text-shadow:0 0 8px #14e6ff}
 .vo3t.n3 .vo3n{border-color:#ff7a1a;background:linear-gradient(90deg,rgba(120,20,0,.85),rgba(40,6,10,.85));box-shadow:0 0 16px rgba(255,122,26,.6)}.vo3t.n4 .vo3n{border-color:#dff3ff;background:linear-gradient(90deg,rgba(60,90,120,.8),rgba(12,18,30,.85));box-shadow:0 0 18px rgba(170,230,255,.6)}.vo3t.n4 .vo3n b{color:#fff;text-shadow:0 0 8px #9fd8ff}
+.vo3t.n5 .vo3n{border-color:#9fe8ff;background:linear-gradient(90deg,rgba(120,200,240,.45),rgba(10,30,50,.85));box-shadow:0 0 16px rgba(159,232,255,.6)}.vo3t.n5 .vo3n b{color:#e8fbff;text-shadow:0 0 6px #9fe8ff}
+.vo3t.n6 .vo3n{border-color:#7dff3a;background:linear-gradient(90deg,rgba(40,90,0,.85),rgba(8,20,4,.85));box-shadow:0 0 16px rgba(125,255,58,.6)}.vo3t.n6 .vo3n b{color:#c9ff9e;text-shadow:0 0 8px #7dff3a}
+.vo3t.n7 .vo3n{border-color:#1aff6a;background:#020a04;box-shadow:0 0 12px rgba(26,255,106,.45)}.vo3t.n7 .vo3n b{color:#3dff7a;font-family:Menlo,Consolas,monospace;text-shadow:0 0 6px #1aff6a}
+.vo3t.n8 .vo3n{border-color:#e3b04f;background:linear-gradient(90deg,rgba(74,20,112,.92),rgba(30,6,50,.92));box-shadow:0 0 18px rgba(181,92,255,.55)}.vo3t.n8 .vo3n b{color:#ffe08a}
+.vo3t.n9 .vo3n{border-color:#b98cff;background:radial-gradient(circle at 20% 40%,rgba(255,255,255,.5) 0 1px,transparent 2px),radial-gradient(circle at 70% 60%,rgba(255,255,255,.45) 0 1px,transparent 2px),linear-gradient(90deg,rgba(60,20,140,.92),rgba(10,10,50,.92));box-shadow:0 0 20px rgba(140,90,255,.65)}.vo3t.n9 .vo3n b{color:#fff;text-shadow:0 0 8px #b98cff}
+.vo3t.n10 .vo3n{border-color:transparent;background:linear-gradient(rgba(10,6,14,.88),rgba(10,6,14,.88)) padding-box,linear-gradient(90deg,#ff1f4f,#ffcf40,#3ddc97,#3fa9ff,#b55cff,#ff1f4f) border-box;border-width:2px;background-size:100% 100%,300% 100%;animation:vo3rb 3s linear infinite;box-shadow:0 0 18px rgba(255,120,200,.5)}
+@keyframes vo3rb{to{background-position:0 0,300% 0}}
 .vo3look p.vo3vx{margin:0 0 7px;line-height:1.45}.vo3look .ft{display:flex;justify-content:space-between;gap:8px;margin-top:14px}.vo3look .ft button{flex:1;padding:9px;border-radius:10px;border:0;background:#ff1f4f;color:#fff;font:800 11px Verdana;letter-spacing:.1em;cursor:pointer}.vo3look .ft button.o{background:rgba(255,255,255,.08)}
 .vo3ld{position:absolute;inset:0;display:grid;place-items:center;background:radial-gradient(circle at 50% 40%,#2a0815,#07040a 70%);z-index:3;transition:opacity .6s}.vo3ld.off{opacity:0;pointer-events:none}
 .vo3ld div{font-size:11px;letter-spacing:.3em;color:#ffb3c2}.vo3ld i{display:block;width:180px;height:2px;margin:12px auto 0;background:linear-gradient(90deg,transparent,#ff1f4f,transparent);background-size:200% 100%;animation:vo3sh 1.1s linear infinite}@keyframes vo3sh{to{background-position:-200% 0}}
 .vo3hold{position:absolute;left:0;top:0;width:2px;height:2px;opacity:.01;pointer-events:none;overflow:hidden}`;
-
-export function injectCSS(){if(document.getElementById('vo3css'))return;const s=document.createElement('style');s.id='vo3css';s.textContent=CSS;document.head.appendChild(s)}
-
-export class Overlay{constructor(root,o){this.o=o;this.root=root;
+function injectCSS(){if(document.getElementById('vo3css'))return;const s=document.createElement('style');s.id='vo3css';s.textContent=CSS;document.head.appendChild(s)}
+class Overlay {
+    constructor(root,o){this.o=o;this.root=root;
     root.insertAdjacentHTML('beforeend',`<div class=vo3l></div><div class=vo3top><div class=vo3ttl><span class=vo3lv></span><div><b>SALES FLOOR</b><small class=vo3cnt>&nbsp;</small></div></div><div class=vo3tb></div></div>
       <div class=vo3toast></div><div class=vo3card></div><div class=vo3look></div><div class=vo3th><div class=vo3thh><span class=vo3lv></span><span class=vo3tht></span><span class=vo3ths></span><button class=vo3thx aria-label="Close">${IC.x}</button></div><div class=vo3thv></div></div><div class=vo3hold></div><div class=vo3ld><div>ENTERING THE FLOOR<i></i></div></div>`);
     const q=s=>root.querySelector(s);this.L=q('.vo3l');this.cnt=q('.vo3cnt');this.tb=q('.vo3tb');this.toastE=q('.vo3toast');this.card=q('.vo3card');this.look=q('.vo3look');this.th=q('.vo3th');this.tht=q('.vo3tht');this.ths=q('.vo3ths');this.thv=q('.vo3thv');this.hold=q('.vo3hold');this.ld=q('.vo3ld');
@@ -87,24 +82,47 @@ export class Overlay{constructor(root,o){this.o=o;this.root=root;
     this.card.querySelectorAll('button').forEach(b=>b.onclick=e=>{e.stopPropagation();this.hideCard();this.o.cardAct(b.dataset.k,a)});
     this.card.style.left=Math.max(120,Math.min(this.root.clientWidth-120,x))+'px';this.card.style.top=Math.max(150,y)+'px';this.card.classList.add('on');this.cardFor=a.id}
   hideCard(){this.card.classList.remove('on');this.cardFor=null}
-  openLook(d,onChange,onDone){const sw=(k,vals,cur,col)=>`<div class=vo3sw data-k="${k}">${vals.map((v,i)=>col?`<button class="c${i===cur?' on':''}" data-v="${i}" style="background:${v}" title="${i+1}"></button>`:`<button class="${i===cur?'on':''}" data-v="${i}">${esc(v)}</button>`).join('')}</div>`;
-    let bp=null;try{bp=this.o.api&&this.o.api.bp?this.o.api.bp():null}catch(e){}const BASE={s:6,o:5,k:10};const has=(k,v)=>!v||(BASE[k]!==undefined&&v<BASE[k])||!!(bp&&bp.has(k,v));
-    const swU=(k,vals,cur,col)=>{const ix=vals.map((v,i)=>i).filter(i=>has(k,i)),lock=vals.length-ix.length;return`<div class=vo3sw data-k="${k}">${ix.map(i=>col?`<button class="c${i===cur?' on':''}" data-v="${i}" style="background:${vals[i]}" title="${i+1}"></button>`:`<button class="${i===cur?'on':''}" data-v="${i}">${esc(vals[i])}</button>`).join('')}</div>${lock?`<p class=vo3lk>&#128274; ${lock} more in the Battle Pass</p>`:''}`};
-    const skins=SKIN.concat(['linear-gradient(135deg,#f6d37a,#b8862e)','linear-gradient(135deg,#ffffff,#9fd8ff)']);
-    const bpSec=()=>{const S=[['H','HAT'],['B','EXTRA'],['G','HEADSET'],['D','DESK'],['C','COMPUTER SETUP'],['I','DESK ITEM'],['R','CHAIR'],['T','TITLE'],['N','NAME TAG'],['E','ENTRANCE'],['V','TALKING AURA'],['W','YOUR RIDE (LOOT CRATES)']];
-      let h=`<h5 class=vo3bph>BATTLE PASS REWARDS${bp?` <b>TIER ${bp.lvl}</b>`:''}</h5>`+S.map(([k,l])=>`<h5>${l}</h5>${swU(k,COS[k],d[k]||0)}`).join('');
-      if(bp&&bp.sig){const mv=SIGM.map((m,i)=>[m,i]).filter(([m])=>!BPEM.some(e=>e[0]===m)||bp.em(m));
-        h+=`<h5>SIGNATURE EMOTE</h5><p>Your own emote: pick a move, an emoji burst, a catchphrase and a sound.</p><div class=vo3sw data-k="X">${mv.map(([m,i])=>`<button class="${(d.X||0)===i?'on':''}" data-v="${i}">${esc(m)}</button>`).join('')}</div>
-        <div class=vo3sw data-k="Y">${SIGE.map((e,i)=>`<button class="${(d.Y||0)===i?'on':''}" data-v="${i}">${e}</button>`).join('')}</div><div class=vo3sw data-k="Z">${SIGP.map((e,i)=>`<button class="${(d.Z||0)===i?'on':''}" data-v="${i}">${esc(e)}</button>`).join('')}</div>
-        <div class=vo3sw data-k="Q">${SIGS.map((e,i)=>`<button class="${(d.Q||0)===i?'on':''}" data-v="${i}">${esc(e)}</button>`).join('')}</div><div class=ft style="margin-top:8px"><button class=o data-x=sig>TRY IT</button></div>`}
-      else h+=`<h5>SIGNATURE EMOTE</h5><p class=vo3lk>&#128274; Unlocks at tier 30 of the Battle Pass</p>`;return h};
-    const draw=()=>{this.look.innerHTML=`<h4>YOUR LOOK</h4><p>Everyone on the floor sees this avatar.</p><h5>SKIN</h5>${swU('s',skins,d.s,1)}<h5>HAIR</h5>${sw('h',HAIRS,d.h)}<h5>HAIR COLOR</h5>${sw('c',HAIRC,d.c,1)}<h5>OUTFIT</h5>${swU('o',COS.o,d.o)}<h5>OUTFIT COLOR</h5>${swU('k',OUTC_ALL,d.k,1)}<h5>PANTS</h5>${sw('p',PANTS,d.p,1)}<h5>EXTRAS</h5>${sw('a',ACC,d.a)}${bp?bpSec():''}<h5>VOICE EXPRESSIONS</h5><p class=vo3vx>Your face and gestures react to the tone of your voice. Worked out live in each browser; nothing is recorded or sent.</p>${sw('m',['On','Off'],d.m||0)}<div class=ft><button class=o data-x=rand>SHUFFLE</button><button data-x=done>DONE</button></div>`;
-      this.look.querySelectorAll('.vo3sw button').forEach(b=>b.onclick=e=>{e.stopPropagation();d[b.parentNode.dataset.k]=+b.dataset.v;draw();onChange(d)});
-      this.look.querySelector('[data-x=rand]').onclick=e=>{e.stopPropagation();d.s=Math.random()*6|0;d.h=Math.random()*10|0;d.c=Math.random()*8|0;d.o=Math.random()*5|0;d.k=Math.random()*10|0;d.p=Math.random()*4|0;d.a=Math.random()*6|0;draw();onChange(d)};
-      const sg=this.look.querySelector('[data-x=sig]');if(sg)sg.onclick=e=>{e.stopPropagation();try{this.o.emote('sig')}catch(x){}};
-      this.look.querySelector('[data-x=done]').onclick=e=>{e.stopPropagation();this.closeLook();onDone&&onDone()}};
-    draw();this.look.classList.add('on');this.lookOpen=true}
+  openLook($, J, Q) {
+      let Z = (W, H, N, F) => `<div class=vo3sw data-k="${W}">${H.map((G, _) => F ? `<button class="c${_ === N ? " on" : ""}" data-v="${_}" style="background:${G}" title="${_ + 1}"></button>` : `<button class="${_ === N ? "on" : ""}" data-v="${_}">${esc(G)}</button>`).join("")}</div>`, U = null;
+      try {
+        U = this.o.api && this.o.api.bp ? this.o.api.bp() : null;
+      } catch (W) {}
+      let q = { s: 6, o: 5, k: 10 }, E = (W, H) => !H || q[W] !== undefined && H < q[W] || !!(U && U.has(W, H)), Y = (W, H, N, F) => {
+        let G = H.map((D, O) => O).filter((D) => E(W, D)), _ = H.length - G.length;
+        return `<div class=vo3sw data-k="${W}">${G.map((D) => F ? `<button class="c${D === N ? " on" : ""}" data-v="${D}" style="background:${H[D]}" title="${D + 1}"></button>` : `<button class="${D === N ? "on" : ""}" data-v="${D}">${esc(H[D])}</button>`).join("")}</div>${_ ? `<p class=vo3lk>&#128274; ${_} more in the Battle Pass, Loot Crates and Shop</p>` : ""}`;
+      }, K = SKIN.concat(["linear-gradient(135deg,#f6d37a,#b8862e)", "linear-gradient(135deg,#ffffff,#9fd8ff)", "linear-gradient(135deg,#d99a5e,#7a4a22)", "linear-gradient(135deg,#ffffff,#8a8f99)", "linear-gradient(135deg,#bffcff,#1aa8c0)", "radial-gradient(circle at 30% 30%,#b98cff,#1d0f52)"]), V = () => {
+        let W = [["H", "HAT"], ["B", "EXTRA"], ["G", "HEADSET"], ["J", "BLASTER (ON YOUR HIP)"], ["D", "DESK"], ["C", "COMPUTER SETUP"], ["I", "DESK ITEM"], ["R", "CHAIR"], ["T", "TITLE"], ["N", "NAME TAG"], ["E", "ENTRANCE"], ["V", "TALKING AURA"], ["W", "YOUR RIDE"], ["F", "YOUR PLANE (FLIES OVER YOUR DESK)"]], H = `<h5 class=vo3bph>YOUR REWARDS${U ? ` <b>TIER ${U.lvl}</b>` : ""}</h5>` + W.map(([N, F]) => `<h5>${F}</h5>${Y(N, COS[N], $[N] || 0)}`).join("");
+        if (U && U.sig) {
+          let N = SIGM.map((F, G) => [F, G]).filter(([F]) => !BPEM.some((G) => G[0] === F) && !CREM.some((G) => G[0] === F) || U.em(F));
+          H += `<h5>SIGNATURE EMOTE</h5><p>Your own emote: pick a move, an emoji burst, a catchphrase and a sound.</p><div class=vo3sw data-k="X">${N.map(([F, G]) => `<button class="${($.X || 0) === G ? "on" : ""}" data-v="${G}">${esc(F)}</button>`).join("")}</div>
+        <div class=vo3sw data-k="Y">${SIGE.map((F, G) => `<button class="${($.Y || 0) === G ? "on" : ""}" data-v="${G}">${F}</button>`).join("")}</div><div class=vo3sw data-k="Z">${SIGP.map((F, G) => `<button class="${($.Z || 0) === G ? "on" : ""}" data-v="${G}">${esc(F)}</button>`).join("")}</div>
+        <div class=vo3sw data-k="Q">${SIGS.map((F, G) => `<button class="${($.Q || 0) === G ? "on" : ""}" data-v="${G}">${esc(F)}</button>`).join("")}</div><div class=ft style="margin-top:8px"><button class=o data-x=sig>TRY IT</button></div>`;
+        } else
+          H += "<h5>SIGNATURE EMOTE</h5><p class=vo3lk>&#128274; Unlocks at tier 30 of the Battle Pass</p>";
+        return H;
+      }, X = () => {
+        this.look.innerHTML = `<h4>YOUR LOOK</h4><p>Everyone on the floor sees this avatar.</p><h5>SKIN</h5>${Y("s", K, $.s, 1)}<h5>HAIR</h5>${Z("h", HAIRS, $.h)}<h5>HAIR COLOR</h5>${Z("c", HAIRC, $.c, 1)}<h5>OUTFIT</h5>${Y("o", COS.o, $.o)}<h5>OUTFIT COLOR</h5>${Y("k", OUTC_ALL, $.k, 1)}<h5>PANTS</h5>${Z("p", PANTS, $.p, 1)}<h5>EXTRAS</h5>${Z("a", ACC, $.a)}${U ? V() : ""}<h5>VOICE EXPRESSIONS</h5><p class=vo3vx>Your face and gestures react to the tone of your voice. Worked out live in each browser; nothing is recorded or sent.</p>${Z("m", ["On", "Off"], $.m || 0)}<div class=ft><button class=o data-x=rand>SHUFFLE</button><button data-x=done>DONE</button></div>`, this.look.querySelectorAll(".vo3sw button").forEach((H) => H.onclick = (N) => {
+          N.stopPropagation(), $[H.parentNode.dataset.k] = +H.dataset.v, X(), J($);
+        }), this.look.querySelector("[data-x=rand]").onclick = (H) => {
+          H.stopPropagation(), $.s = Math.random() * 6 | 0, $.h = Math.random() * 10 | 0, $.c = Math.random() * 8 | 0, $.o = Math.random() * 5 | 0, $.k = Math.random() * 10 | 0, $.p = Math.random() * 4 | 0, $.a = Math.random() * 6 | 0, X(), J($);
+        };
+        let W = this.look.querySelector("[data-x=sig]");
+        if (W)
+          W.onclick = (H) => {
+            H.stopPropagation();
+            try {
+              this.o.emote("sig");
+            } catch (N) {}
+          };
+        this.look.querySelector("[data-x=done]").onclick = (H) => {
+          H.stopPropagation(), this.closeLook(), Q && Q();
+        };
+      };
+      X(), this.look.classList.add("on"), this.lookOpen = true;
+    }
   closeLook(){this.look.classList.remove('on');this.lookOpen=false;this.o.lookClosed&&this.o.lookClosed()}
   theater(open,title,list,cur){if(!open){this.th.classList.remove('on');return}this.tht.textContent=title;this.ths.innerHTML=(list||[]).length>1?list.map(s=>`<button data-sid="${esc(s.sid)}" class="${s.sid===cur?'on':''}">${esc(s.nm)}</button>`).join(''):'';
     this.ths.querySelectorAll('button').forEach(b=>b.onclick=()=>this.o.watch(b.dataset.sid));this.th.classList.add('on')}
 }
+
+export {IC, Overlay, injectCSS};

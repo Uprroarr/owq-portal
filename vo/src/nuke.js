@@ -1,15 +1,11 @@
-// Owner-only "nuke" emote: the owner pulls out a detonator, a bomb drops out of the sky outside the left windows, flash,
-// fireball -> mushroom cloud, a shockwave rolls across the city and blows the floor out (glass in, everyone flying), blackout,
-// the floor is rebuilt. Everything here is created on start and disposed at the end.
 import * as THREE from 'three';
-import {clamp,lerp,sstep} from './util.js';
+import {clamp, lerp, sstep} from './util.js';
 
-export const GZ=new THREE.Vector3(-24,-8.5,-44);                 // ground zero, seen through the left window wall
+const GZ=new THREE.Vector3(-24,-8.5,-44);
 const WIN=new THREE.Vector3(-7.165,2.6,-7);
-export const HITR=GZ.distanceTo(WIN);
-const K=.8;   // overall size of the cloud
-export const NT={press:1.3,cut:1.7,drop:1.8,impact:3.8,wave:4.7,hit:6.7,dark:8.3,black:9.0,rebuild:10.7,end:11.9};
-
+const HITR=GZ.distanceTo(WIN);
+const K=.8;
+const NT={press:1.3,cut:1.7,drop:1.8,impact:3.8,wave:4.7,hit:6.7,dark:8.3,black:9.0,rebuild:10.7,end:11.9};
 const PUFF_VS='attribute float aH;attribute float aS;varying float vH;varying vec3 vN;varying vec3 vW;'+
  'void main(){vec3 p=position;float n=sin(p.x*5.+aS*13.)*sin(p.y*4.+aS*7.)*sin(p.z*6.+aS*5.);p*=1.+.17*n;'+
  'mat4 m=modelMatrix*instanceMatrix;vec4 w=m*vec4(p,1.);vW=w.xyz;vN=normalize(mat3(m)*normal);vH=aH;gl_Position=projectionMatrix*viewMatrix*w;}';
@@ -22,9 +18,8 @@ const DOME_VS='varying vec3 vN;varying vec3 vW;void main(){vec4 w=modelMatrix*ve
 const DOME_FS='uniform float uA;varying vec3 vN;varying vec3 vW;void main(){vec3 V=normalize(cameraPosition-vW);float f=pow(1.-abs(dot(normalize(vN),V)),2.2);gl_FragColor=vec4(vec3(1.7,1.4,1.1)*f*uA,1.);}';
 const WALL_VS='varying vec2 vU;void main(){vU=uv;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.);}';
 const WALL_FS='uniform float uA;varying vec2 vU;void main(){float a=pow(1.-vU.y,1.6)*uA*(.75+.25*sin(vU.x*90.));gl_FragColor=vec4(vec3(.42,.33,.26),a);}';
-
-export class Nuke{
-  constructor(O,a){this.O=O;this.a=a;this.t=0;this.G=new THREE.Group();this.G.name='nuke';O.room.group.add(this.G);this.done=false;this.fired={};this.own=[];
+class Nuke {
+    constructor(O,a){this.O=O;this.a=a;this.t=0;this.G=new THREE.Group();this.G.name='nuke';O.room.group.add(this.G);this.done=false;this.fired={};this.own=[];
     const R=O.room,L=R.lights;this.save={key:L.key.intensity,sl:L.sl.intensity,sr:L.sr.intensity,rim:L.rim.intensity,rimC:L.rim.color.clone(),hemi:L.hemi.intensity,uK:R.backdrop.material.uniforms.uK.value};
     this.build()}
   mk(geo,mat){this.own.push(geo,mat);return new THREE.Mesh(geo,mat)}
@@ -111,14 +106,18 @@ export class Nuke{
       if(p.k!=='skirt'){f.copy(p.d).multiplyScalar(Rf*Math.cbrt(p.r));f.x+=GZ.x;f.y+=fc;f.z+=GZ.z;v.lerpVectors(f,v,form);s=lerp(2.6*K,s,form);h=Math.max(h,1-form)}
       q.setFromAxisAngle(p.d,u*.3+p.r*6);sc.setScalar(Math.max(.01,s));m.compose(v,q,sc);M.setMatrixAt(i,m);A[i]=h}
     M.instanceMatrix.needsUpdate=true;this.aH.needsUpdate=true}
-  hit(){const O=this.O,R=O.room;O.sfx('blast');O.sfx('smash');O.shk=3;(R.glass||[]).forEach(g=>g.visible=false);
-    if(O.fx.blastIn){O.fx.blastIn(-9,-5.33,170);O.fx.blastIn(3.45,7,90)}
-    O.fx.sparkle(-7.165,2.4,-6.6,60,[1,.6,.25]);O.fx.sparkle(5.2,2.4,-6.6,30,[1,.6,.25]);
-    // everyone at a desk is blown across the floor
-    this.blownL=[];O.av.forEach(a=>{if(!a.root.visible||a.mode!=='seated'||O.busy(a))return;const p=a.root.position,dx=p.x-WIN.x;
-      a.mode='tossed';a.tossF=1;a.chuteK=0;a.emo=null;a.idleK=null;a.nuked=1;
-      this.blownL.push({a,v:new THREE.Vector3(clamp(dx*.22,-2,3.5)+(Math.random()-.5)*1.5,3.2+Math.random()*2.2,6+Math.random()*3.5),w:5+Math.random()*4,rx:0,land:0})});
-    if(this.det){this.det.parent&&this.det.parent.remove(this.det);this.det=null}}
+  hit() {
+      let $ = this.O, J = $.room;
+      if ($.sfx("blast"), $.sfx("smash"), $.shk = 3, (J.glass || []).forEach((Q) => Q.visible = false), $.fx.blastIn)
+        $.fx.blastIn(-10, -5.33, 170), $.fx.blastIn(3.45, 7, 90);
+      if ($.fx.sparkle(-7.165, 2.4, -6.6, 60, [1, 0.6, 0.25]), $.fx.sparkle(5.2, 2.4, -6.6, 30, [1, 0.6, 0.25]), this.blownL = [], $.av.forEach((Q) => {
+        if (!Q.root.visible || Q.mode !== "seated" || $.busy(Q))
+          return;
+        let Z = Q.root.position, U = Z.x - WIN.x;
+        Q.mode = "tossed", Q.tossF = 1, Q.chuteK = 0, Q.emo = null, Q.idleK = null, Q.nuked = 1, this.blownL.push({ a: Q, v: new THREE.Vector3(clamp(U * 0.22, -2, 3.5) + (Math.random() - 0.5) * 1.5, 3.2 + Math.random() * 2.2, 6 + Math.random() * 3.5), w: 5 + Math.random() * 4, rx: 0, land: 0 });
+      }), this.det)
+        this.det.parent && this.det.parent.remove(this.det), this.det = null;
+    }
   blown(dt){for(const B of this.blownL||[]){const a=B.a,r=a.root,p=r.position;if(a.leaving||!a.nuked)continue;
       if(!B.land){B.v.y-=12*dt;p.addScaledVector(B.v,dt);B.rx+=B.w*dt;r.rotation.x=B.rx;
         if(p.z>5.1){p.z=5.1;B.v.z*=-.25}if(Math.abs(p.x)>8.5){p.x=Math.sign(p.x)*8.5;B.v.x*=-.3}
@@ -134,3 +133,5 @@ export class Nuke{
   shot(P,T,vf){const t=this.t;if(t<NT.cut&&this.a&&this.a.root.visible){const h=this.a.headPos(this._h||(this._h=new THREE.Vector3()));P.set(h.x+1.05,h.y+.1,h.z+2.9);T.set(h.x+.12,h.y-.48,h.z);return 32}
     P.set(-3.6,2.6,.6);T.set(-7.2,3.6,-7);return clamp(vf*1.28,40,58)}
 }
+
+export {NT, Nuke};

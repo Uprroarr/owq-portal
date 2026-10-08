@@ -1,15 +1,15 @@
-// Voice tone -> mood for one person. Reads loudness, pitch, how much the pitch moves, brightness and laugh-like bursts,
-// compared with that person's own normal voice (learned while they talk, remembered on this device). Nothing is recorded:
-// only a few running averages are kept.
-import {clamp,sstep,damp} from './util.js';
-export const MOODS=['hype','laugh','focus','fire','calm'];
-const KEY='owq_vtone';let SAVED=null;
+import {clamp, damp, sstep} from './util.js';
+
+const MOODS=['hype','laugh','focus','fire','calm'];
+const KEY='owq_vtone';
+let SAVED=null;
 function store(){if(SAVED)return SAVED;SAVED={};try{const v=JSON.parse(localStorage.getItem(KEY)||'{}');if(v&&typeof v==='object')SAVED=v}catch(e){}return SAVED}
 function persist(){try{const o=store(),ks=Object.keys(o);if(ks.length>40)delete o[ks[0]];localStorage.setItem(KEY,JSON.stringify(o))}catch(e){}}
 const zero=()=>({hype:0,laugh:0,focus:0,fire:0,calm:0});
-const W=2.4;            // seconds of speech the mood is judged on
-const st=f=>12*Math.log2(f/55);   // pitch in semitones
-export class Tone{
+const W=2.4;
+const st=f=>12*Math.log2(f/55);
+// pitch in semitones
+class Tone{
   constructor(key){this.key=String(key||'x');const s=store()[this.key];
     this.b=s&&s.n>0?{lv:+s.lv||.3,hf:+s.hf||.3,p:+s.p||0,n:+s.n||0}:{lv:.3,hf:.3,p:0,n:0};
     this.t=0;this.fr=[];this.pk=[];this.env={up:1,mx:0,mn:1};this.quiet=9;this.cur='';this.curS=0;this.lgh=0;this.saveT=0;
@@ -59,3 +59,5 @@ export class Tone{
   drive(dt,talking,k){const nw=performance.now()/1000;if(this.lt&&nw>this.lt)dt=Math.min(.5,Math.max(dt,nw-this.lt));this.lt=nw;this.t+=dt;const w=this.w;for(const m of MOODS){const g=talking&&m===k?.9:0;w[m]=damp(w[m],g,g>w[m]?2.8:1.1,dt);if(w[m]<.003)w[m]=0}return w}
   static zero(){return zero()}
 }
+
+export {MOODS, Tone};

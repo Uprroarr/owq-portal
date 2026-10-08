@@ -1,8 +1,12 @@
 import * as THREE from 'three';
-import {tex,billCanvas,glowCanvas} from './tex.js';
+import {billCanvas, glowCanvas, tex} from './tex.js';
 
 const COLS=['#ff1f4f','#ffd166','#ffffff','#3ddc97','#7cc7ff','#ff7ab6','#b98cff'].map(c=>new THREE.Color(c));
-const _m=new THREE.Matrix4(),_q=new THREE.Quaternion(),_e=new THREE.Euler(),_s=new THREE.Vector3(1,1,1),_p=new THREE.Vector3();
+const _m=new THREE.Matrix4();
+const _q=new THREE.Quaternion();
+const _e=new THREE.Euler();
+const _s=new THREE.Vector3(1,1,1);
+const _p=new THREE.Vector3();
 class Pool{constructor(G,geo,mat,N){this.N=N;this.fz=-1e9;this.mesh=new THREE.InstancedMesh(geo,mat,N);this.mesh.count=0;this.mesh.frustumCulled=false;this.mesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage);this.mesh.castShadow=false;G.add(this.mesh);this.P=[];
     for(let i=0;i<N;i++)this.mesh.setColorAt(i,COLS[0]);}
   add(p){if(this.P.length>=this.N)this.P.shift();this.P.push(p)}
@@ -10,8 +14,7 @@ class Pool{constructor(G,geo,mat,N){this.N=N;this.fz=-1e9;this.mesh=new THREE.In
       if(!p.rest){p.vy-=grav*dt;const k=Math.exp(-drag*dt);p.vx*=k;p.vy*=k;p.vz*=k;p.x+=(p.vx+Math.sin(p.ph+p.life*6)*p.fl)*dt;p.y+=p.vy*dt;p.z+=p.vz*dt;p.ax+=p.wx*dt;p.ay+=p.wy*dt;p.az+=p.wz*dt;if(p.y<=.004&&p.z>this.fz){p.y=.004;p.rest=1;p.ax=-Math.PI/2;p.ay=0;p.life=Math.min(p.life,2.2)}else if(p.y<-40)p.life=0}
       _e.set(p.ax,p.ay,p.az);_q.setFromEuler(_e);const sc=Math.min(1,p.life*2);_s.set(sc,sc,sc);_p.set(p.x,p.y,p.z);_m.compose(_p,_q,_s);this.mesh.setMatrixAt(w,_m);this.mesh.setColorAt(w,p.col);P[w++]=p}
     P.length=w;this.mesh.count=w;this.mesh.instanceMatrix.needsUpdate=true;if(this.mesh.instanceColor)this.mesh.instanceColor.needsUpdate=true}}
-
-export class FX{constructor(G){this.G=G;
+class FX{constructor(G){this.G=G;
     this.cf=new Pool(G,new THREE.PlaneGeometry(.06,.034),new THREE.MeshStandardMaterial({side:THREE.DoubleSide,roughness:.4,metalness:.35,emissive:0x222222}),900);
     const bt=tex(billCanvas());this.bl=new Pool(G,new THREE.PlaneGeometry(.17,.074),new THREE.MeshStandardMaterial({map:bt,side:THREE.DoubleSide,roughness:.75}),220);
     this.NS=600;const g=new THREE.BufferGeometry();this.sp=new Float32Array(this.NS*3);this.sc=new Float32Array(this.NS*3);g.setAttribute('position',new THREE.BufferAttribute(this.sp,3).setUsage(THREE.DynamicDrawUsage));g.setAttribute('color',new THREE.BufferAttribute(this.sc,3).setUsage(THREE.DynamicDrawUsage));
@@ -38,3 +41,5 @@ export class FX{constructor(G){this.G=G;
       const k=Math.max(0,s.l/s.L);this.sp[w*3]=s.x;this.sp[w*3+1]=s.y;this.sp[w*3+2]=s.z;
       if(s.c){this.sc[w*3]=s.c[0]*3*k;this.sc[w*3+1]=s.c[1]*3*k;this.sc[w*3+2]=s.c[2]*3*k}else{this.sc[w*3]=3.4*k;this.sc[w*3+1]=(.6+1.6*k)*k;this.sc[w*3+2]=.25*k*k}S[w++]=s}
     S.length=w;const g=this.pts.geometry;g.setDrawRange(0,w);g.attributes.position.needsUpdate=true;g.attributes.color.needsUpdate=true}}
+
+export {FX};

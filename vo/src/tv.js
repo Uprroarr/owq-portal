@@ -1,8 +1,8 @@
 import * as THREE from 'three';
-import {cv,tex,glowCanvas} from './tex.js';
+import {cv, glowCanvas, tex} from './tex.js';
 import {rbox} from './geo.js';
 import {TVP} from './layout.js';
-import {damp,clamp} from './util.js';
+import {damp} from './util.js';
 
 const VS='varying vec2 vUv;void main(){vUv=uv;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.);}';
 const FS=`uniform sampler2D tA,tB;uniform float uMix,uAB,uK,uT;varying vec2 vUv;
@@ -13,8 +13,7 @@ void main(){vec3 a=texture2D(tA,vUv).rgb;vec3 b=fitB(vUv);float band=abs(vUv.y-.
  float edge=exp(-pow((band-m)*24.,2.))*step(.02,uMix)*step(uMix,.98);c+=vec3(.75,.88,1.)*edge*1.6;
  vec2 px=fract(vUv*vec2(1280.,720.));c*=.93+.07*smoothstep(0.,.18,min(px.x,px.y));
  vec2 d=vUv-.5;c*=1.-.22*dot(d,d);gl_FragColor=vec4(c*uK,1.);}`;
-
-export class TV{
+class TV{
   constructor(G){this.G=G;this.cv=cv(1280,720);this.x=this.cv.getContext('2d');this.itex=tex(this.cv,{mips:false});
     this.u={tA:{value:this.itex},tB:{value:this.itex},uMix:{value:0},uAB:{value:16/9},uK:{value:1.08},uT:{value:0}};
     const bez=new THREE.Mesh(rbox(TVP.w+.18,TVP.h+.18,.1,.035),new THREE.MeshStandardMaterial({color:0x050507,roughness:.18,metalness:.5}));bez.position.set(TVP.x,TVP.y,TVP.z-.06);bez.castShadow=false;G.add(bez);
@@ -74,3 +73,5 @@ export class TV{
     x.save();x.beginPath();x.rect(0,H-64,W,64);x.clip();const tw=x.measureText(tk).width+200,off=(t*90)%tw;x.fillText(tk,W-off,H-23);x.fillText(tk,W-off+tw,H-23);x.restore();
     x.fillStyle='#0a0408';x.fillRect(0,H-64,190,64);x.fillStyle='#ffd166';x.font='900 24px Verdana,sans-serif';x.fillText('WINS ▶',28,H-23);x.restore()}
 }
+
+export {TV};
