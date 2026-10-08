@@ -17,7 +17,7 @@ const CSS = `.vo3hr{position:absolute;inset:0;pointer-events:none;z-index:5;disp
 .vo3hrt{position:absolute;top:62px;left:50%;transform:translateX(-50%);padding:8px 16px;border-radius:999px;background:rgba(12,6,12,.78);border:1px solid rgba(255,209,102,.4);font:800 11px Verdana,sans-serif;letter-spacing:.12em;color:#ffd166;white-space:nowrap}
 .vo3hrb{position:absolute;top:150px;left:50%;transform:translateX(-50%);font:900 46px Verdana,sans-serif;letter-spacing:.08em;color:#fff;text-shadow:0 0 26px #ff1f4f,0 3px 12px #000;opacity:0;transition:opacity .25s,transform .25s;white-space:nowrap}.vo3hrb.on{opacity:1;transform:translateX(-50%) scale(1.06)}
 .vo3hrb small{display:block;text-align:center;font-size:16px;letter-spacing:.2em;color:#ffd166}
-.vo3hrs{position:absolute;bottom:96px;left:50%;transform:translateX(-50%);pointer-events:auto;width:132px;height:132px;border-radius:50%;border:3px solid #ffd166;background:radial-gradient(circle at 40% 35%,rgba(255,209,102,.35),rgba(12,6,12,.85));color:#fff;font:900 18px Verdana,sans-serif;letter-spacing:.12em;cursor:pointer;touch-action:none;box-shadow:0 0 30px rgba(255,209,102,.35)}
+.vo3hrs{position:absolute;bottom:92px;right:22px;pointer-events:auto;width:124px;height:124px;border-radius:50%;border:3px solid #ffd166;background:radial-gradient(circle at 40% 35%,rgba(255,209,102,.35),rgba(12,6,12,.85));color:#fff;font:900 18px Verdana,sans-serif;letter-spacing:.12em;cursor:pointer;touch-action:none;box-shadow:0 0 30px rgba(255,209,102,.35)}
 .vo3hrs.on{background:#ffd166;color:#120a10}
 .vo3hrx{position:absolute;top:58px;right:14px;pointer-events:auto;padding:9px 14px;border-radius:12px;border:0;background:#ff1f4f;color:#fff;font:800 11px Verdana,sans-serif;letter-spacing:.1em;cursor:pointer}`;
 
@@ -87,7 +87,8 @@ export class Derby {
     wx.font = '900 64px Verdana,sans-serif'; wx.textAlign = 'center'; wx.textBaseline = 'middle'; wx.fillStyle = '#fff';
     [[.08, Math.round(FENCE * FT) + "'"], [.3, 'OWQ'], [.5, Math.round(FENCE * 1.04 * FT) + "'"], [.7, 'OWQ'], [.92, Math.round(FENCE * FT) + "'"]].forEach(([f, t]) => wx.fillText(t, 2048 * f, 70));
     const wallG = new THREE.CylinderGeometry(FENCE, FENCE, FENCEH, 64, 1, true, Math.PI - FOUL, FOUL * 2);
-    const wall = add(wallG, new THREE.MeshStandardMaterial({map: tex(wallC, {mips: true}), side: THREE.DoubleSide, roughness: .8}), PLATE.x, Y + FENCEH / 2, PLATE.z);
+    const wallT = tex(wallC, {mips: true}); wallT.wrapS = THREE.RepeatWrapping; wallT.repeat.x = -1; wallT.offset.x = 1;   // read from inside the park
+    const wall = add(wallG, new THREE.MeshStandardMaterial({map: wallT, side: THREE.DoubleSide, roughness: .8}), PLATE.x, Y + FENCEH / 2, PLATE.z);
     add(new THREE.TorusGeometry(FENCE, .06, 6, 80, FOUL * 2), gold, PLATE.x, Y + FENCEH, PLATE.z, -Math.PI / 2, 0, Math.PI / 2 - FOUL);
     // foul poles
     [-FOUL, FOUL].forEach(a => add(new THREE.CylinderGeometry(.12, .12, 14, 8), gold, PLATE.x - Math.sin(a) * FENCE, Y + 7, PLATE.z - Math.cos(a) * FENCE));

@@ -156,7 +156,7 @@ export function buildSky(parent) {
     x.fillStyle = 'rgba(255,255,255,.75)'; x.fillRect(0, h / 2 - 2, w * .45, 4);
   });
   const roadT = rep(road); roadT.repeat.set(1, 1);
-  const roadM = new THREE.MeshStandardMaterial({map: roadT, roughness: .62, metalness: .15, emissive: new THREE.Color('#ff1f4f'), emissiveIntensity: .0});
+  const roadM = new THREE.MeshStandardMaterial({map: roadT, roughness: .62, metalness: .15, emissiveMap: roadT, emissive: new THREE.Color('#ffffff'), emissiveIntensity: .55});   // lane paint reads at night
   // the top surface (uv u along the track, v across): repeat every 12 m
   const top = strip(S, -HW, HW, 0, 12);
   // swap uv so the texture runs along the road

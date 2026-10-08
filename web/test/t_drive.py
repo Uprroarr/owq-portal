@@ -43,20 +43,23 @@ try:
   inside=A.evaluate("(([x,z])=>SEATS_CHECK=null)([0,0])") if False else None
   A.screenshot(path=OUT+'/drive_floor.png',timeout=180000)
   pr=A.evaluate("(()=>{const x=VC.room.peers().find(p=>p.peer===vcMe());return x&&x.presence.dv})()");ok(pr and 'x' in pr and pr.get('c')==8,'your position goes out to the floor (presence)',pr)
-  # to the garage door
-  A.evaluate("(()=>{const d=VO3.dbg().drive.me.drv;d.x=-7.6;d.z=3.6;d.h=Math.PI;d.v=3})()");A.keyboard.down('w');A.evaluate(step,40);A.keyboard.up('w');A.evaluate(step,20)
-  p4=A.evaluate(pos);ok(p4['k']==1,'driving into the RACE TRACK door takes you to the OWQ Speedway',p4)
+  # out the west door onto the Sky Deck
+  A.evaluate("(()=>{const d=VO3.dbg().drive.me.drv;d.x=-7.6;d.z=3.6;d.h=Math.PI;d.v=3})()");A.keyboard.down('w');A.evaluate(step,40);A.keyboard.up('w');A.evaluate(step,10)
+  p4=A.evaluate(pos);ok(p4['k']==1,'driving through the west door takes you onto the Sky Deck',p4)
   A.screenshot(path=OUT+'/drive_track.png',timeout=180000)
-  A.keyboard.down('w');A.evaluate(step,50);A.keyboard.up('w');A.screenshot(path=OUT+'/drive_track2.png',timeout=180000);p5=A.evaluate(pos);print('p5',p5)
-  # a lap: put the car before the line, mark both ends visited, cross
-  A.evaluate("(()=>{const D=VO3.dbg().drive,d=D.me.drv;d.x=3;d.z=-14;d.h=Math.PI;d.v=10;d.lap={px:3,t0:performance.now()/1000-21.5,a:1,b:1}})()");A.keyboard.down('w');A.evaluate(step,12);A.keyboard.up('w')
-  bl=A.evaluate("VO3.dbg().drive.best");ok(bl and bl>20,'crossing the line after a full lap records the lap time',bl)
+  # a lap: put the car just before the start line with every checkpoint done, then cross it
+  A.evaluate("(()=>{const D=VO3.dbg().drive,d=D.me.drv,S=VO3.dbg().track.sky,i=Math.round((S.start-4)/S.len*S.n),a=S.S[i];d.x=a.p.x;d.z=a.p.z;d.y=a.p.y;d.h=Math.atan2(-a.t.z,a.t.x);d.v=10;d.hint=i;d.air=0;d.s=S.start-4;d.lap={t0:VO3.dbg().t-41.5,cp:S.cps.length}})()")
+  A.keyboard.down('w');A.evaluate(step,14);A.keyboard.up('w')
+  bl=A.evaluate("VO3.dbg().drive.best");ok(bl and bl>20,'crossing the start line after a full lap records the lap time',bl)
   ok(A.evaluate("VO3.dbg().drive.boardRows().length")>=1,'the lap board lists it')
-  A.evaluate("(()=>{const d=VO3.dbg().drive.me.drv;d.x=0;d.z=24;d.h=-Math.PI/2;d.v=4})()");A.keyboard.down('w');A.evaluate(step,40);A.keyboard.up('w');A.evaluate(step,20)
-  p6=A.evaluate(pos);ok(p6['k']==0,'the pit tunnel brings you back to the office',p6)
-  A.keyboard.press('e');A.evaluate(step,60)
+  A.screenshot(path=OUT+'/drive_track2.png',timeout=180000)
+  # back in through the door
+  A.evaluate("(()=>{const d=VO3.dbg().drive.me.drv;d.x=-12.2;d.z=3.6;d.y=0;d.h=0;d.v=4;d.hint=-1;d.air=0})()");A.keyboard.down('w');A.evaluate(step,30);A.keyboard.up('w');A.evaluate(step,10)
+  p6=A.evaluate(pos);ok(p6['k']==0 and p6['x']>-9.9,'driving back through the door brings you into the office',p6)
+  A.keyboard.press('e');A.evaluate(step,20)
   ok(not A.evaluate("VO3.driving()"),'E gets you out')
-  A.evaluate(step,120);ok(A.evaluate("['seated','sitting','walk'].includes(VO3.dbg().meAv.mode)"),'and you walk back to your desk',A.evaluate("VO3.dbg().meAv.mode"))
+  ok(A.evaluate("VO3.dbg().meAv.mode")=='free','and you keep walking from there',A.evaluate("VO3.dbg().meAv.mode"))
+  A.keyboard.press('q');A.evaluate(step,140);ok(A.evaluate("['seated','sitting','walk'].includes(VO3.dbg().meAv.mode)"),'Q walks you back to your desk',A.evaluate("VO3.dbg().meAv.mode"))
   pr=A.evaluate("(()=>{const x=VC.room.peers().find(p=>p.peer===vcMe());return x&&x.presence.dv})()");ok(not pr,'your car leaves everyone else\'s floor',pr)
   ok(not errs and not A.evaluate("VO3.dbg().errs||0"),'no errors',errs)
   print('errs',errs);b.close()

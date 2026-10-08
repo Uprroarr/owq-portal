@@ -123,7 +123,7 @@ export class Fly {
     O.av.forEach(a => { if (a === this.me) this.mine(a, dt, t); else if (a.fly && a.fly.rt) this.follow(a, dt); });
     // my own plane waits on the pad while I'm on the roof
     const me = O.meAv, want = me && !this.me && me.wk && me.wk.f === 'r' && me.look && me.look.F > 0 ? me.look.F : 0;
-    if (want !== (this.parkedId || 0)) { if (this.parked) this.group.remove(this.parked); this.parked = null; this.parkedId = want; if (want) { this.parked = this.model(want); this.parked.position.set(PAD.x - 2, ROOFY + 1.1, PAD.z); this.parked.rotation.y = PAD.h; this.group.add(this.parked); } }
+    if (want !== (this.parkedId || 0)) { if (this.parked) this.group.remove(this.parked); this.parked = null; this.parkedId = want; if (want) { this.parked = this.model(want); this.parked.position.set(PAD.x - 2, ROOFY + 1.1, PAD.z); this.parked.rotation.y = PAD.h - Math.PI / 2; /* nose down the runway (models face +x) */ this.group.add(this.parked); } }
     this.rings.forEach((r, i) => { r.m.visible = !!this.me || O.wld.zone !== 'o'; r.m.rotation.z += dt * .4 * (i % 2 ? 1 : -1); });
   }
   mine(a, dt, t) {

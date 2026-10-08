@@ -219,7 +219,18 @@ class Drive {
     const sv = this.sens / 5; d.st = damp(d.st, (K.left ? 1 : 0) - (K.right ? 1 : 0), 3 + 4 * sv, dt);
     const wb = Math.max(.9, d.L * S * .62), yaw = d.v * Math.tan(Math.min(1.1, .6 * sv) * d.st) / wb * (d.air ? .25 : 1);
     const nh = d.h + yaw * dt, nx = d.x + Math.cos(nh) * d.v * dt, nz = d.z - Math.sin(nh) * d.v * dt;
-    if (d.air) { d.x = nx; d.z = nz; d.h = nh; }   // nothing to hit in mid air
+    if (d.air) {   // nothing to hit in mid air
+      d.x = nx; d.z = nz; d.h = nh;
+      // jump assist: in the air the car lines up with the road and drifts back toward the middle, so a jump in a
+      // gentle curve still lands on the far side
+      if (d.k && SKY.n && d.hint >= 0) {
+        const s0 = SKY.S[d.hint], fw = carH(d.h), dir = fw.x * s0.t.x + fw.z * s0.t.z >= 0 ? 1 : -1;
+        let dh = Math.atan2(-s0.t.z * dir, s0.t.x * dir) - d.h; dh = Math.atan2(Math.sin(dh), Math.cos(dh));
+        if (Math.abs(dh) < 1) d.h += dh * Math.min(1, dt * 2.6);
+        const lat = (d.x - s0.p.x) * s0.nx + (d.z - s0.p.z) * s0.nz, over = Math.abs(lat) - 1.2;
+        if (over > 0) { const k = Math.min(over, 4 * dt) * Math.sign(lat); d.x -= s0.nx * k; d.z -= s0.nz * k; }
+      }
+    }
     else if (!carHits(d, nx, nz, nh)) { d.x = nx; d.z = nz; d.h = nh; }
     else if (!carHits(d, nx, d.z, nh)) { d.x = nx; d.h = nh; d.v *= .8; }
     else if (!carHits(d, d.x, nz, nh)) { d.z = nz; d.h = nh; d.v *= .8; }

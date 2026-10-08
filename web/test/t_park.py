@@ -36,7 +36,7 @@ try:
   # up to the Sky Park
   A.evaluate("(()=>{const W=VO3.dbg().walk;W.me.wk.x=8;W.me.wk.z=-6.4;W.ride('r')})()");A.evaluate(step,16);ok(A.evaluate(wk).get('f')=='r','elevator to the Sky Park')
   # the START button
-  A.evaluate("(()=>{const W=VO3.dbg().walk,w=W.me.wk;w.x=-15.6;w.z=18.6;w.h=Math.PI;W.yaw=Math.PI})()");A.evaluate(step,3)
+  A.evaluate("(()=>{const W=VO3.dbg().walk,w=W.me.wk;w.x=-15.6;w.z=18.6;w.h=Math.PI;W.yaw=Math.PI;W.snap=1})()");A.evaluate(step,3)
   pp=A.evaluate("(()=>{const p=VO3.dbg().walk.prompt();return p&&p.t})()");ok(pp and 'DERBY' in pp,'by home plate the prompt offers the Home Run Derby',pp)
   if SHOTS:A.screenshot(path=OUT+'/park_button.png',timeout=180000)
   A.keyboard.press('e');A.evaluate(step,40)
@@ -63,7 +63,7 @@ try:
   ok(not A.evaluate("VO3.dbg().derby.turn") and A.evaluate("VO3.dbg().meAv.mode")=='free','finishing gives you back control',A.evaluate(wk))
   top=A.evaluate("(()=>{try{return voApi.tops().derby||[]}catch(e){return 'x'}})()");ok(top and top[0][1]>=1,'team best saved for the derby',top)
   # flying from the hangar pad
-  A.evaluate("(()=>{const W=VO3.dbg().walk,w=W.me.wk;w.x=26;w.z=-14;w.h=Math.PI/2;W.yaw=Math.PI/2})()");A.evaluate(step,3)
+  A.evaluate("(()=>{const W=VO3.dbg().walk,w=W.me.wk;w.x=26;w.z=-14;w.h=Math.PI/2;W.yaw=Math.PI/2;W.snap=1})()");A.evaluate(step,3)
   pp=A.evaluate("(()=>{const p=VO3.dbg().walk.prompt();return p&&p.k})()");ok(pp=='fly','on the hangar pad the prompt says FLY MY PLANE',pp)
   if SHOTS:A.screenshot(path=OUT+'/park_pad.png',timeout=180000)
   A.keyboard.press('e');A.evaluate(step,4);ok(A.evaluate("!!VO3.dbg().fly.me"),'E takes off')
@@ -81,7 +81,7 @@ try:
   A.keyboard.press('e');A.evaluate(step,16);ok(A.evaluate(wk).get('f')=='r' and not A.evaluate("!!VO3.dbg().fly.me"),'E lands you back on the Sky Park',A.evaluate(wk))
   # the Firing Range
   A.evaluate("(()=>{const W=VO3.dbg().walk;W.me.wk.x=8;W.me.wk.z=-6.4;W.ride('g')})()");A.evaluate(step,16);ok(A.evaluate(wk).get('f')=='g','elevator down to the Firing Range')
-  A.evaluate("(()=>{const W=VO3.dbg().walk,w=W.me.wk;w.x=-7.4;w.z=-3.7;w.h=0;W.yaw=0})()");A.evaluate(step,3)
+  A.evaluate("(()=>{const W=VO3.dbg().walk,w=W.me.wk;w.x=-7.4;w.z=-3.7;w.h=0;W.yaw=0;W.snap=1})()");A.evaluate(step,3)
   pp=A.evaluate("(()=>{const p=VO3.dbg().walk.prompt();return p&&p.t})()");ok(pp and 'LANE 1' in pp,'at a lane the prompt says START SHOOTING',pp)
   A.keyboard.press('e');A.evaluate(step,70)
   ok(A.evaluate("!!VO3.dbg().range.lane"),'E starts a round in the lane')
