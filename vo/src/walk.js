@@ -9,7 +9,7 @@ import {DOOR, skyAt, skyRail, skyPose} from './sky.js';
 
 const WR = .27;            // walker radius
 const SPD = 2.3, RUN = 5.2, G = 15;
-const CSS = `.vo3wk{position:absolute;inset:0;pointer-events:none;z-index:5;display:none}.vo3wk.on{display:block}.vo3wk.on.lk{display:none}
+const CSS = `.vo3wk{position:absolute;inset:0;pointer-events:none;z-index:5;display:none}.vo3wk.on{display:block}.vo3wk.on.lk{display:none}.vo3nar .vo3wkh,.vo3nar .vo3drh,.vo3nar .vo3flh{display:none}
 .vo3wkh{position:absolute;top:62px;left:50%;transform:translateX(-50%);width:max-content;max-width:calc(100% - 340px);white-space:normal;text-align:center;line-height:1.55;padding:7px 14px;border-radius:14px;background:rgba(12,6,12,.72);border:1px solid rgba(255,255,255,.14);font:700 10px Verdana,sans-serif;letter-spacing:.1em;color:#ffd0da;-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px)}
 .vo3wkh b{color:#fff}.vo3wkf{position:absolute;top:96px;left:50%;transform:translateX(-50%);font:900 12px Verdana,sans-serif;letter-spacing:.18em;color:#fff;text-shadow:0 2px 12px rgba(255,31,79,.8)}
 .vo3wkp{position:absolute;bottom:150px;left:50%;transform:translateX(-50%);pointer-events:auto;padding:11px 18px;border-radius:14px;border:1px solid rgba(255,209,102,.55);background:rgba(12,6,12,.82);color:#ffd166;font:800 12px Verdana,sans-serif;letter-spacing:.1em;cursor:pointer;display:none;box-shadow:0 0 24px rgba(255,209,102,.25)}

@@ -169,7 +169,7 @@ class Drive {
       if (a.drv) this.end(a);
       if (a.wk) { a.wk = null; a.mv = 0; }
       if (a.mode !== 'seated' && a.mode !== 'sitting' && a.mode !== 'walk' && a.mode !== 'free') return;
-      if (!this.mount(a, c, x, z, h, k, y)) return; a.drv.hn = +dv.hn || 0;
+      if (!this.mount(a, c, x, z, h, k, y)) return; a.drv.hn = +dv.hn || 0; a.drv.knN = dv.kn && typeof dv.kn === 'object' ? +dv.kn.n || 0 : 0;
     }
     const d = a.drv; if (k !== d.k) { d.k = k; d.x = x; d.z = z; d.h = h; d.y = y; }
     d.tx = x; d.tz = z; d.th = h; d.ty = y; d.tv = +dv.v || 0; d.rt = performance.now();
@@ -177,8 +177,8 @@ class Drive {
     if ((+dv.hn || 0) !== d.hn) { d.hn = +dv.hn || 0; this.O.sfx('horn', .7); }
     // they hit someone: everyone plays the knockdown
     const kn = dv.kn; if (kn && typeof kn === 'object' && (+kn.n || 0) !== (d.knN || 0)) {
-      const first = d.knN === undefined; d.knN = +kn.n || 0;
-      if (!first) { let v = null; this.O.av.forEach(b => { if (b.id === kn.id) v = b; }); if (v && this.O.walk) this.O.walk.knock(v, +kn.dx || 0, +kn.dz || 0, +kn.v || 4); }
+      d.knN = +kn.n || 0;
+      let v = null; this.O.av.forEach(b => { if (b.id === kn.id) v = b; }); if (v && this.O.walk) this.O.walk.knock(v, +kn.dx || 0, +kn.dz || 0, +kn.v || 4);
     }
   }
   tick(dt, t) {

@@ -12,7 +12,7 @@ const PLATE = {x: -12, z: 15.2};
 const MOUND = {x: -12, z: 0.6};
 const FENCE = 44, FOUL = 38 * Math.PI / 180, FENCEH = 2.6;
 const BTN = {x: -15.6, z: 17.4};
-const PITCHES = 10, FT = 7.2;
+const PITCHES = 10, FT = 7.2, TURNMAX = 150;   // seconds: a turn that runs longer than this gives up the plate
 const CSS = `.vo3hr{position:absolute;inset:0;pointer-events:none;z-index:5;display:none}.vo3hr.on{display:block}
 .vo3hrt{position:absolute;top:62px;left:50%;transform:translateX(-50%);padding:8px 16px;border-radius:999px;background:rgba(12,6,12,.78);border:1px solid rgba(255,209,102,.4);font:800 11px Verdana,sans-serif;letter-spacing:.12em;color:#ffd166;white-space:nowrap}
 .vo3hrb{position:absolute;top:150px;left:50%;transform:translateX(-50%);font:900 46px Verdana,sans-serif;letter-spacing:.08em;color:#fff;text-shadow:0 0 26px #ff1f4f,0 3px 12px #000;opacity:0;transition:opacity .25s,transform .25s;white-space:nowrap}.vo3hrb.on{opacity:1;transform:translateX(-50%) scale(1.06)}
@@ -116,7 +116,7 @@ export class Derby {
     const bp = this.btn = new THREE.Group(); bp.position.set(BTN.x, Y, BTN.z); G.add(bp);
     bp.add(at(new THREE.Mesh(new THREE.CylinderGeometry(.32, .42, 1.05, 18), mm), new THREE.Vector3(0, .52, 0), null));
     this.btnTop = at(new THREE.Mesh(new THREE.CylinderGeometry(.24, .26, .16, 22), BM({color: new THREE.Color(3.6, .3, .5), toneMapped: false})), new THREE.Vector3(0, 1.12, 0), null); bp.add(this.btnTop);
-    const bs = add(new THREE.PlaneGeometry(2.6, .7), BM({map: tex(sign('HOME RUN DERBY', 8, 2, '#fff', '#ff1f4f'), {mips: true}), transparent: true, depthWrite: false, color: new THREE.Color(2, 2, 2), toneMapped: false, side: THREE.DoubleSide}), BTN.x, Y + 2.05, BTN.z, 0, 0, 0);
+    const bs = add(new THREE.PlaneGeometry(2.6, .7), BM({map: tex(sign('HOME RUN DERBY', 8, 2, '#fff', '#ff1f4f'), {mips: true}), transparent: true, depthWrite: false, color: new THREE.Color(2, 2, 2), toneMapped: false, side: THREE.DoubleSide}), BTN.x, Y + 2.05, BTN.z, 0, Math.PI, 0);
     FLOORBOX.r.push([BTN.x - .45, BTN.z - .45, BTN.x + .45, BTN.z + .45]);
     // scoreboard in centre field
     this.sbC = cv(1024, 576); this.sbT = tex(this.sbC, {mips: false});
@@ -163,7 +163,9 @@ export class Derby {
   // ---------- who's batting, who's waiting (from everyone's presence)
   state() {
     const O = this.O, L = [];
-    O.av.forEach(a => { const h = a.me ? this.mine() : a.p && a.p.hr; if (h && typeof h === 'object' && (h.st === 'q' || h.st === 'b')) L.push({a, nm: a.nm, id: a.id, me: !!a.me, st: h.st, t: +h.t || 0, n: +h.n || 0, p: +h.p || 0, l: +h.l || 0, e: h.e}); });
+    const now = this.now();
+    O.av.forEach(a => { const h = a.me ? this.mine() : a.p && a.p.hr; if (h && typeof h === 'object' && h.st === 'b' && !a.me && +h.bt > 0 && now - h.bt > TURNMAX * 1000) return;
+      if (h && typeof h === 'object' && (h.st === 'q' || h.st === 'b')) L.push({a, nm: a.nm, id: a.id, me: !!a.me, st: h.st, t: +h.t || 0, n: +h.n || 0, p: +h.p || 0, l: +h.l || 0, e: h.e}); });
     const bat = L.filter(x => x.st === 'b').sort((x, y) => x.t - y.t)[0] || null;
     const queue = L.filter(x => x.st === 'q').sort((x, y) => x.t - y.t || (x.id < y.id ? -1 : 1));
     let top = []; try { const T = O.api.tops ? O.api.tops() : {}; top = (T && T.derby) || []; } catch (e) {}
@@ -194,7 +196,7 @@ export class Derby {
     const w = a.wk; w.x = PLATE.x + .85; w.z = PLATE.z + .1; w.h = Math.PI; w.vx = w.vz = 0;
     O.walk.lock = 1; a.bat = 1;
     this.turn = {p: 0, n: 0, l: 0, ph: 'wait', t: 0, next: 2.2, ball: null, sw: -1, ev: 0};
-    this.setMine({st: 'b', t: this.my ? this.my.t : this.now(), p: 0, n: 0, l: 0});
+    this.setMine({st: 'b', t: this.my ? this.my.t : this.now(), p: 0, n: 0, l: 0, bt: this.now()});
     this.ui.classList.add('on'); this.big("YOU'RE UP!", 'CLICK OR SPACE TO SWING'); O.sfx('airhorn'); this.snap = 1;
     this.bat(a, true);
   }
@@ -289,6 +291,7 @@ export class Derby {
     // leaving the roof drops my spot
     if (m && (m.st === 'q' || m.st === 'b') && !(O.meAv && O.meAv.wk && O.meAv.wk.f === 'r')) { if (this.turn) this.finish(true); else this.setMine(null); }
     const T = this.turn;
+    if (T && this.my && +this.my.bt > 0 && this.now() - this.my.bt > TURNMAX * 1000) { this.finish(); return; }
     if (T) {
       T.t += dt;
       if (T.ph === 'wait' && T.t > T.next) { if (T.p >= PITCHES) { this.finish(); } else { T.ph = 'pitch'; this.pitch(T); T.p++; this.syncMine(T); } }

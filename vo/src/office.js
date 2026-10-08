@@ -118,7 +118,7 @@ uniform sampler2D tRefl;uniform float uRK;varying vec4 vRU;varying vec3 vRW;`).r
       }
     }
   resize(){const w=this.el.clientWidth|0,h=this.el.clientHeight|0;if(w<2||h<2)return false;if(w===this.W&&h===this.H&&this._pr===this.pr)return true;
-    this.W=w;this.H=h;this._pr=this.pr;this.r.setPixelRatio(this.pr);this.r.setSize(w,h,false);this.comp.setPixelRatio(this.pr);this.comp.setSize(w,h);
+    this.W=w;this.H=h;this._pr=this.pr;this.el.classList.toggle('vo3nar',w<640);this.r.setPixelRatio(this.pr);this.r.setSize(w,h,false);this.comp.setPixelRatio(this.pr);this.comp.setSize(w,h);
     this.rRT.setSize(Math.max(2,(w*this.pr*.5)|0),Math.max(2,(h*this.pr*.5)|0));this.cam.aspect=w/h;this.cam.updateProjectionMatrix();return true}
   start(){if(this.running)return;this.running=true;this.mountT=now();this.last=now();const loop=()=>{if(!this.running)return;this.raf=requestAnimationFrame(loop);try{this.frame()}catch(e){this.errs=(this.errs||0)+1;if(this.errs<4)console.warn('VO3 frame',e);if(this.errs>30){this.stop();try{this.api.onFail&&this.api.onFail()}catch(x){}}}};this.raf=requestAnimationFrame(loop)}
   stop(){this.running=false;cancelAnimationFrame(this.raf)}
