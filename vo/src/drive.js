@@ -19,7 +19,7 @@ BOX.push([-4.3, -7, 2.4, -6.4], [-10, -7, -5.3, -6.45], [3.6, -7, 6.4, -6.45], [
 const XB = [-9.75, 9.75];
 const ZB = [-6.35, 11.3];
 const CSS = `.vo3drv{position:absolute;inset:0;pointer-events:none;z-index:5;display:none}.vo3drv.on{display:block}
-.vo3drh{position:absolute;top:62px;left:50%;transform:translateX(-50%);padding:7px 14px;border-radius:999px;background:rgba(12,6,12,.72);border:1px solid rgba(255,255,255,.14);font:700 10px Verdana,sans-serif;letter-spacing:.1em;color:#ffd0da;white-space:nowrap;-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px)}
+.vo3drh{position:absolute;top:62px;left:50%;transform:translateX(-50%);padding:7px 14px;border-radius:14px;background:rgba(12,6,12,.72);border:1px solid rgba(255,255,255,.14);font:700 10px Verdana,sans-serif;letter-spacing:.1em;color:#ffd0da;width:max-content;max-width:calc(100% - 340px);white-space:normal;text-align:center;line-height:1.55;-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px)}
 .vo3drh b{color:#fff}.vo3drs{position:absolute;top:96px;left:50%;transform:translateX(-50%);font:900 22px Verdana,sans-serif;color:#fff;text-shadow:0 2px 12px rgba(255,31,79,.8)}.vo3drs small{font-size:10px;letter-spacing:.14em;color:#ffb3c2;margin-left:4px}
 .vo3drp{position:absolute;bottom:92px;display:flex;gap:10px;pointer-events:auto}.vo3drp.l{left:16px}.vo3drp.r{right:16px;flex-direction:column}
 .vo3drp button{width:62px;height:62px;border-radius:18px;border:1px solid rgba(255,255,255,.18);background:rgba(12,6,12,.7);color:#fff;font:800 18px Verdana,sans-serif;touch-action:none;-webkit-user-select:none;user-select:none;cursor:pointer;-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px)}
@@ -59,7 +59,7 @@ class Drive {
     this.O = O; this.keys = {}; this.me = null; this.sendT = 0; this.last = ''; this.hn = 0; this.kn = 0; this.knk = null;
     if (!document.getElementById('vo3drcss')) { const s = document.createElement('style'); s.id = 'vo3drcss'; s.textContent = CSS; document.head.appendChild(s); }
     const u = this.ui = document.createElement('div'); u.className = 'vo3drv';
-    u.innerHTML = `<div class=vo3drh><b>DRIVING</b> &nbsp;W A S D / arrows &middot; SPACE brake &middot; H horn &middot; [ ] steering &middot; E get out &middot; west door = SKY DECK</div><label class=vo3drt title="How fast you turn with the arrow keys or WASD (also used for planes)">STEERING<input type=range min=1 max=10 step=1 aria-label="Steering sensitivity"><b>5</b></label><div class=vo3drs><span>0</span><small>MPH</small></div><div class=vo3drl></div><div class=vo3drb></div><div class=vo3drf></div>
+    u.innerHTML = `<div class=vo3drh><b>DRIVING</b> &nbsp;W A S D / arrows &middot; SPACE brake &middot; H horn &middot; E get out &middot; west door = SKY DECK</div><label class=vo3drt title="How fast you turn with the arrow keys or WASD (also used for planes)">STEERING<input type=range min=1 max=10 step=1 aria-label="Steering sensitivity"><b>5</b></label><div class=vo3drs><span>0</span><small>MPH</small></div><div class=vo3drl></div><div class=vo3drb></div><div class=vo3drf></div>
       <div class="vo3drp l"><button data-k=left aria-label="Steer left">&#9664;</button><button data-k=right aria-label="Steer right">&#9654;</button></div>
       <div class="vo3drp r"><button class=g data-k=up aria-label="Gas">GAS</button><button data-k=down aria-label="Brake / reverse">BRAKE</button></div>
       <button class=vo3drk data-k=horn>&#128227; HORN</button><button class=vo3drx>GET OUT</button>`;

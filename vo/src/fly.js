@@ -14,7 +14,7 @@ const PAD = {x: 24, z: -14, h: Math.PI / 2};      // launch pad on the Sky Park,
 const SPAN = 9;                                      // flying wingspan in metres
 const VMIN = 18, VCRU = 34, VBOOST = 66;
 const CSS = `.vo3fl{position:absolute;inset:0;pointer-events:none;z-index:5;display:none}.vo3fl.on{display:block}
-.vo3flh{position:absolute;top:62px;left:50%;transform:translateX(-50%);padding:7px 14px;border-radius:999px;background:rgba(12,6,12,.72);border:1px solid rgba(255,255,255,.14);font:700 10px Verdana,sans-serif;letter-spacing:.1em;color:#ffd0da;white-space:nowrap}
+.vo3flh{position:absolute;top:62px;left:50%;transform:translateX(-50%);padding:7px 14px;border-radius:14px;background:rgba(12,6,12,.72);border:1px solid rgba(255,255,255,.14);font:700 10px Verdana,sans-serif;letter-spacing:.1em;color:#ffd0da;width:max-content;max-width:calc(100% - 340px);white-space:normal;text-align:center;line-height:1.55;}
 .vo3flh b{color:#fff}.vo3fli{position:absolute;top:96px;left:50%;transform:translateX(-50%);display:flex;gap:22px;font:900 20px Verdana,sans-serif;color:#fff;text-shadow:0 2px 12px rgba(255,31,79,.8)}
 .vo3fli small{display:block;font-size:9px;letter-spacing:.16em;color:#ffb3c2;text-align:center}
 .vo3flr{position:absolute;top:150px;left:50%;transform:translateX(-50%);font:800 12px Verdana,sans-serif;letter-spacing:.1em;color:#ffd166;text-shadow:0 2px 10px #000;white-space:nowrap}
@@ -34,7 +34,7 @@ export class Fly {
     this.build(G);
     if (!document.getElementById('vo3flcss')) { const s = document.createElement('style'); s.id = 'vo3flcss'; s.textContent = CSS; document.head.appendChild(s); }
     const u = this.ui = document.createElement('div'); u.className = 'vo3fl';
-    u.innerHTML = `<div class=vo3flh><b>FLYING</b> &nbsp;W S / up down pitch &middot; A D / left right turn &middot; SHIFT boost &middot; SPACE slow &middot; E land</div>
+    u.innerHTML = `<div class=vo3flh><b>FLYING</b> &nbsp;W S pitch &middot; A D turn &middot; SHIFT boost &middot; SPACE slow &middot; E land</div>
       <div class=vo3fli><div><span class=spd>0</span><small>KNOTS</small></div><div><span class=alt>0</span><small>FEET</small></div></div><div class=vo3flr></div><div class=vo3flb></div><div class=vo3flf></div>
       <label class=vo3flt title="How fast you turn with the arrow keys or WASD (same as driving)">TURNING<input type=range min=1 max=10 step=1 aria-label="Turn sensitivity"><b>5</b></label>
       <div class=vo3flp><span></span><button data-k=up>&#9650;</button><span></span><button data-k=left>&#9664;</button><button data-k=down>&#9660;</button><button data-k=right>&#9654;</button></div>

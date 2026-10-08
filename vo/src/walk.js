@@ -10,7 +10,7 @@ import {DOOR, skyAt, skyRail, skyPose} from './sky.js';
 const WR = .27;            // walker radius
 const SPD = 2.3, RUN = 5.2, G = 15;
 const CSS = `.vo3wk{position:absolute;inset:0;pointer-events:none;z-index:5;display:none}.vo3wk.on{display:block}
-.vo3wkh{position:absolute;top:62px;left:50%;transform:translateX(-50%);padding:7px 14px;border-radius:999px;background:rgba(12,6,12,.72);border:1px solid rgba(255,255,255,.14);font:700 10px Verdana,sans-serif;letter-spacing:.1em;color:#ffd0da;white-space:nowrap;-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px)}
+.vo3wkh{position:absolute;top:62px;left:50%;transform:translateX(-50%);width:max-content;max-width:calc(100% - 340px);white-space:normal;text-align:center;line-height:1.55;padding:7px 14px;border-radius:14px;background:rgba(12,6,12,.72);border:1px solid rgba(255,255,255,.14);font:700 10px Verdana,sans-serif;letter-spacing:.1em;color:#ffd0da;-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px)}
 .vo3wkh b{color:#fff}.vo3wkf{position:absolute;top:96px;left:50%;transform:translateX(-50%);font:900 12px Verdana,sans-serif;letter-spacing:.18em;color:#fff;text-shadow:0 2px 12px rgba(255,31,79,.8)}
 .vo3wkp{position:absolute;bottom:150px;left:50%;transform:translateX(-50%);pointer-events:auto;padding:11px 18px;border-radius:14px;border:1px solid rgba(255,209,102,.55);background:rgba(12,6,12,.82);color:#ffd166;font:800 12px Verdana,sans-serif;letter-spacing:.1em;cursor:pointer;display:none;box-shadow:0 0 24px rgba(255,209,102,.25)}
 .vo3wkp.on{display:block}.vo3wkp kbd{display:inline-block;min-width:18px;padding:2px 6px;margin-right:8px;border-radius:6px;background:#ffd166;color:#120a10;font:900 11px Verdana,sans-serif;text-align:center}
@@ -58,7 +58,7 @@ export class Walk {
     this.O = O; this.keys = {}; this.me = null; this.sendT = 0; this.last = ''; this.yaw = Math.PI; this.pitch = .38; this.dist = 4.4; this.manualT = 0; this.kn = 0;
     if (!document.getElementById('vo3wkcss')) { const s = document.createElement('style'); s.id = 'vo3wkcss'; s.textContent = CSS; document.head.appendChild(s); }
     const u = this.ui = document.createElement('div'); u.className = 'vo3wk';
-    u.innerHTML = `<div class=vo3wkh><b>WALKING</b> &nbsp;W A S D / arrows &middot; SHIFT run &middot; SPACE jump &middot; drag to look &middot; E use &middot; Q back to desk</div><div class=vo3wkf></div>
+    u.innerHTML = `<div class=vo3wkh><b>WALKING</b> &nbsp;WASD / arrows &middot; SHIFT run &middot; SPACE jump &middot; E use &middot; Q back to desk</div><div class=vo3wkf></div>
       <button class=vo3wkp><kbd>E</kbd><span></span></button><button class=vo3wkx>BACK TO MY DESK</button>
       <div class=vo3wkd><span></span><button data-k=up aria-label="Walk forward">&#9650;</button><span></span><button data-k=left aria-label="Walk left">&#9664;</button><button data-k=down aria-label="Walk back">&#9660;</button><button data-k=right aria-label="Walk right">&#9654;</button></div>
       <div class=vo3wkr><button data-k=run>RUN</button><button data-k=jump>JUMP</button></div>`;
@@ -78,7 +78,7 @@ export class Walk {
     const typing = e => { const t = e.target; return t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable); };
     addEventListener('keydown', e => {
       if (!this.me || typing(e) || this.O.modal || this.lock) return;
-      if (this.elOpen) { if (e.key === 'Escape') { this.closeElev(); e.preventDefault(); } else if (/^[1-3]$/.test(e.key)) { const k = ['o', 'r', 'g'][+e.key - 1]; this.ride(k); e.preventDefault(); } return; }
+      if (this.elOpen) { if (e.key === 'Escape') { this.closeElev(); e.preventDefault(); } else if (/^[1-3]$/.test(e.key)) { const k = ['g', 'o', 'r'][+e.key - 1]; this.ride(k); e.preventDefault(); } return; }
       const k = KM[e.key]; if (k) { this.keys[k] = 1; e.preventDefault(); e.stopPropagation(); return; }
       if (e.key === ' ') { this.jump(); e.preventDefault(); e.stopPropagation(); }
       else if (e.key === 'e' || e.key === 'E' || e.key === 'Enter') { this.use(); e.preventDefault(); e.stopPropagation(); }
@@ -143,7 +143,7 @@ export class Walk {
   openElev() {
     const a = this.me; if (!a) return; this.elOpen = 1; this.keys = {};
     const here = a.wk.f;
-    this.elE.innerHTML = `<div class=vo3elp><h3>OWQ TOWER</h3><p>Pick a floor. Teammates on that floor see you step out.</p>${['r', 'o', 'g'].map((k, i) => `<button data-f=${k} class="${k === here ? 'here' : ''}">${['3', '1', '2'][i]}&nbsp;&nbsp;${FLOORS[k].name}${k === here ? ' &middot; YOU ARE HERE' : ''}<small>${FLOORS[k].sub}</small></button>`).join('')}<button class=x>CLOSE (ESC)</button></div>`;
+    this.elE.innerHTML = `<div class=vo3elp><h3>OWQ TOWER</h3><p>Pick a floor. Teammates on that floor see you step out.</p>${['r', 'o', 'g'].map((k, i) => `<button data-f=${k} class="${k === here ? 'here' : ''}">${['3', '2', '1'][i]}&nbsp;&nbsp;${FLOORS[k].name}${k === here ? ' &middot; YOU ARE HERE' : ''}<small>${FLOORS[k].sub}</small></button>`).join('')}<button class=x>CLOSE (ESC)</button></div>`;
     this.elE.querySelectorAll('button[data-f]').forEach(b => b.onclick = e => { e.stopPropagation(); this.ride(b.dataset.f); });
     this.elE.querySelector('.x').onclick = e => { e.stopPropagation(); this.closeElev(); };
     this.elE.classList.add('on'); this.O.sfx('click');
@@ -162,7 +162,7 @@ export class Walk {
     }, 520);
   }
   exitElev(a, f) {
-    const w = a.wk, O = this.O; w.x = ELEVP.x; w.z = ELEVP.z + .9; w.y = FLOORS[f].y; w.h = 0; w.vy = 0; w.air = 0; this.yaw = 0;
+    const w = a.wk, O = this.O; w.x = ELEVP.x; w.z = ELEVP.z + .9; w.y = FLOORS[f].y; w.h = f === 'r' ? -1.05 : 0; w.vy = 0; w.air = 0; this.yaw = w.h;
     if (O.hook) O.hook('elevOpen', f);
     if (f === 'o') O.room.elevOpen(2);
   }

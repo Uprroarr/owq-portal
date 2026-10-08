@@ -66,11 +66,12 @@ class Overlay {
     constructor(root,o){this.o=o;this.root=root;
     root.insertAdjacentHTML('beforeend',`<div class=vo3l></div><div class=vo3top><div class=vo3ttl><span class=vo3lv></span><div><b>SALES FLOOR</b><small class=vo3cnt>&nbsp;</small></div></div><div class=vo3tb></div></div>
       <div class=vo3toast></div><div class=vo3card></div><div class=vo3look></div><div class=vo3th><div class=vo3thh><span class=vo3lv></span><span class=vo3tht></span><span class=vo3ths></span><button class=vo3thx aria-label="Close">${IC.x}</button></div><div class=vo3thv></div></div><div class=vo3hold></div><div class=vo3ld><div>ENTERING THE FLOOR<i></i></div></div>`);
-    const q=s=>root.querySelector(s);this.L=q('.vo3l');this.cnt=q('.vo3cnt');this.tb=q('.vo3tb');this.toastE=q('.vo3toast');this.card=q('.vo3card');this.look=q('.vo3look');this.th=q('.vo3th');this.tht=q('.vo3tht');this.ths=q('.vo3ths');this.thv=q('.vo3thv');this.hold=q('.vo3hold');this.ld=q('.vo3ld');
+    const q=s=>root.querySelector(s);this.L=q('.vo3l');this.cnt=q('.vo3cnt');this.ttlB=q('.vo3ttl b');this.tb=q('.vo3tb');this.toastE=q('.vo3toast');this.card=q('.vo3card');this.look=q('.vo3look');this.th=q('.vo3th');this.tht=q('.vo3tht');this.ths=q('.vo3ths');this.thv=q('.vo3thv');this.hold=q('.vo3hold');this.ld=q('.vo3ld');
     q('.vo3thx').onclick=()=>o.closeTheater();this.tags=new Map();this.tt=0}
   loaded(){this.ld.classList.add('off')}
   toolbar(btns){const h=btns.map(b=>`<button class="${b.on?'on':''}" data-k="${b.k}" title="${esc(b.t)}" aria-label="${esc(b.t)}">${b.i}</button>`).join('');if(h!==this._tb){this._tb=h;this.tb.innerHTML=h;this.tb.querySelectorAll('button').forEach(b=>b.onclick=e=>{e.stopPropagation();this.o.tool(b.dataset.k)})}}
   count(t){if(t!==this._ct){this._ct=t;this.cnt.innerHTML=t}}
+  place(t){if(t&&t!==this._pl&&this.ttlB){this._pl=t;this.ttlB.textContent=t}}
   tag(a){let e=this.tags.get(a.id);if(!e){e=document.createElement('div');e.className='vo3t';e.innerHTML=`<div class=vo3hd>✋</div><div class=vo3cam></div><div class=vo3n><i></i><b></b><s>${IC.micoff}</s></div>`;this.L.appendChild(e);e._b=e.querySelector('b');e._c=e.querySelector('.vo3cam');e._n=e.querySelector('.vo3n');this.tags.set(a.id,e)}return e}
   setTag(e,a,x,y,vis,sc){const nm=a.nm+(a.me?'':''),badge=a.me?'<em>YOU</em>':a.bot?'<em class=d>DEMO</em>':'',L=a.look||{},ti=L.T&&COS.T[L.T]?`<u class=vo3ti>${esc(COS.T[L.T])}</u>`:'';const h=esc(nm)+ti+badge;if(e._h!==h){e._h=h;e._b.innerHTML=h}
     const cls='vo3t'+(a.L>.12&&!a.muted?' sp':'')+(a.muted?' mu':'')+(a.hand?' hd':'')+(a.camOn?' cm':'')+(a.me?' me':'')+(L.N?' n'+L.N:'');if(e.className!==cls)e.className=cls;

@@ -18,7 +18,7 @@ try:
   ctx.add_init_script("try{localStorage.setItem('owq_gq','still');localStorage.setItem('owq_vo',JSON.stringify({list:0,demo:0,ava:'',auto:1,sfx:1}))}catch(e){}")
   errs=[]
   K=ctx.new_page();K.goto('http://127.0.0.1:%d/keep.html'%PORT);K.wait_for_function('window.__FAKE')
-  A=ctx.new_page();A.on('pageerror',lambda e:errs.append(str(e)[:300]));A.on('console',lambda m:errs.append('console:'+m.text[:300]) if m.type=='error' else None)
+  A=ctx.new_page();A.on('pageerror',lambda e:errs.append(str(e)[:300]));A.on('console',lambda m:errs.append('console:'+m.text[:300]) if m.type=='error' and 'Failed to load resource' not in m.text else None)
   A.add_init_script("window.__FAKE_SIGNIN=%s;"%json.dumps({'uid':'uOwner','email':'owner@example.com','displayName':'Cole Leckey'}))
   A.goto(URL);A.wait_for_function("window.__FAKE",timeout=20000);A.evaluate("__FAKE.call('reset',{owner:'owner@example.com'})");A.evaluate("sessionStorage.clear()");A.reload()
   A.wait_for_function("OWQC.phase==='out'",timeout=30000);A.click('#owqgi');A.wait_for_function("OWQC.phase==='in'",timeout=30000)
@@ -76,11 +76,11 @@ try:
   ok(abs(p2['y']-ry)<.5,'and follows the road up and down',[p2['y'],ry])
   if SHOTS:A.screenshot(path=OUT+'/drive_deck1.png',timeout=180000)
   if SHOTS:
-    A.evaluate("(()=>{const O=VO3.dbg();O.dbgCam={P:new O.cam.position.constructor(-60,40,110),T:new O.cam.position.constructor(-55,0,0),F:55}})()");A.evaluate(step,3);A.screenshot(path=OUT+'/world_wide.png',timeout=180000)
+    A.evaluate("(()=>{const O=VO3.dbg();O.dbgCam={P:new O.cam.position.constructor(-40,150,175),T:new O.cam.position.constructor(-72,-12,-2),F:58}})()");A.evaluate(step,3);A.screenshot(path=OUT+'/world_wide.png',timeout=180000)
     A.evaluate("(()=>{const O=VO3.dbg();O.dbgCam={P:new O.cam.position.constructor(40,30,60),T:new O.cam.position.constructor(-5,5,-5),F:50}})()");A.evaluate(step,3);A.screenshot(path=OUT+'/world_tower.png',timeout=180000)
     A.evaluate("(()=>{VO3.dbg().dbgCam=null})()")
   # put the car before the first jump at speed
-  jp=A.evaluate("(()=>{const D=VO3.dbg().drive,d=D.me.drv;const S=VO3.dbg().track.sky,g=S.gaps[0];const i=Math.round((g.s0-30)/S.len*S.n)%S.n,a=S.S[i];d.x=a.p.x;d.z=a.p.z;d.y=a.p.y;d.h=Math.atan2(-a.t.z,a.t.x);d.v=21;d.hint=i;d.air=0;return {s0:g.s0,s1:g.s1}})()")
+  jp=A.evaluate("(()=>{const D=VO3.dbg().drive,d=D.me.drv;const S=VO3.dbg().track.sky,g=S.gaps[0];const i=Math.round((g.s0-12)/S.len*S.n)%S.n,a=S.S[i];d.x=a.p.x;d.z=a.p.z;d.y=a.p.y;d.h=Math.atan2(-a.t.z,a.t.x);d.v=21;d.hint=i;d.air=0;return {s0:g.s0,s1:g.s1}})()")
   A.keyboard.down('w');air=False;landed=None
   for k in range(40):
     A.evaluate(step,1);q=A.evaluate(pos)

@@ -41,7 +41,7 @@ class Tone{
       tg.focus=stdy*(1-lo)*(1-quiet)*(.5+.5*dn)*(1-up)*conf;
       tg.calm=quiet*(.45+.55*stdy)*(1-.5*up)*conf;
       // yelling: a lot louder than this person normally talks, usually harsher too; it wins over the others
-      tg.yell=clamp(sstep(1.5,2.2,R)*(.65+.35*harsh)+.25*sstep(2.2,3,R),0,1)*conf;
+      tg.yell=clamp(sstep(1.4,2.1,R)*(.65+.35*harsh)+.25*sstep(2.1,3,R),0,1)*conf;
       if(tg.yell>.35){for(const k of MOODS)if(k!=='yell')tg[k]*=.35}
       this.f={R:+R.toFixed(2),H:+H.toFixed(2),rel:+rel.toFixed(1),sd:+sd.toFixed(1),vf:+vf.toFixed(2)};
       // laughing: six or more quick, very even bursts, well above the usual pitch (laughs sit much higher than talking)

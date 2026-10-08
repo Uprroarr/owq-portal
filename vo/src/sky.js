@@ -26,11 +26,13 @@ function layout() {
   SKY.len = L; SKY.n = n;
   const pts = curve.getSpacedPoints(n);
   // jumps: kicker ramp up to the lip, an empty gap, a lower landing (positions as fractions of the loop)
-  const J = [{at: .655, gap: 11, kick: 1.5, drop: 2.6}, {at: .85, gap: 7, kick: 1.1, drop: .6}];
+  // both jumps sit on the straightest stretches of the loop, each right after a boost pad; every checkpoint leaves
+  // a long run-up to the next jump, so falling in and starting again from the checkpoint is never a trap
+  const J = [{at: .655, gap: 11, kick: 1.5, drop: 2.6}, {at: .27, gap: 7, kick: 1.1, drop: .6}];
   SKY.gaps = J.map(j => ({s0: j.at * L, s1: j.at * L + j.gap, kick: j.kick, drop: j.drop}));
-  SKY.boosts = [.1, .62, .815].map(f => f * L);
+  SKY.boosts = [.1, .23, .62].map(f => f * L);
   SKY.start = 14;   // start / finish line, just after the door
-  SKY.cps = [.25, .5, .75].map(f => f * L);
+  SKY.cps = [.17, .5, .8].map(f => f * L);
   const S = SKY.S = [];
   for (let i = 0; i < n; i++) {
     const p = pts[i].clone(), q = pts[(i + 1) % n], t = new THREE.Vector3(q.x - p.x, 0, q.z - p.z).normalize();
@@ -53,8 +55,16 @@ function layout() {
     S[i].bank = Math.max(-.32, Math.min(.32, -turn * 1.6));
   }
   for (let k = 0; k < 3; k++) { const B = S.map(x => x.bank); for (let i = 0; i < n; i++) S[i].bank = (B[(i - 1 + n) % n] + B[i] * 2 + B[(i + 1) % n]) / 4; }
+  // pylons every 60 m, alternating sides; the deck hangs from cables between their tops
+  const pyl = SKY.pylons = [];
+  for (let i = 0; i < n; i += 60) {
+    const a = S[i], off = (HW + 9) * (i % 120 ? 1 : -1);
+    pyl.push({x: a.p.x + a.nx * off, z: a.p.z + a.nz * off, y0: -120, y1: a.p.y + 38 + (i % 180) / 6, i});
+  }
   return SKY;
 }
+// the track layout (samples, jumps, pylons) without building any meshes: the city uses it to keep clear
+export function skyLayout() { return layout(); }
 
 // the short bridge from the door out to the loop's inside lane
 export const BRIDGE = {x0: DOOR.x, x1: -13.2, z0: DOOR.z0 - .1, z1: DOOR.z1 + .1};
@@ -164,7 +174,7 @@ export function buildSky(parent) {
   add(band(S, HW + .3, -.55, .02, 6), fas); add(band(S, -HW - .3, -.55, .02, 6), fas);
   // rails: posts + two glowing tubes (open where the bridge joins and over the jump gaps)
   const side = S0side();
-  const openAt = (a, prev, o) => !(Math.sign(o) === side && a.p.x > -15 && a.p.z > BRIDGE.z0 - .2 && a.p.z < BRIDGE.z1 + .2);
+  const openAt = (a, prev, o) => !(Math.sign(o) === side && a.p.x + a.nx * o > -14.5 && a.p.z + a.nz * o > BRIDGE.z0 - .2 && a.p.z + a.nz * o < BRIDGE.z1 + .2);
   const railT = rep(noiseCv(128, 32, '#0f0e13', 6, (x, w, h) => { x.fillStyle = 'rgba(255,255,255,.55)'; x.fillRect(0, 2, w, 2); x.fillStyle = 'rgba(255,31,79,.9)'; x.fillRect(0, h - 8, w, 4); }), 1, 1);
   const railM = new THREE.MeshBasicMaterial({map: railT, side: THREE.DoubleSide, transparent: true, opacity: .92});
   [HW + .15, -HW - .15].forEach(o => add(band(S, o, 0, 1.05, 3, openAt), railM));
@@ -177,19 +187,13 @@ export function buildSky(parent) {
   const inst = new THREE.InstancedMesh(beamG, beamM, beams.length * 2); const m4 = new THREE.Matrix4(), q = new THREE.Quaternion(), e = new THREE.Euler(), sc = new THREE.Vector3(), ps = new THREE.Vector3();
   beams.forEach((a, k) => {
     const yaw = Math.atan2(a.t.x, a.t.z);
-    e.set(0, yaw, a.bank, 'YXZ'); q.setFromEuler(e);
+    e.set(0, yaw, -a.bank, 'YXZ'); q.setFromEuler(e);   // local +x points at -n, so roll the other way to match the road
     sc.set(2 * HW + .9, .32, .5); ps.set(a.p.x, a.p.y - .8, a.p.z); m4.compose(ps, q, sc); inst.setMatrixAt(k * 2, m4);
     sc.set(.6, .7, 6.2); ps.set(a.p.x, a.p.y - 1.2, a.p.z); m4.compose(ps, q, sc); inst.setMatrixAt(k * 2 + 1, m4);
   });
   inst.instanceMatrix.needsUpdate = true; G.add(inst);
   // pylons with red aviation lights, main cables and hangers: the deck hangs from them
-  const pyl = [], cableY = [];
-  for (let i = 0; i < n; i += 60) {
-    const a = S[i], out = (a.bank >= 0 ? -1 : 1);
-    const off = (HW + 9) * (i % 120 ? 1 : -1);
-    pyl.push({x: a.p.x + a.nx * off, z: a.p.z + a.nz * off, y0: -120, y1: a.p.y + 38 + (i % 180) / 6, i});
-  }
-  D.pylons = pyl;
+  const pyl = D.pylons;
   const pylM = new THREE.MeshStandardMaterial({color: '#1d1c22', roughness: .4, metalness: .8});
   const red = BM({color: new THREE.Color(4, .3, .4), toneMapped: false});
   pyl.forEach(p => {

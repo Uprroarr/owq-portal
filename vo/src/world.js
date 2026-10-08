@@ -2,7 +2,7 @@
 // world is drawn ("zones"). Sales Floor coordinates: office floor y = 0, street level y = GROUNDY.
 import * as THREE from 'three';
 import {cv, tex} from './tex.js';
-import {SKY, skyAt} from './sky.js';
+import {SKY, skyAt, skyLayout} from './sky.js';
 
 export const GROUNDY = -120;
 export const ROOFY = 6;        // top of the Sky Park deck on the roof
@@ -57,7 +57,11 @@ void main(){
     float floorBand=step(.97,fract(vW.y/(cell.y*6.)));
     vec3 base=vec3(.025,.024,.035)+vC*.035;
     col=base+win*(lit*wc*(.85+.6*h1(id+9.))*uGlow+(1.-lit)*vec3(.03,.035,.06));
-    col+=floorBand*vC*.25;
+    // far away a window is smaller than a pixel: fade to the average glow instead of sparkling noise
+    vec2 fw=fwidth(g);float lp=.42+.22*idk;
+    vec3 avg=base+.394*(lp*vec3(1.,.83,.64)*uGlow+(1.-lp)*vec3(.03,.035,.06));
+    col=mix(col,avg,smoothstep(.3,.85,max(fw.x,fw.y)));
+    col+=floorBand*vC*.25*(1.-smoothstep(.05,.2,fwidth(vW.y/(cell.y*6.))));
     // a soft crimson bounce from the street on the lower floors
     col+=vec3(.12,.02,.05)*exp(-(vW.y+120.)*.03);
   }
@@ -102,7 +106,7 @@ export class World {
   out(o) { o.traverse(c => c.layers.set(LAYER_OUT)); return o; }
   build() {
     if (this.built) return; this.built = true;
-    const G = this.group;
+    const G = this.group; skyLayout();   // the city keeps clear of the Sky Deck, so lay the track out first
     // sky dome with a crimson horizon glow, stars and a moon
     const skyM = new THREE.ShaderMaterial({side: THREE.BackSide, depthWrite: false, fog: false,
       vertexShader: 'varying vec3 vD;void main(){vD=normalize(position);gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.);}',
@@ -142,13 +146,13 @@ export class World {
         const near = Math.max(0, 1 - dist / 900);
         let h = 30 + Math.pow(R(), 1.6) * 120 + near * near * 140;
         if (R() < .06) h += 90;
-        const rad = Math.max(w, d) * .5 + 16;
+        const rad = Math.max(w, d) * .72 + 14;   // corners included: at least ~9 m of air between any building and the road
         if (!clearOf(x, z, rad)) continue;
         boxes.push([x, z, w, d, h]);
       }
     }
     // hero towers near the Sky Deck, standing just outside its corridor
-    [[-75, 20, 26, 26, 210], [-150, -60, 30, 30, 240], [-40, 95, 32, 28, 190], [-175, 55, 28, 34, 170], [-95, -110, 34, 30, 260], [20, 110, 30, 30, 160], [70, -40, 30, 30, 200]].forEach(b => { if (clearOf(b[0], b[1], Math.max(b[2], b[3]) * .5 + 15)) boxes.push(b); });
+    [[-75, 20, 26, 26, 210], [-150, -60, 30, 30, 240], [-40, 95, 32, 28, 190], [-175, 55, 28, 34, 170], [-95, -110, 34, 30, 260], [20, 110, 30, 30, 160], [70, -40, 30, 30, 200]].forEach(b => { if (clearOf(b[0], b[1], Math.max(b[2], b[3]) * .72 + 12)) boxes.push(b); });
     this.blds = boxes;
     const im = new THREE.InstancedMesh(new THREE.BoxGeometry(1, 1, 1).translate(0, .5, 0), bm, boxes.length);
     const m4 = new THREE.Matrix4(), col = new THREE.Color(), pal = ['#2a3a6a', '#3a2550', '#1f3f4a', '#4a2030', '#2b2b3b', '#5a1a32'];
@@ -204,8 +208,8 @@ export class World {
     if (this.shell) this.shell.visible = outside;
     O.room.backdrop && (O.room.backdrop.visible = !outside && z !== 'g');
     // outdoors: moonlight and a violet sky light; the range downstairs gets an even work light
-    this.moon.intensity = outside ? 1.1 : z === 'g' ? .7 : 0; this.hemi.intensity = outside ? .55 : z === 'g' ? 1.15 : 0;
-    this.hemi.color.set(z === 'g' ? '#fff1e2' : '#6a5cff'); this.hemi.groundColor.set(z === 'g' ? '#3a2a30' : '#2a0912');
+    this.moon.intensity = z === 'r' ? 1.5 : outside ? 1.1 : z === 'g' ? .7 : 0; this.hemi.intensity = z === 'r' ? 1.05 : outside ? .55 : z === 'g' ? 1.15 : 0;
+    this.hemi.color.set(z === 'g' ? '#fff1e2' : z === 'r' ? '#d9ddff' : '#6a5cff'); this.hemi.groundColor.set(z === 'g' ? '#3a2a30' : z === 'r' ? '#2a1a22' : '#2a0912');
     O.scene.fog.near = outside ? FOG.near : 1e5; O.scene.fog.far = outside ? FOG.far : 2e5;
     if (O.onZone) O.onZone(z);
   }
