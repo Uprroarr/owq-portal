@@ -1,0 +1,36 @@
+rules_version = '2';
+// Only Winners & Quitters portal (website version). Paste into Firebase console > Firestore Database > Rules, then Publish.
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedIn() { return request.auth != null && request.auth.token.email_verified == true; }
+    function email() { return request.auth.token.email.lower(); }
+    function isOwner() { return signedIn() && email() == '__OWNER_EMAIL__'; }
+    function isMember() { return signedIn() && (isOwner() || exists(/databases/$(database)/documents/members/$(email()))); }
+    function isAdmin() { return isOwner() || (isMember() && get(/databases/$(database)/documents/members/$(email())).data.role == 'admin'); }
+
+    // who may open the portal (document id = Google email)
+    match /members/{e} {
+      allow read: if isMember();
+      allow create: if isAdmin();
+      allow update, delete: if isAdmin() && (resource.data.role != 'owner' || isOwner());
+    }
+    // "request access" from people who are not approved yet
+    match /requests/{e} {
+      allow create, update: if signedIn() && e == email();
+      allow read, delete: if isAdmin() || (signedIn() && e == email());
+    }
+    // access codes and voice relay settings
+    match /cfg/{d} {
+      allow read: if isMember();
+      allow write: if isAdmin();
+    }
+    // each person's private data
+    match /data/users/{uid}/{rest=**} {
+      allow read, write: if isMember() && request.auth.uid == uid;
+    }
+    // everything else the portal shares with the team
+    match /{coll}/{rest=**} {
+      allow read, write: if isMember() && !(coll in ['members', 'requests', 'cfg', 'data']);
+    }
+  }
+}

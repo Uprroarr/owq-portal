@@ -1,0 +1,15 @@
+from playwright.sync_api import sync_playwright
+with sync_playwright() as p:
+    b=p.chromium.launch(executable_path='/opt/pw-browsers/chromium',args=['--autoplay-policy=no-user-gesture-required'])
+    pg=b.new_page(viewport={'width':1280,'height':760})
+    errs=[];pg.on('pageerror',lambda e:errs.append(str(e)))
+    pg.add_init_script("window.__au=[];const O=window.Audio;window.Audio=function(s){const a=new O(s);window.__au.push(a);return a}")
+    pg.goto('file:///mnt/user-data/outputs/owq-command-station-v2.html');pg.wait_for_timeout(3500)
+    print('autoplay allowed:',pg.evaluate("__au.map(a=>({t:a.currentTime>0,paused:a.paused,loop:a.loop}))"),errs)
+    b2=p.chromium.launch(executable_path='/opt/pw-browsers/chromium')
+    pg=b2.new_page(viewport={'width':1280,'height':760})
+    pg.add_init_script("window.__au=[];const O=window.Audio;window.Audio=function(s){const a=new O(s);window.__au.push(a);return a}")
+    pg.goto('file:///mnt/user-data/outputs/owq-command-station-v2.html');pg.wait_for_timeout(2500)
+    print('default policy before click:',pg.evaluate("__au.map(a=>({playing:!a.paused&&a.currentTime>0}))"),pg.evaluate("LB.st"))
+    pg.mouse.click(300,300);pg.wait_for_timeout(1200)
+    print('after first click:',pg.evaluate("__au.map(a=>({playing:!a.paused&&a.currentTime>0}))"),pg.evaluate("LB.st"))

@@ -1,0 +1,17 @@
+{
+  "rules": {
+    "members": {
+      ".read": false,
+      "$k": {
+        ".write": "auth != null && auth.token.email_verified == true && (auth.token.email.toLowerCase() == '__OWNER_EMAIL__' || root.child('members').child(auth.token.email.toLowerCase().replace('.', ',')).val() == 'admin')"
+      }
+    },
+    "rooms": {
+      ".read": "auth != null && auth.token.email_verified == true && root.child('members').child(auth.token.email.toLowerCase().replace('.', ',')).exists()",
+      ".write": "auth != null && auth.token.email_verified == true && root.child('members').child(auth.token.email.toLowerCase().replace('.', ',')).exists()",
+      "$room": {
+        "e": { ".indexOn": ["at"] }
+      }
+    }
+  }
+}

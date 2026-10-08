@@ -1,0 +1,4 @@
+global.window=global;global.innerWidth=1366;global.innerHeight=860;global.performance={now:()=>Date.now()};global.document={hidden:false};
+eval(require('fs').readFileSync(process.argv[2]||'gx/gx_engine.js','utf8').replace(/^var GX=/m,'global.GX='));
+const cities=[['New York',40.71,-74.01],['Dubai',25.2,55.27],['Tokyo',35.68,139.69],['Chicago',41.88,-87.63],['London',51.51,-0.13],['Sydney',-33.87,151.21],['Warsaw',52.23,21.01],['Sao Paulo',-23.55,-46.63],['Paris',48.86,2.35],['Hong Kong',22.32,114.17],['Anchorage',61.22,-149.9]];
+for(const [n,la,lo] of cities){const I=GX.cityInfo(la,lo);console.log(n.padEnd(10),JSON.stringify({ci:I.ci,cls:I.cls,R:I.R,RB:+I.RB.toFixed(2),h:+I.h.toFixed(3),Tc:+(I.Tc||0).toFixed(3),T:I.T,sky:I.sky,mid:I.mid,pop:I.pop,aim:I.aim,style:I.style,sea:I.sea,riv:I.rivT}))}

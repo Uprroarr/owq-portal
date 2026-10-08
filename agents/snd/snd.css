@@ -1,0 +1,42 @@
+/*SNDcss*/
+.sndb{position:relative;background:#0f0f15;border:1px solid var(--ln);color:var(--tx);width:38px;height:34px;padding:0;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:.2s;flex:none}
+.sndb:hover,.sndb.on{border-color:var(--red)}.sndb.on{box-shadow:0 0 12px #ff1f4f55}.sndb.mu{color:var(--red)}
+.sndb svg{width:19px;height:19px;display:block}
+.sndp{position:fixed;z-index:420;width:340px;max-width:calc(100vw - 16px);max-height:min(80vh,640px);overflow:auto;overscroll-behavior:contain;padding:12px 14px;background:linear-gradient(180deg,#15141c,#0c0c12);border:1px solid #ff1f4f66;box-shadow:0 24px 70px rgba(0,0,0,.72),0 0 32px #ff1f4f22;font:12px Verdana,sans-serif;color:var(--tx);animation:sndin .18s ease-out;outline:none}
+.sndp[hidden]{display:none}
+@keyframes sndin{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+.sndp.sheet{left:8px!important;right:8px!important;bottom:8px!important;top:auto!important;width:auto;max-width:none;max-height:78vh}
+.sndh{display:flex;align-items:center;justify-content:space-between;padding:0 0 9px;margin:0 0 4px;border-bottom:1px solid var(--ln)}
+.sndh b{font-size:11px;letter-spacing:3px}
+.sndp .sndx{background:none;border:1px solid var(--ln);color:var(--mut);width:28px;height:28px;padding:0;cursor:pointer;font:16px/1 Verdana,sans-serif;letter-spacing:0}
+.sndp .sndx:hover{color:#fff;border-color:var(--red)}
+.snds{padding:6px 0 2px}.snds+.snds{border-top:1px solid var(--ln);margin-top:6px;padding-top:10px}
+.snds h5{margin:0 0 4px;font:700 10px Verdana,sans-serif;letter-spacing:2.5px;color:var(--red)}
+.sndr{display:grid;grid-template-columns:30px minmax(0,1fr) auto;grid-template-areas:"m l o" "m s s";column-gap:9px;row-gap:3px;align-items:center;padding:6px 0}
+.sndp .sndm{grid-area:m;width:30px;height:30px;padding:0;display:grid;place-items:center;background:#0f0f15;border:1px solid var(--ln);color:var(--tx);cursor:pointer;letter-spacing:0}
+.sndp .sndm svg{width:16px;height:16px}.sndp .sndm:hover{border-color:var(--red)}
+.sndr.mu .sndm{color:var(--red);border-color:#ff1f4f88}
+.sndp label.sndl{grid-area:l;display:flex;align-items:center;gap:7px;min-width:0;margin:0;font-size:11px;color:var(--tx);cursor:default}
+.sndl b{font-size:11px;letter-spacing:1px;text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sndl small{color:var(--mut);font-size:10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0;flex:1 1 auto}
+.sndr:not(.sndpr) .sndl b{flex:none}
+.sndpr .sndl b{text-transform:none;letter-spacing:.3px}
+.sndr output{grid-area:o;font:700 11px Verdana,sans-serif;min-width:46px;text-align:right}
+.sndr.mu output{color:var(--red)}
+.sndp input[type=range]{grid-area:s;-webkit-appearance:none;appearance:none;width:100%;height:22px;margin:0;padding:0;border:0;background:transparent;cursor:pointer;accent-color:#ff1f4f;--v:100%}
+.sndp input[type=range]:focus{outline:none}.sndp input[type=range]:focus-visible{outline:1px solid #ff1f4f99;outline-offset:2px}
+.sndp input[type=range]::-webkit-slider-runnable-track{height:6px;border-radius:3px;background:linear-gradient(90deg,#ff1f4f 0,#ff5a7d var(--v),#2b2b36 var(--v))}
+.sndp input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;width:16px;height:16px;margin-top:-5px;border-radius:50%;background:#fff;border:2px solid #ff1f4f;box-shadow:0 0 10px #ff1f4faa}
+.sndp input[type=range]::-moz-range-track{height:6px;border-radius:3px;background:#2b2b36;border:0}
+.sndp input[type=range]::-moz-range-progress{height:6px;border-radius:3px;background:#ff1f4f}
+.sndp input[type=range]::-moz-range-thumb{width:14px;height:14px;border-radius:50%;background:#fff;border:2px solid #ff1f4f;box-shadow:0 0 10px #ff1f4faa}
+.sndr.mu input[type=range]{opacity:.45}
+.snddot{width:7px;height:7px;border-radius:50%;background:var(--ok);flex:none;opacity:0;transition:opacity .2s}
+.sndpr.sp .snddot{opacity:1;box-shadow:0 0 8px var(--ok)}
+.sndp label.sndt{display:flex;align-items:center;gap:8px;margin:7px 0 2px;font-size:11px;color:var(--mut);cursor:pointer}
+.sndp .sndt input{width:16px;height:16px;margin:0;padding:0;accent-color:#ff1f4f;flex:none}
+.snde{margin:6px 0 2px;color:var(--mut);font-size:11px;line-height:1.55}
+.sndf{display:flex;align-items:center;justify-content:space-between;gap:10px;border-top:1px solid var(--ln);margin-top:8px;padding-top:10px}
+.sndf small{color:var(--mut);font-size:10px}.sndf .btn{margin:0;padding:6px 12px}
+.redmo .sndp{animation:none}
+/*SNDcssend*/

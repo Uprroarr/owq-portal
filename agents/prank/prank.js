@@ -1,0 +1,26 @@
+/*PRANK: owner's joke on Austin. Opening the Sales Floor shows a "Sales Floor Premium $9.99/month" pop-up that cannot be closed.
+  Nothing is collected or charged: there are no payment fields and the buttons only change the pop-up. Remove by setting PRK.on=false. */
+var PRK={on:false,who:'Austin Vardzel',shown:0,step:0};
+function prkActive(){return PRK.on&&typeof WHO!=='undefined'&&WHO===PRK.who}
+function prkOnFloor(){try{return tab==='Team Chat'&&CH.ch==='__voice'}catch(e){return false}}
+function prkCss(){if(document.getElementById('prkS'))return;const s=document.createElement('style');s.id='prkS';s.textContent=`#prk,#prk *{font-family:Verdana,Geneva,sans-serif!important;box-sizing:border-box}#prk{position:fixed;inset:0;z-index:2147483000;background:radial-gradient(ellipse at 50% 30%,rgba(255,31,79,.22),rgba(4,2,6,.94) 60%);display:flex;align-items:center;justify-content:center;padding:16px;-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);font-family:Verdana,sans-serif}
+#prk .prkc{width:min(520px,100%);background:linear-gradient(180deg,#16101a,#0b080d);border:1px solid #ff1f4f88;box-shadow:0 0 60px #ff1f4f55,inset 0 0 0 1px #ffffff10;padding:28px 26px 24px;text-align:center;color:#fff;animation:prkIn .45s cubic-bezier(.2,1.4,.4,1)}
+@keyframes prkIn{from{transform:scale(.85);opacity:0}}#prk .prkt{display:inline-block;font:700 10px Verdana;letter-spacing:.3em;color:#ffcf40;border:1px solid #ffcf4066;padding:5px 10px;margin-bottom:14px}
+#prk h2{margin:0 0 6px;font-size:24px;letter-spacing:.12em}#prk .prkp{font-size:44px;font-weight:900;margin:14px 0 2px;color:#ff1f4f;text-shadow:0 0 22px #ff1f4f;opacity:1!important;animation:none!important}#prk .prkp small{font-size:15px;color:#bbb;font-weight:700}
+#prk p{color:#c9bfc6;font-size:13px;line-height:1.6;margin:8px 0}#prk ul{list-style:none;padding:0;margin:14px 0 18px;text-align:left;display:inline-block}#prk li{font-size:13px;margin:6px 0;color:#eee}#prk li b{color:#3ddc97;margin-right:8px}
+#prk button{display:block;width:100%;margin:8px 0 0;padding:14px;border:0;cursor:pointer;font:800 13px Verdana;letter-spacing:.14em}#prk .prky{background:#ff1f4f;color:#fff;box-shadow:0 0 24px #ff1f4f88}#prk .prkn{background:transparent;color:#9a8f97;border:1px solid #3a2f37}
+#prk .prkf{font-size:10px;color:#7d737a;margin-top:14px;line-height:1.5}#prk .prks{width:44px;height:44px;border-radius:50%;border:4px solid #ff1f4f33;border-top-color:#ff1f4f;margin:18px auto;animation:prkSp 1s linear infinite}@keyframes prkSp{to{transform:rotate(360deg)}}
+#prk .prksh{animation:prkSh .4s}@keyframes prkSh{25%{transform:translateX(-10px)}75%{transform:translateX(10px)}}`;document.head.appendChild(s)}
+function prkRender(){const d=document.getElementById('prk');if(!d)return;const c=d.querySelector('.prkc');
+ if(PRK.step===0)c.innerHTML=`<div class=prkt>NEW &middot; SALES FLOOR PREMIUM</div><h2>UPGRADE REQUIRED</h2><p>Starting today, the Sales Floor is a premium feature. Voice, the 3D office, emotes and screen sharing now need an active Sales Floor Premium plan.</p>
+  <div class=prkp>$9.99<small> / month</small></div><ul><li><b>&#10003;</b>Unlimited voice on the Sales Floor</li><li><b>&#10003;</b>3D office, emotes and the bell</li><li><b>&#10003;</b>Screen sharing to the TV</li><li><b>&#10003;</b>Priority seat by the window</li></ul>
+  <button class=prky onclick="prkYes()">SUBSCRIBE &middot; $9.99/MO</button><button class=prkn onclick="prkNo()">No thanks</button><div class=prkf>Billed monthly. Your plan renews automatically. Premium is required to enter the Sales Floor.</div>`;
+ else if(PRK.step===1)c.innerHTML=`<div class=prkt>SALES FLOOR PREMIUM</div><h2>PROCESSING</h2><div class=prks></div><p>Setting up your subscription&hellip;</p>`;
+ else c.innerHTML=`<div class=prkt>SALES FLOOR PREMIUM</div><h2>PENDING APPROVAL</h2><div class=prks></div><p>Your subscription request was sent to the agency owner for approval.</p><p>The Sales Floor will unlock as soon as it is approved. Please keep this window open.</p>`}
+function prkShow(){if(document.getElementById('prk'))return;prkCss();const d=document.createElement('div');d.id='prk';d.setAttribute('role','dialog');d.setAttribute('aria-modal','true');d.innerHTML='<div class=prkc></div>';document.body.appendChild(d);prkRender();
+ try{if(typeof VC!=='undefined'&&VC.on&&typeof vcLeave==='function')vcLeave()}catch(e){}}
+function prkYes(){PRK.step=1;prkRender();setTimeout(()=>{PRK.step=2;prkRender()},2600)}
+function prkNo(){const c=document.querySelector('#prk .prkc');if(!c)return;c.classList.remove('prksh');void c.offsetWidth;c.classList.add('prksh');let f=c.querySelector('.prkf');if(f)f.innerHTML='<b style="color:#ff6f8e">Sales Floor Premium is required to continue.</b>'}
+document.addEventListener('keydown',e=>{if(document.getElementById('prk')&&e.key==='Escape'){e.stopPropagation();e.preventDefault()}},true);
+setInterval(()=>{try{if(prkActive()&&prkOnFloor())prkShow();else if(!prkActive()){const d=document.getElementById('prk');if(d)d.remove()}}catch(e){}},600);
+(function(){const w=setInterval(()=>{if(typeof vcJoin!=='function')return;clearInterval(w);const _j=vcJoin;vcJoin=async function(){if(prkActive()){prkShow();return}return _j.apply(this,arguments)}},300)})();

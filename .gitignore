@@ -1,0 +1,7 @@
+node_modules/
+dist/
+*.html
+!web/test/keep.html
+web/private/
+*.png
+*.log

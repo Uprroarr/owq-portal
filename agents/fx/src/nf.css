@@ -1,0 +1,34 @@
+/*NFcss*/
+#nfg{position:fixed;inset:0;z-index:151;pointer-events:none;overflow:hidden}
+#nfc{position:fixed;inset:0;width:100vw;height:100vh;z-index:152;pointer-events:none}
+.nf-fly{position:absolute;left:0;top:0;will-change:transform;filter:drop-shadow(0 0 6px #ff1f4f88)}
+.nf-fly-info{filter:drop-shadow(0 0 6px #ffcf4066)}
+.nf-fly svg{display:block;overflow:visible}
+.nf-flk{transform-origin:14px 10px;animation:nfflk .09s linear infinite alternate}
+.nf-flk2{transform-origin:12px 44px;animation:nfflk2 .09s linear infinite alternate}
+@keyframes nfflk{from{transform:scaleX(.8)}to{transform:scaleX(1.25)}}
+@keyframes nfflk2{from{transform:scaleY(.8)}to{transform:scaleY(1.25)}}
+.pp.nf-wait{opacity:0;animation:none!important}
+.pp.nf-ig{animation-fill-mode:both}
+.pp.nf-k-ok{animation:nfok .4s cubic-bezier(.2,.9,.3,1) both}
+.pp.nf-k-warn{animation:nfwarn .3s cubic-bezier(.2,.9,.2,1) both,nfpulse .5s ease-out .28s 2}
+.pp.nf-k-info{animation:nfinfo .46s cubic-bezier(.2,1.2,.4,1) both}
+.pp.nf-k-plain,.pp.nf-k-rm{animation:nfrm .15s ease-out both}
+@keyframes nfok{0%{opacity:0;transform:scale(.55);filter:blur(7px) brightness(2.4)}45%{opacity:1;filter:blur(1px) brightness(1.7)}100%{opacity:1;transform:none;filter:none}}
+@keyframes nfwarn{0%{opacity:0;transform:translateX(-26px) scale(1.1)}60%{opacity:1;transform:translateX(4px) scale(.99)}100%{opacity:1;transform:none}}
+@keyframes nfpulse{0%{box-shadow:0 8px 30px #000a,0 0 0 0 #ff1f4f99}100%{box-shadow:0 8px 30px #000a,0 0 0 14px #ff1f4f00}}
+@keyframes nfinfo{0%{opacity:0;transform:translateY(30px) scale(.95)}70%{opacity:1;transform:translateY(-3px)}100%{opacity:1;transform:none}}
+@keyframes nfrm{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:none}}
+.pp.nf-c-info.nf-ig::after,.pp.nf-c-info:not(.nf-wait)::after{content:"";position:absolute;left:0;top:0;bottom:0;width:16px;background:linear-gradient(90deg,color-mix(in srgb,var(--sc) 60%,transparent),transparent);pointer-events:none;animation:nfidle .22s steps(2) infinite alternate}
+@keyframes nfidle{from{opacity:.15}to{opacity:.5}}
+.nf-gone{pointer-events:none!important;overflow:visible!important;will-change:transform,opacity;animation:none!important;box-shadow:0 8px 30px #000a,0 0 24px color-mix(in srgb,var(--sc) 35%,transparent)}
+.nf-gone .pt{animation:none!important}
+.nf-gone::after{display:none!important}
+.nf-fl{position:absolute;left:50%;top:100%;width:24px;height:46px;margin-top:-2px;transform:translateX(-50%) scaleY(.4);transform-origin:top center;opacity:0;pointer-events:none;background:linear-gradient(#fff6d0,#ffcf40 35%,#ff1f4f 70%,transparent);clip-path:polygon(0 0,100% 0,62% 100%,38% 100%);filter:blur(.6px)}
+.nf-gone-rm{transition:opacity .15s,transform .15s}
+.nf-gone-rm.go{opacity:0;transform:translateY(-12px)}
+@media(prefers-reduced-motion:reduce){.pp.nf-k-ok,.pp.nf-k-warn,.pp.nf-k-info{animation:nfrm .15s ease-out both}.pp.nf-c-info::after{animation:none!important}}
+.redmo .pp.nf-k-ok,.redmo .pp.nf-k-warn,.redmo .pp.nf-k-info{animation:nfrm .15s ease-out both}
+.redmo .pp.nf-c-info::after{animation:none!important}
+body.hush #nfc,body.hush #nfg{visibility:hidden}
+/*NFcssend*/

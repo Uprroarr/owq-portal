@@ -1,0 +1,2 @@
+nodes 239 239 timers 0
+RESULT 24 / 24

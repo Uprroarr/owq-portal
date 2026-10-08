@@ -1,0 +1,61 @@
+/*DKcss: Command Deck restyle (deck builder). Everything is scoped under .dk-root, other pages are untouched */
+.dk-root{position:relative;container-type:inline-size;container-name:dk;overflow-x:clip}
+.dk-root .dk-n{font-variant-numeric:tabular-nums}
+/* the classic per-render card fades, typewriter lines and bar grows would replay on every live refresh: the deck runs its own entrance */
+.dk-root .c,.dk-root .bl,.dk-root .gp>i b,.dk-root .rd,.dk-root .ln2,.dk-root .r3{animation:none}
+.dk-root .ln2{stroke-dashoffset:0}
+.dk-root .dk-hd{align-items:center}
+.dk-root .dk-hd .dk-hdt{min-width:0}
+.dk-root .dk-act{display:flex;flex-wrap:wrap;gap:6px;align-items:center;justify-content:flex-end}
+.dk-root .dk-act .btn{margin:0}
+.dk-root .mod:focus-visible,.dk-root .qr:focus-visible,.dk-root .ck:focus-visible,.dk-root .cbr:focus-visible{outline:2px solid #ffcf40;outline-offset:2px}
+.dk-root .qr{min-height:22px}
+/* sparkline */
+.dk-root .dk-spw{position:relative;margin-top:10px;height:32px}
+.dk-root .dk-spw svg{display:block;width:100%;height:100%;overflow:visible}
+.dk-root .dk-spl{fill:none;stroke:#ff1f4f;stroke-width:2.2;stroke-linejoin:round;stroke-linecap:round}
+.dk-root .dk-sph{position:absolute;right:-3px;width:7px;height:7px;margin-top:-3.5px;border-radius:50%;background:#fff;box-shadow:0 0 0 2px rgba(255,31,79,.6),0 0 12px #ff1f4f}
+/* entrance (first render per page load only; .dk-in is never set on live refreshes after the first 2.6 s) */
+@keyframes dkUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:none}}
+@keyframes dkFade{from{opacity:0}to{opacity:1}}
+@keyframes dkPop{from{opacity:0;transform:scale(.86)}to{opacity:1;transform:none}}
+@keyframes dkDraw{from{stroke-dashoffset:1}to{stroke-dashoffset:0}}
+@keyframes dkArc{from{stroke-dasharray:0 100}}
+@keyframes dkRing{from{stroke-dasharray:0 var(--c)}}
+@keyframes dkGrow{from{transform:scaleX(0)}to{transform:none}}
+@keyframes dkSpin{to{transform:rotate(360deg)}}
+@keyframes dkPing{0%{transform:scale(.6);opacity:.9}100%{transform:scale(2.4);opacity:0}}
+@keyframes dkBlink{0%,100%{opacity:1}50%{opacity:.25}}
+.dk-root.dk-in .dk-spl{stroke-dasharray:1;animation:dkDraw 1.6s cubic-bezier(.3,.7,.2,1) both;animation-delay:calc(.35s + var(--dke))}
+.dk-root.dk-in .dk-spa{animation:dkFade 1.2s ease both;animation-delay:calc(.9s + var(--dke))}
+.dk-root.dk-in .dk-sph{animation:dkPop .5s ease both;animation-delay:calc(1.7s + var(--dke))}
+.dk-root.dk-in .bl{animation:reveal 1s steps(40) both;animation-delay:calc(.5s + var(--i,0)*.25s + var(--dke))}
+.dk-root.dk-in .gp>i b{animation:grow 1.1s cubic-bezier(.2,.8,.2,1) both;animation-delay:calc(.6s + var(--dke))}
+.dk-root.dk-in .rd{animation:dkPop .9s cubic-bezier(.2,.8,.2,1) both;animation-delay:calc(.5s + var(--dke))}
+/* celebration: ring flash + sparks, only when the goal crosses 25/50/75/100% or a policy lands */
+.dk-root .dk-burst{position:absolute;left:50%;top:50%;width:0;height:0;pointer-events:none;z-index:6}
+.dk-root .dk-burst i{position:absolute;left:-90px;top:-90px;width:180px;height:180px;border-radius:50%;border:2px solid #ffcf40;opacity:0;animation:dkFlash 1.3s cubic-bezier(.2,.8,.2,1) forwards}
+.dk-root .dk-burst i:nth-child(2){border-color:#fff;animation-delay:.12s}
+.dk-root .dk-burst i:nth-child(3){border-color:#ff1f4f;animation-delay:.24s}
+.dk-root .dk-burst b{position:absolute;left:-3px;top:-3px;width:6px;height:6px;border-radius:50%;background:#ffcf40;box-shadow:0 0 8px #ffcf40;opacity:0;transform:rotate(var(--a)) translateY(0);animation:dkSpark 1.2s ease-out forwards}
+.dk-root .dk-burst-pol b{background:#fff;box-shadow:0 0 8px #ff1f4f}
+@keyframes dkFlash{0%{opacity:.95;transform:scale(.3)}100%{opacity:0;transform:scale(1.9)}}
+@keyframes dkSpark{0%{opacity:1;transform:rotate(var(--a)) translateY(-20px)}100%{opacity:0;transform:rotate(var(--a)) translateY(-150px)}}
+/* still tier (reduced motion or graphics 'still'): nothing moves, everything is already in its final state */
+.dk-root.dk-t-still *,.dk-root.dk-t-still *::before,.dk-root.dk-t-still *::after{animation:none!important;transition:none!important}
+/* phone: every tap target at least 44px */
+@container dk (max-width:640px){
+ .dk-root .btn{min-height:44px}
+ .dk-root .qr,.dk-root .cbr,.dk-root .dk-ni{min-height:44px;box-sizing:border-box}
+ .dk-root .qr{align-items:center}
+ .dk-root .gp{min-height:44px;display:flex;flex-direction:column;justify-content:center;margin:4px 0}
+}
+
+/*DKSW*/
+.dk-root .dk-sw{display:inline-flex;gap:0;margin-left:8px;border:1px solid rgba(255,207,64,.45);background:rgba(10,8,12,.7)}
+.dk-root .dk-sw button{min-width:36px;min-height:34px;padding:0 8px;background:none;border:0;border-left:1px solid rgba(255,207,64,.2);color:#cdb98a;font:700 11px Verdana,sans-serif;letter-spacing:1px;cursor:pointer}
+.dk-root .dk-sw button:first-child{border-left:0}
+.dk-root .dk-sw button.on{background:#ffcf40;color:#160f02}
+.dk-root .dk-sw button:focus-visible{outline:2px solid #ffcf40;outline-offset:2px}
+@container dk (max-width:640px){.dk-root .dk-sw button{min-height:44px;min-width:44px}}
+/*DKSWend*/

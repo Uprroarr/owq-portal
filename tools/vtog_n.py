@@ -1,0 +1,22 @@
+from playwright.sync_api import sync_playwright
+F='file:///mnt/user-data/outputs/owq-command-station-v2.html'
+with sync_playwright() as p:
+    b=p.chromium.launch(executable_path='/opt/pw-browsers/chromium',args=['--use-angle=swiftshader','--use-gl=angle','--enable-unsafe-swiftshader','--ignore-gpu-blocklist','--no-sandbox'])
+    ctx=b.new_context(viewport={'width':1100,'height':700});ctx.add_init_script("try{localStorage.setItem('owq_gq','still')}catch(e){}");pg=ctx.new_page();errs=[];pg.on('pageerror',lambda e:errs.append(str(e)[:200]))
+    pg.goto(F,timeout=180000);pg.wait_for_timeout(2500)
+    import lgx;lgx.login(pg,6);pg.wait_for_timeout(3000)
+    pg.evaluate("CH.ch='__voice';openTab('Team Chat')");pg.wait_for_timeout(3000)
+    print('office', pg.evaluate("!!document.querySelector('#vofm .vo3')"))
+    pg.evaluate("voToggleList()");pg.wait_for_timeout(1500)
+    print('classic', pg.evaluate("[!!document.querySelector('.vo3'),document.getElementById('main').innerHTML.includes('3D office view'),document.getElementById('main').innerHTML.includes('Sales Floor')]"))
+    pg.evaluate("voToggleList()");pg.wait_for_timeout(2500)
+    print('office again', pg.evaluate("[!!document.querySelector('#vofm .vo3'),VO3.info().ready]"))
+    pg.evaluate("voExp()");pg.wait_for_timeout(800)
+    print('expanded', pg.evaluate("[document.getElementById('vofm').classList.contains('vox'),getComputedStyle(document.getElementById('vofm')).position]"))
+    pg.keyboard.press('Escape');pg.wait_for_timeout(500)
+    print('esc', pg.evaluate("document.getElementById('vofm').classList.contains('vox')"))
+    pg.evaluate("voDemo(1)");pg.wait_for_timeout(9000)
+    print('demo', pg.evaluate("JSON.stringify(VO3.info())"))
+    pg.evaluate("openTab('Command Deck')");pg.wait_for_timeout(1500)
+    print('left tab, loop stopped', pg.evaluate("!VO3.dbg().running"))
+    print(errs[:5]);b.close()

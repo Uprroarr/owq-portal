@@ -1,0 +1,16 @@
+inventory a rc=0
+inventory b rc=0
+inventory c rc=0
+behave rc=1
+perf rc=0
+reg a e2e3_n.py: e2e3_n.py rc=0
+reg a vtog_n.py: vtog_n.py rc=0
+reg b e2e3_n.py: e2e3_n.py rc=0
+reg b vtog_n.py: vtog_n.py rc=0
+reg c e2e3_n.py: e2e3_n.py rc=0
+reg c vtog_n.py: vtog_n.py rc=0
+mr t4_mobile a rc=0
+mr t4_mobile b rc=0
+mr t4_mobile c rc=0
+mr t2_local all retry rc=0
+FINALDONE

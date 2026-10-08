@@ -1,0 +1,10 @@
+export const ROOM={W:9,ZB:-7,ZF:5.6,H:5.2};
+const ROWS={b:{z:-3.8,aisle:-5.6},m:{z:-0.9,aisle:-2.65},f:{z:2.0,aisle:0.25}};
+const ORDER=[['m',-1.6],['m',1.6],['b',0],['b',-3.15],['b',3.15],['m',-4.7],['m',4.7],['f',0],['b',-6.3],['b',6.3],['f',-3.15],['f',3.15]];
+export const SEATS=ORDER.map(([r,x],i)=>({i,row:r,x,z:ROWS[r].z,cz:ROWS[r].z-.62,sz:ROWS[r].z-.58,aisle:ROWS[r].aisle}));
+export const TVP={x:-.94,y:3.04,z:-6.86,w:6.8,h:3.825};
+export const ELEV={x:8,z:-7,spawn:{x:8,z:-7.95},out:{x:8,z:-6.3}};
+export const COLX=7.8;
+export const BELLP={x:6.35,z:-6.2,hx:6.75,hy:1.72};
+export const pathIn=s=>[[ELEV.out.x,ELEV.out.z],[COLX,s.aisle],[s.x,s.aisle],[s.x,s.sz]];
+export const pathOut=s=>[[s.x,s.aisle],[COLX,s.aisle],[ELEV.out.x,ELEV.out.z],[ELEV.spawn.x,ELEV.spawn.z]];

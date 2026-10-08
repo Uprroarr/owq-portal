@@ -1,0 +1,17 @@
+/*TOSScss*/
+.voem .voem-t{grid-column:span 2;min-width:0;flex-direction:row;justify-content:center;gap:10px;padding:9px 8px;border-color:rgba(255,31,79,.5);background:rgba(255,31,79,.14)}
+.voem .voem-t b{font-size:22px;flex:none}.voem .voem-t small{font-size:9.5px;letter-spacing:.1em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.votp{width:min(540px,calc(100vw - 40px))}
+.votph{display:flex;align-items:center;gap:10px;margin:0 0 10px}
+.votph b{font:700 11px Verdana,sans-serif;letter-spacing:.14em;color:#fff}
+.votb{width:30px;height:30px;flex:none;border-radius:10px;border:1px solid rgba(255,255,255,.14);background:rgba(255,255,255,.06);color:#fff;cursor:pointer;padding:0;font-size:16px;line-height:1}
+.votb:hover{border-color:#ff1f4f;background:rgba(255,31,79,.25)}
+.votg{display:grid;grid-template-columns:repeat(auto-fill,minmax(98px,1fr));gap:8px}
+.votg button{display:flex;flex-direction:column;align-items:center;gap:5px;padding:10px 6px;border-radius:14px;border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.05);color:#fff;cursor:pointer;transition:transform .14s,background .14s,border-color .14s;min-width:0}
+.votg button:hover:not(:disabled){transform:translateY(-2px);background:rgba(255,31,79,.22);border-color:#ff1f4f}
+.votg button:disabled{opacity:.4;cursor:not-allowed}
+.votg b{font:700 11px Verdana,sans-serif;letter-spacing:.04em;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.votg small{font:9px Verdana,sans-serif;letter-spacing:.06em;color:#ecd9e2;opacity:.8}
+.votn{display:block;margin:8px 0 0;font:10px Verdana,sans-serif;color:#ecd9e2;opacity:.75;text-align:center;line-height:1.5}
+.redmo .votg button{transition:none}
+/*TOSScssend*/
