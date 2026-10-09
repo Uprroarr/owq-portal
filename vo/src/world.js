@@ -3,10 +3,12 @@
 import * as THREE from 'three';
 import {cv, tex} from './tex.js';
 import {SKY, skyAt, skyLayout} from './sky.js';
+import {GFX, nightEnv} from './gfx.js';
 
 export const GROUNDY = -120;
 export const ROOFY = 6;        // top of the Sky Park deck on the roof
 export const RANGEY = -6;      // the Firing Range floor, one floor down
+export const ARENAY = -420;    // the 1v1 arenas are built out of sight, far below the street
 export const TOWER = {x0: -10.45, x1: 10.45, z0: -7.45, z1: 12.05, top: 5.6};
 export const ELEVP = {x: 8, z: -7.05};   // elevator doors (same shaft on every floor)
 export const FLOORS = {
@@ -101,7 +103,9 @@ export class World {
     this.group = new THREE.Group(); this.group.name = 'world'; O.scene.add(this.group);
     this.uni = {uFog: {value: FOG.color}, uFogN: {value: FOG.near}, uFogF: {value: FOG.far}, uT: {value: 0}, uGlow: {value: 1}, uTint: {value: new THREE.Color(.3, .3, .4)}};
     // outdoor lights stay in the scene (so shaders never recompile) and fade with the zone
-    this.moon = new THREE.DirectionalLight('#b8c4ff', 0); this.moon.position.set(-300, 400, 200); O.scene.add(this.moon);
+    this.moon = new THREE.DirectionalLight('#b8c4ff', 0); this.moon.position.set(-300, 400, 200); O.scene.add(this.moon, this.moon.target);
+    // the moon casts the outdoor shadows (its shadow box follows the camera); indoors it is off and its map is not redrawn
+    this.moon.castShadow = true; const sm = GFX.level === 'low' ? 1024 : 2048; this.moon.shadow.mapSize.set(sm, sm); this.moon.shadow.autoUpdate = false;
     this.hemi = new THREE.HemisphereLight('#6a5cff', '#2a0912', 0); O.scene.add(this.hemi);
     O.scene.fog = new THREE.Fog(FOG.color, 1e5, 2e5);
     this.build();
@@ -206,18 +210,49 @@ export class World {
     const inside = p.x > T.x0 + .05 && p.x < T.x1 - .05 && p.z > T.z0 + .05 && p.z < T.z1 - .2;
     if (inside && p.y > -.3 && p.y < 5.35) return 'o';
     if (inside && p.y > RANGEY - .3 && p.y < -.6) return 'g';
+    if (p.y < ARENAY + 60) return 'a';
     // the default Sales Floor camera sits just outside the open front wall: still the Sales Floor
     if (p.y > -.3 && p.y < 7 && p.x > T.x0 - .2 && p.x < T.x1 + .2 && p.z > T.z0 && p.z < T.z1 + 9) return 'o';
     if (p.y > ROOFY - .5 && p.y < ROOFY + 40 && Math.abs(p.x) < 60 && p.z > -70 && p.z < 40) return 'r';
     return 'd';
   }
+  // lighting rig per zone. Indoors the room's ceiling spotlight is the key light (on the range it hangs over the lanes).
+  // Outside the moon is the key light: a shadow-casting directional light whose shadow box follows the camera, so every
+  // car, person and lamp post near you casts a crisp shadow. Both lights always exist (no shader recompiles), and the
+  // one that isn't in use stops re-rendering its shadow map.
+  keyRig(z) {
+    const O = this.O, K = O.room && O.room.lights && O.room.lights.key, M = this.moon; if (!K) return;
+    const k0 = this.k0 || (this.k0 = {p: K.position.clone(), t: K.target.position.clone(), i: K.intensity});
+    if (z === 'o' || z === 'g') { const dy = z === 'g' ? RANGEY : 0; K.position.set(k0.p.x, k0.p.y + dy, k0.p.z); K.target.position.set(k0.t.x, k0.t.y + dy, k0.t.z); K.target.updateMatrixWorld(); K.intensity = k0.i * (z === 'g' ? .85 : 1); K.shadow.autoUpdate = true; }
+    else { K.intensity = 0; K.shadow.autoUpdate = false; }
+    const out = z === 'd' || z === 'r' || z === 'a';
+    M.shadow.autoUpdate = out;
+    if (!out) { M.intensity = z === 'g' ? .35 : 0; this.keyA = null; return; }
+    const A = z === 'a' && this.arenaKey ? this.arenaKey : z === 'r' ? {d: [.2, 1, .45], R: 50, i: 3.1, c: '#fff4e6', f: [-6, ROOFY, -8]} : {d: [-.42, .62, -.66], R: 58, i: 1.75, c: '#cdd6ff'};
+    this.keyA = A; M.intensity = A.i; M.color.set(A.c);
+    const C = M.shadow.camera; C.left = -A.R; C.right = A.R; C.top = A.R; C.bottom = -A.R; C.near = 1; C.far = 520; C.updateProjectionMatrix();
+    M.shadow.bias = -.00035; M.shadow.normalBias = .045;
+    this.keyAim(A.f ? new THREE.Vector3(A.f[0], A.f[1], A.f[2]) : (O.dir && O.dir.T) || new THREE.Vector3());
+  }
+  keyAim(f) {
+    const M = this.moon, A = this.keyA; if (!A) return;
+    const d = this._kd || (this._kd = new THREE.Vector3()); d.set(A.d[0], A.d[1], A.d[2]).normalize();
+    // snap the focus to whole shadow texels so the shadow edges don't crawl while the camera moves
+    const g = (2 * A.R) / (M.shadow.mapSize.x || 2048) * 4, fx = Math.round(f.x / g) * g, fy = Math.round(f.y / g) * g, fz = Math.round(f.z / g) * g;
+    M.position.set(fx + d.x * 240, fy + d.y * 240, fz + d.z * 240); M.target.position.set(fx, fy, fz); M.target.updateMatrixWorld();
+  }
   setZone(z) {
     if (z === this.zone) return; this.zone = z;
     const O = this.O, outside = z === 'd' || z === 'r';
+    // reflections: the office keeps its studio environment, outside (and outdoor arenas) reflect the night city
+    if (!this.envO) this.envO = {t: O.scene.environment, i: O.scene.environmentIntensity};
+    if (!this.envN) { try { this.envN = nightEnv(O.r); } catch (e) { this.envN = this.envO.t; } }
+    O.scene.environment = outside || (z === 'a' && this.arenaKey) ? this.envN : this.envO.t; O.scene.environmentIntensity = outside ? .85 : this.envO.i;
+    this.keyRig(z);
     if (this.shell) this.shell.visible = outside;
     O.room.backdrop && (O.room.backdrop.visible = !outside && z !== 'g');
     // outdoors: moonlight and a violet sky light; the range downstairs gets an even work light
-    this.moon.intensity = z === 'r' ? 1.5 : outside ? 1.1 : z === 'g' ? .7 : 0; this.hemi.intensity = z === 'r' ? 1.05 : outside ? .55 : z === 'g' ? 1.45 : 0;
+    this.hemi.intensity = z === 'r' ? 1.0 : outside ? .62 : z === 'g' ? 1.1 : z === 'a' ? .7 : 0;
     this.hemi.color.set(z === 'g' ? '#fff1e2' : z === 'r' ? '#d9ddff' : '#6a5cff'); this.hemi.groundColor.set(z === 'g' ? '#3a2a30' : z === 'r' ? '#2a1a22' : '#2a0912');
     O.scene.fog.near = outside ? FOG.near : 1e5; O.scene.fog.far = outside ? FOG.far : 2e5;
     if (O.onZone) O.onZone(z);
@@ -229,6 +264,9 @@ export class World {
     // from inside the tower the outside only shows through the west door: skip drawing it unless the camera looks that way
     let show = true;
     if (z === 'o' || z === 'g') { const d = this._d || (this._d = new THREE.Vector3()); cam.getWorldDirection(d); show = z === 'o' && d.x < -.2 && cam.position.x < 7; }
+    if (z === 'a') show = !!this.arenaSky;
     if (this.group.visible !== show) this.group.visible = show;
+    // outside the key light follows what the camera looks at
+    if (z === 'd' && this.keyA && this.O.dir && this.O.dir.T) this.keyAim(this.O.dir.T);
   }
 }
