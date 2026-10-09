@@ -70,7 +70,7 @@ export class Range {
     const H = 5.2, conc = cv(512, 512), cx = conc.getContext('2d'); cx.fillStyle = '#1b1a1f'; cx.fillRect(0, 0, 512, 512);
     const id = cx.getImageData(0, 0, 512, 512); for (let i = 0; i < id.data.length; i += 4) { const k = (Math.random() - .5) * 18; id.data[i] += k; id.data[i + 1] += k; id.data[i + 2] += k; } cx.putImageData(id, 0, 0);
     const cT = tex(conc, {mips: true}); cT.wrapS = cT.wrapT = THREE.RepeatWrapping; cT.repeat.set(4, 4);
-    const wall = mat('concrete', {key: 'rngwall', color: '#a29fab', bump: .8}), floor = mat('polished', {key: 'rngfloor', color: '#7d7f88', bump: .5, env: 1.1});
+    const wall = mat('concrete', {key: 'rngwall', color: '#a29fab', bump: .8}), floor = mat('polished', {key: 'rngfloor', color: '#53565e', bump: .55, rough: 1.6, env: .35});
     add(tiled(20.2, 18.6, 3).rotateX(-Math.PI / 2), floor, 0, Y, 2.3).receiveShadow = true;
     add(new THREE.PlaneGeometry(20.2, 18.6).rotateX(Math.PI / 2), new THREE.MeshStandardMaterial({color: '#141317', roughness: 1}), 0, Y + H, 2.3);
     add(tiled(20.2, H, 3), wall, 0, Y + H / 2, -7.0).receiveShadow = true; add(tiled(20.2, H, 3), wall, 0, Y + H / 2, 11.6, 0, Math.PI, 0);

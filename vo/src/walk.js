@@ -18,6 +18,7 @@ const CSS = `.vo3wk{position:absolute;inset:0;pointer-events:none;z-index:5;disp
 .vo3wkd{position:absolute;bottom:92px;left:16px;display:grid;grid-template-columns:52px 52px 52px;gap:6px;pointer-events:auto}
 .vo3wkd button{height:52px;border-radius:14px;border:1px solid rgba(255,255,255,.18);background:rgba(12,6,12,.7);color:#fff;font:800 16px Verdana,sans-serif;touch-action:none;-webkit-user-select:none;user-select:none;cursor:pointer}
 .vo3wkd button.on{background:#ff1f4f;border-color:#ff1f4f}.vo3wkd .e{grid-column:1}
+@media (hover:hover) and (pointer:fine){.vo3wkd,.vo3wkr,.vo3drp,.vo3flp,.vo3flq{display:none!important}}
 .vo3wkr{position:absolute;bottom:92px;right:16px;display:flex;flex-direction:column;gap:8px;pointer-events:auto}
 .vo3wkr button{width:78px;height:52px;border-radius:14px;border:1px solid rgba(255,255,255,.18);background:rgba(12,6,12,.7);color:#fff;font:800 11px Verdana,sans-serif;letter-spacing:.08em;cursor:pointer}
 .vo3wkr button.on{background:#ff1f4f;border-color:#ff1f4f}

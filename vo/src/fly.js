@@ -46,7 +46,7 @@ const CSS = `.vo3fl{position:absolute;inset:0;pointer-events:none;z-index:5;disp
 .vo3flt input{width:110px;accent-color:#ff1f4f}.vo3flt b{min-width:16px;text-align:right;color:#fff}
 .vo3flk{position:absolute;top:148px;right:14px;display:flex;flex-direction:column;gap:6px;pointer-events:auto}.vo3flk button{padding:8px 12px;border-radius:12px;border:1px solid rgba(255,255,255,.16);background:rgba(12,6,12,.72);color:#fff;font:800 10px Verdana,sans-serif;letter-spacing:.1em;cursor:pointer;text-align:left}
 .vo3flk button.on{border-color:#3ddc97;color:#bff7de}
-.vo3flg{position:absolute;left:16px;top:96px;width:236px;padding:12px 14px;border-radius:16px;background:rgba(8,5,10,.78);border:1px solid rgba(76,201,240,.4);color:#fff;font:800 10px Verdana,sans-serif;letter-spacing:.08em;display:none}.vo3flg.on{display:block}
+.vo3flg{position:absolute;left:16px;top:96px;width:250px;padding:12px 14px;border-radius:16px;background:rgba(8,5,10,.78);border:1px solid rgba(76,201,240,.4);color:#fff;font:800 10px Verdana,sans-serif;letter-spacing:.08em;display:none}.vo3flg.on{display:block}
 .vo3flg h4{margin:0 0 8px;font:900 11px Verdana,sans-serif;letter-spacing:.18em;color:#8fdcff}.vo3flg .row{display:flex;justify-content:space-between;margin:3px 0}.vo3flg .row b{color:#fff}
 .vo3flg .bar{position:relative;height:10px;margin:6px 0 2px;border-radius:5px;background:rgba(255,255,255,.08)}.vo3flg .bar i{position:absolute;top:-3px;width:10px;height:16px;margin-left:-5px;border-radius:3px;background:#ff3bd4}.vo3flg .bar:after{content:'';position:absolute;left:50%;top:-4px;width:2px;height:18px;background:rgba(255,255,255,.5)}
 .vo3flg .ok{color:#3ddc97}.vo3flg .warn{color:#ffd166}.vo3flg .bad{color:#ff3b5c}.vo3flg .lim{margin-top:8px;padding-top:7px;border-top:1px solid rgba(255,255,255,.1);font:700 8.5px Verdana,sans-serif;letter-spacing:.06em;color:#b9a3ad;line-height:1.6}
@@ -68,7 +68,7 @@ export class Fly {
     u.innerHTML = `<div class=vo3flh><b>FLYING</b> &nbsp;W S nose &middot; A D bank &middot; SHIFT / SPACE throttle (SPACE brakes on the ground) &middot; G gear &middot; T landing assist &middot; R practice landing &middot; E back to the hangar</div>
       <div class=vo3fli><div><span class=spd>0</span><small>KNOTS</small></div><div><span class=alt>0</span><small>FEET</small></div><div><span class=vs>0</span><small>FT / MIN</small></div><div><span class=thr>0</span><small>THROTTLE</small></div><div><span class=gear>DOWN</span><small>GEAR</small></div></div>
       <div class=vo3flr></div><div class=vo3flb></div><div class=vo3flf></div>
-      <div class=vo3flg><h4>LANDING GUIDE &middot; RUNWAY 27</h4><div class=row><span>DISTANCE</span><b class=gdist>-</b></div><div class=row><span>LINE UP</span><b class=gloc>-</b></div><div class=bar><i class=gl style="left:50%"></i></div>
+      <div class=vo3flg><h4>LANDING GUIDE &middot; RWY 27</h4><div class=row><span>TO THE MARKERS</span><b class=gdist>-</b></div><div class=row><span>LINE UP</span><b class=gloc>-</b></div><div class=bar><i class=gl style="left:50%"></i></div>
         <div class=row><span>GLIDE PATH</span><b class=ggs>-</b></div><div class=bar><i class=gg style="left:50%"></i></div><div class=row><span>SINK RATE</span><b class=gsink>-</b></div><div class=row><span>BANK</span><b class=gbank>-</b></div><div class=row><span>SPEED</span><b class=gspd>-</b></div><div class=row><span>GEAR</span><b class=ggear>-</b></div>
         <div class=lim></div></div>
       <label class=vo3flt title="How fast you turn with the arrow keys or WASD (same as driving)">TURNING<input type=range min=1 max=10 step=1 aria-label="Turn sensitivity"><b>5</b></label>
@@ -447,7 +447,7 @@ export class Fly {
     E.g.classList.toggle('on', show);
     if (show) {
       const km = Math.max(0, ap.dist) / 1000, sink = Math.max(0, -f.vy), bank = Math.abs(f.roll) / D2R, cls = (v, a, b) => v < a ? 'ok' : v < b ? 'warn' : 'bad';
-      E.gdist.textContent = ap.dist > 0 ? km.toFixed(2) + ' KM TO THE MARKERS' : 'OVER THE RUNWAY';
+      E.gdist.textContent = ap.dist > 0 ? km.toFixed(2) + ' KM' : 'OVER THE RUNWAY';
       E.gloc.textContent = Math.abs(ap.lat) < 4 ? 'LINED UP' : ap.lat > 0 ? 'STEER RIGHT ' + Math.round(ap.lat) + ' M' : 'STEER LEFT ' + Math.round(-ap.lat) + ' M'; E.gloc.className = Math.abs(ap.lat) < 4 ? 'ok' : Math.abs(ap.lat) < 15 ? 'warn' : 'bad';
       E.gl.style.left = clamp(50 - ap.lat * 1.2, 4, 96) + '%';
       E.ggs.textContent = Math.abs(ap.dev) < 6 ? 'ON THE GLIDE PATH' : ap.dev > 0 ? 'HIGH ' + Math.round(ap.dev) + ' M' : 'LOW ' + Math.round(-ap.dev) + ' M'; E.ggs.className = Math.abs(ap.dev) < 6 ? 'ok' : Math.abs(ap.dev) < 20 ? 'warn' : 'bad';
