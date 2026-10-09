@@ -20,7 +20,7 @@ const D2R = Math.PI / 180;
 // the Skyport, in world metres (deck top at ROOFY)
 export const RWY = {x0: 52, x1: 952, z: -14, hw: 22.5, dw: 30};   // paved half width 22.5 m, deck half width 30 m
 const THRE = 928, AIMX = THRE - 300, THRW = 66, GS = 3.5 * D2R;    // landing threshold (runway 27), aiming point, west threshold, glide slope
-const APRON = [30, 16, 172, 80], BRIDGE = [15.6, 6, 34, 20];
+const APRON = [30, 16, 172, 80], BRIDGE = [15.6, 4, 31, 10], PAD = [30, 4, 52, 16];   // the skybridge lands on a pad that joins the apron and the runway deck
 const HANGAR = {x0: 70, x1: 134, z0: 44, z1: 78, h: 18};
 const STAND = {x: 102, z: 31};                                    // where my plane waits, nose to the runway
 const CTWR = {x: 158, z: 28};
@@ -62,7 +62,7 @@ export class Fly {
     const G = this.group = new THREE.Group(); G.name = 'skyport'; parent.add(G);
     this.build(G);
     // the skybridge, the apron and the runway are part of the roof floor (walk there, ragdolls land there)
-    if (FLOORRECT.r && FLOORRECT.r.areas) FLOORRECT.r.areas.push({r: BRIDGE}, {r: APRON}, {r: [RWY.x0, RWY.z - RWY.dw, RWY.x1, RWY.z + RWY.dw]});
+    if (FLOORRECT.r && FLOORRECT.r.areas) FLOORRECT.r.areas.push({r: BRIDGE}, {r: PAD}, {r: APRON}, {r: [RWY.x0, RWY.z - RWY.dw, RWY.x1, RWY.z + RWY.dw]});
     if (!document.getElementById('vo3flcss')) { const s = document.createElement('style'); s.id = 'vo3flcss'; s.textContent = CSS; document.head.appendChild(s); }
     const u = this.ui = document.createElement('div'); u.className = 'vo3fl';
     u.innerHTML = `<div class=vo3flh><b>FLYING</b> &nbsp;W S nose &middot; A D bank &middot; SHIFT / SPACE throttle (SPACE brakes on the ground) &middot; G gear &middot; T landing assist &middot; R practice landing &middot; E back to the hangar</div>
@@ -169,8 +169,9 @@ export class Fly {
       vec2 b=abs(p-vec2(${STAND.x}.,${STAND.z + 2}.))-vec2(7.,8.);float bx=step(abs(max(b.x,b.y)),.15);
       float hs=step(abs(p.y-${(RWY.z + RWY.dw + 1.2).toFixed(2)}),.15)+step(abs(p.y-${(RWY.z + RWY.dw + 1.8).toFixed(2)}),.15)*step(.5,fract(p.x/2.));
       float y=clamp(tx+tl+bx+hs*step(70.,p.x)*step(p.x,135.),0.,1.);diffuseColor.rgb=mix(diffuseColor.rgb*(1.+m),vec3(.95,.72,.08),y);ek=y;eC=vec3(.25,.18,.02)*y;}`});
-    const apTop = new THREE.PlaneGeometry(APRON[2] - APRON[0], APRON[3] - APRON[1]).rotateX(-Math.PI / 2); apTop.translate((APRON[0] + APRON[2]) / 2, Y + .008, (APRON[1] + APRON[3]) / 2);
-    { const P = apTop.getAttribute('position'), UV = apTop.getAttribute('uv'); for (let i = 0; i < P.count; i++) UV.setXY(i, P.getX(i) / 7.5, P.getZ(i) / 7.5); } add(apTop, apM);
+    const slab = (R, y) => { const g = new THREE.PlaneGeometry(R[2] - R[0], R[3] - R[1]).rotateX(-Math.PI / 2); g.translate((R[0] + R[2]) / 2, y, (R[1] + R[3]) / 2); const P = g.getAttribute('position'), UV = g.getAttribute('uv'); for (let i = 0; i < P.count; i++) UV.setXY(i, P.getX(i) / 7.5, P.getZ(i) / 7.5); return g; };
+    add(slab(APRON, Y + .008), apM); add(slab(PAD, Y + .006), apM);
+    { const pd = mbox(PAD[2] - PAD[0], 1.2, PAD[3] - PAD[1], 4); pd.translate((PAD[0] + PAD[2]) / 2, Y - .6, (PAD[1] + PAD[3]) / 2); add(pd, deckM, {cast: true}); }
     // taxi edge lights (blue) from the stand to the runway
     const tlts = []; for (let z = RWY.z + RWY.dw + 1; z < STAND.z - 3; z += 6) [-1, 1].forEach(s => tlts.push([STAND.x + s * 5, Y + .25, z, .55, .3, .6, 3.2]));
     for (let x = 58; x < STAND.x - 5; x += 8) [-1, 1].forEach(s => tlts.push([x, Y + .25, 21 + s * 5, .55, .3, .6, 3.2])); glowPoints(G, tlts);
@@ -336,7 +337,7 @@ export class Fly {
       f.x += Math.sin(f.yaw) * f.v * dt; f.z += Math.cos(f.yaw) * f.v * dt; f.y = ROOFY; f.vy = 0;
       if (f.pitch > 4 * D2R && f.v > VR) { f.gr = 0; f.done = 0; f.stopT = 0; f.liftT = t; f.vy = Math.sin(f.pitch) * f.v; this.big('AIRBORNE', 'GEAR COMES UP ON ITS OWN · RING RUN: FLY THROUGH THE BLUE RING'); O.sfx('whee', .6); }
       // off the end or over the side: it's a long way down
-      if (!onRwyDeck(f.x, f.z) && !onRect(APRON, f.x, f.z)) { this.crash(f.x < RWY.x0 ? 'OVERRAN THE RUNWAY' : 'ROLLED OFF THE DECK'); return; }
+      if (!onRwyDeck(f.x, f.z) && !onRect(APRON, f.x, f.z) && !onRect(PAD, f.x, f.z)) { this.crash(f.x < RWY.x0 ? 'OVERRAN THE RUNWAY' : 'ROLLED OFF THE DECK'); return; }
       if (f.done && f.v < .3) { if (!f.stopT) { f.stopT = t; this.big('STOPPED', 'PRESS E TO PARK AT THE HANGAR · R TO GO AROUND AGAIN'); } }
       return;
     }
@@ -421,9 +422,9 @@ export class Fly {
     if (f.y < GROUNDY + 1.5) return 'HIT THE STREET';
     if (f.x > TOWER.x0 - 1 && f.x < TOWER.x1 + 1 && f.z > TOWER.z0 - 1 && f.z < TOWER.z1 + 1 && f.y < ROOFY + 3) return 'HIT THE OWQ TOWER';
     if (f.y < ROOFY + 16 && f.y > ROOFY - 2 && onDeck(f.x, f.z)) return 'HIT THE SKY PARK';
-    if (f.y < ROOFY + 1 && f.y > ROOFY - 2 && (onRect(APRON, f.x, f.z) || onRect(BRIDGE, f.x, f.z))) return 'TOUCHED DOWN ON THE APRON, NOT THE RUNWAY';
+    if (f.y < ROOFY + 1 && f.y > ROOFY - 2 && (onRect(APRON, f.x, f.z) || onRect(PAD, f.x, f.z) || onRect(BRIDGE, f.x, f.z))) return 'TOUCHED DOWN ON THE APRON, NOT THE RUNWAY';
     if (f.y < ROOFY + 1 && f.y > ROOFY - 2.2 && onRwyDeck(f.x, f.z) && Math.abs(f.z - RWY.z) > RWY.hw) return 'MISSED THE RUNWAY';
-    if (f.y < ROOFY - 2 && f.y > ROOFY - 3.5 && (onRwyDeck(f.x, f.z) || onRect(APRON, f.x, f.z))) return 'HIT THE DECK FROM BELOW';
+    if (f.y < ROOFY - 2 && f.y > ROOFY - 3.5 && (onRwyDeck(f.x, f.z) || onRect(APRON, f.x, f.z) || onRect(PAD, f.x, f.z))) return 'HIT THE DECK FROM BELOW';
     const H = HANGAR; if (f.x > H.x0 - 1 && f.x < H.x1 + 1 && f.z > H.z0 - 1 && f.z < H.z1 + 1 && f.y < ROOFY + H.h + 1) return 'HIT THE HANGAR';
     if ((Math.hypot(f.x - CTWR.x, f.z - CTWR.z) < 6.5 && f.y < ROOFY + 37) || (f.x > CTWR.x - 5 && f.x < CTWR.x + 9 && f.z > CTWR.z - 4.5 && f.z < CTWR.z + 6.5 && f.y < ROOFY + 6)) return 'HIT THE CONTROL TOWER';
     const W = this.O.wld, B = W && (W.bldNear ? W.bldNear(f.x, f.z) : W.blds); if (B) for (const b of B) { if (Math.abs(f.x - b[0]) < b[2] / 2 + 1.5 && Math.abs(f.z - b[1]) < b[3] / 2 + 1.5 && f.y < GROUNDY + b[4] + 1) return 'HIT A BUILDING'; }

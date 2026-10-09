@@ -187,7 +187,7 @@ export class Derby {
     // ---- light towers (LED banks aimed at the field) and the light they throw
     const ledC = cv(256, 160), lx = ledC.getContext('2d'); lx.fillStyle = '#15161b'; lx.fillRect(0, 0, 256, 160); for (let i = 0; i < 6; i++) for (let j = 0; j < 4; j++) { const g = lx.createRadialGradient(22 + i * 42, 20 + j * 40, 0, 22 + i * 42, 20 + j * 40, 17); g.addColorStop(0, '#ffffff'); g.addColorStop(.6, '#fff4dc'); g.addColorStop(1, '#15161b'); lx.fillStyle = g; lx.fillRect(i * 42 + 2, j * 40, 40, 40); }
     const ledM = BM({map: canvasTex(ledC), toneMapped: false, color: new THREE.Color(2.6, 2.5, 2.3)}), towM = mat('metal', {key: 'parktower', color: '#2a2d35'}), heads = [];
-    [[-36, -86, 34], [42, -86, 34], [-37, -46, 30], [43, -46, 30], [-9, 8, 22], [15, 8, 22]].forEach(([x, z, h]) => {
+    [[-36, -86, 34], [42, -86, 34], [-37, -46, 30], [43, -46, 30], [-9, 8, 22], [15.4, -13, 22]].forEach(([x, z, h]) => {
       put(new THREE.CylinderGeometry(.45, .9, h, 10), towM, x, Y + h / 2, z).castShadow = true;
       const hd = new THREE.Group(); hd.position.set(x, Y + h + 1.6, z); G.add(hd); hd.lookAt(PLATE.x, Y, PLATE.z - 30);
       const fr = new THREE.Mesh(new THREE.BoxGeometry(7, 4.4, .5), towM); hd.add(fr); const pn = new THREE.Mesh(new THREE.PlaneGeometry(6.6, 4), ledM); pn.position.z = .26; hd.add(pn);
@@ -213,9 +213,9 @@ export class Derby {
     { const dl = [], pp = []; for (let x = -6; x <= 10.01; x += 4) for (const z of [-3.2, -1, 1.2]) { dl.push([x, Y + 4.9, z, .8, 3, 2.8, 2.5]); pp.push([x, Y + .02, z, 3.2, .1, .09, .08]); } glowPoints(G, dl); lightPools(G, pp); }
     [[-7.5, -4], [11.5, -4], [-7.5, 2], [11.5, 2]].forEach(([x, z]) => { put(new THREE.BoxGeometry(.6, 5.2, .6), towM, x, Y + 2.6, z).castShadow = true; FLOORBOX.r.push([x - .4, z - .4, x + .4, z + .4]); });
     // planters and benches on the plaza
-    const plg = [], bng = []; [[-8, 6], [14, 6], [-8, -10], [14, -10]].forEach(([x, z]) => { plg.push(plain(mbox(2.2, .7, 1.4, 1.2)).translate(x, Y + .35, z)); FLOORBOX.r.push([x - 1.2, z - .8, x + 1.2, z + .8]); });
+    const plg = [], bng = []; [[-8, 6], [13.6, -1.2], [-8, -10], [14, -10]].forEach(([x, z]) => { plg.push(plain(mbox(2.2, .7, 1.4, 1.2)).translate(x, Y + .35, z)); FLOORBOX.r.push([x - 1.2, z - .8, x + 1.2, z + .8]); });
     add(mergeGeometries(plg), mat('concrete', {key: 'parkplanter', color: '#45474f'}), {cast: true});
-    plants(G, [[-8, 6], [14, 6], [-8, -10], [14, -10]].flatMap(([x, z], i) => i >= 2 ? [{k: 'shrub', x, y: Y + .66, z, w: 2, d: 1.2}, {k: 'tree', x, y: Y + .7, z, h: 2.5}] : [{k: 'shrub', x, y: Y + .66, z, w: 2, d: 1.2}]), {seed: 5});
+    plants(G, [[-8, 6], [13.6, -1.2], [-8, -10], [14, -10]].flatMap(([x, z], i) => i >= 2 ? [{k: 'shrub', x, y: Y + .66, z, w: 2, d: 1.2}, {k: 'tree', x, y: Y + .7, z, h: 2.5}] : [{k: 'shrub', x, y: Y + .66, z, w: 2, d: 1.2}]), {seed: 5});
     // elevator hut (same shaft as every floor), doors face the plaza
     const hut = new THREE.MeshPhysicalMaterial({color: '#1a1920', metalness: .6, roughness: .3, clearcoat: .5});
     put(new THREE.BoxGeometry(3.2, 3.4, 2.6), hut, ELEVP.x, Y + 1.7, ELEVP.z - 1.32).castShadow = true;
