@@ -39,6 +39,8 @@ try:
         for P in (A, B): P.evaluate("vcJoin()")
         A.wait_for_timeout(2000)
         for P in (A, B): P.evaluate("try{VO3.dbg().fast=true}catch(e){}")
+        # challenges expire after a minute of wall-clock time; the software renderer is slow, so hold both arena clocks still
+        for P in (A, B): P.evaluate("(()=>{const w=setInterval(()=>{try{const R=VO3.dbg().arena;if(R){R.now=()=>1.7e12;clearInterval(w)}}catch(e){}},200)})()")
         ok(until(A, "(()=>{const m=VO3.dbg().meAv;return m&&m.mode==='seated'})()", 300) and until(B, "(()=>{const m=VO3.dbg().meAv;return m&&m.mode==='seated'})()", 300), 'setup: Cole and John are on the floor')
         # Cole challenges John on the Neon Warehouse
         jid = A.evaluate("(()=>{const a=[...VO3.dbg().av.values()].find(x=>x.nm==='John Montini');return a&&a.id})()")
@@ -66,6 +68,8 @@ try:
         A.bring_to_front(); synced = until(A, "(()=>{const o=VO3.dbg().arena.match.opp;return Math.abs(o.p.x+3)<.5&&Math.abs(o.p.z)<.5})()", 10)
         ok(synced, "Cole's screen has John where John is standing", A.evaluate("(()=>{const o=VO3.dbg().arena.match.opp;return [o.p.x,o.p.y,o.p.z]})()"))
         ok(A.evaluate("(()=>{const o=VO3.dbg().arena.match.opp.av;return !!(o&&o.root.visible&&o.ar)})()"), "John's avatar stands in Cole's arena")
+        wp = A.evaluate("(()=>{const M=VO3.dbg().arena.match,o=M.opp,d=M.M.def.o,v=o.av.root.getWorldPosition(new o.p.constructor());return {dx:v.x-(d[0]+o.p.x),dy:v.y-(d[1]+o.p.y),dz:v.z-(d[2]+o.p.z)}})()")
+        ok(abs(wp['dx']) + abs(wp['dy']) + abs(wp['dz']) < .3, "and he is drawn where he really is", wp)
         # Cole takes the headshot
         A.evaluate("""(()=>{const R=VO3.dbg().arena,M=R.match,me=M.me,o=M.opp;R.noSpread=1;o.prot=0;const e=R.eye(new me.p.constructor());const dx=o.p.x-e.x,dz=o.p.z-e.z,dy=o.p.y+1.5-e.y;me.yaw=Math.atan2(dx,dz);me.pitch=Math.atan2(dy,Math.hypot(dx,dz));me.next=0;R.fire(VO3.dbg().t)})()""")
         ok(A.evaluate("VO3.dbg().arena.match.stats.heads") == 1, "Cole's laser hits John's head")

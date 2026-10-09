@@ -14,7 +14,7 @@ export const ELEVP = {x: 8, z: -7.05};   // elevator doors (same shaft on every 
 export const FLOORS = {
   o: {y: 0, name: 'SALES FLOOR', sub: 'Desks, TV, arcade, Sky Deck door'},
   r: {y: ROOFY, name: 'SKY PARK', sub: 'Home Run Derby, skybridge to the Skyport'},
-  g: {y: RANGEY, name: 'FIRING RANGE', sub: 'Target practice with your blaster'},
+  g: {y: RANGEY, name: 'FIRING RANGE', sub: 'Target lanes and Laser Tag 1v1'},
 };
 export const LAYER_OUT = 2;   // outdoor things: not drawn in the floor reflection
 // Ring Run course for planes (the city keeps clear of every ring), and the runway heading east off the Sky Park

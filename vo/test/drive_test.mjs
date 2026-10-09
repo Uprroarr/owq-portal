@@ -49,8 +49,9 @@ const at = (m, l = 0) => ({x: C.p.x + C.t.x * m + C.nx * l, z: C.p.z + C.t.z * m
 // 5. people: slow car is blocked, fast car sends them flying, then they lie down and get back up on the deck
 { const {D, O, mk} = rig(); const p = at(0), v = at(8); const a = mk('me', p.x, p.z, along(0), 2.2, 1); D.me = a;
   const root = new THREE.Object3D(); root.position.set(v.x, C.p.y, v.z); const w = {id: 'w', nm: 'Walker', root, wk: {x: v.x, y: C.p.y, z: v.z, h: 0, f: 'd', hint: I}}; O.av.set('w', w);
-  drive(D, a, 4, {}); const d = a.drv;
-  ok(!w.rd && 8 - alg(d.x, d.z) >= d.hl + .25, 'slow car: someone standing in the road stops it (no knock-down)', {gap: 8 - alg(d.x, d.z), rd: !!w.rd});
+  // creeping at walking pace (2.2 m/s held) right into them
+  let minGap = 1e9; drive(D, a, 4, {}, d => { d.vx = C.t.x * 2.2; d.vz = C.t.z * 2.2; minGap = Math.min(minGap, 8 - alg(d.x, d.z)); }); const d = a.drv;
+  ok(!w.rd && minGap >= d.hl + .25 && minGap < d.hl + .6, 'slow car: someone standing in the road stops it (no knock-down, no driving through)', {minGap, need: d.hl + .3, rd: !!w.rd});
   const p2 = at(-6); Object.assign(d, {x: p2.x, z: p2.z, vx: C.t.x * 15, vz: C.t.z * 15, v: 15, w: 0, h: along(0)});
   let hit = -1, top = 0, lie = -1, up = -1; const dt = 1 / 60;
   for (let i = 0; i < 60 * 9; i++) { O.t += dt; if (D.me) D.mine(a, d, dt, O.t); tickRagdolls(O, dt); if (w.rd && hit < 0) hit = i; if (w.rd && w.rd.ph === 'fly') top = Math.max(top, w.root.position.y - C.p.y); if (w.rd && w.rd.ph === 'lie' && lie < 0) lie = i; if (hit >= 0 && !w.rd) { up = i; break; } }

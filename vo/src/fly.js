@@ -27,6 +27,8 @@ const CTWR = {x: 158, z: 28};
 const SPAN = 9, VSTALL = 21, VR = 30, VAPP = 34, TMAX = 13, CD = .0024;
 // what counts as a crash at touchdown (also printed on the landing guide)
 export const LIMITS = {sink: 7, bank: 20, pitch: -7, speed: 75};
+// crash rules you can pick in the cockpit (CRASH RULES button): how hard, how banked, how nose-down and how fast a touchdown may be
+export const RULES = {easy: {sink: 9, bank: 26, pitch: -10, speed: 85}, normal: {sink: 7, bank: 20, pitch: -7, speed: 75}, strict: {sink: 4.5, bank: 14, pitch: -4, speed: 65}};
 const onRect = (r, x, z, m = 0) => x >= r[0] - m && x <= r[2] + m && z >= r[1] - m && z <= r[3] + m;
 const onRunway = (x, z) => x >= RWY.x0 && x <= RWY.x1 && Math.abs(z - RWY.z) <= RWY.hw;
 const onRwyDeck = (x, z) => x >= RWY.x0 && x <= RWY.x1 && Math.abs(z - RWY.z) <= RWY.dw;
@@ -68,9 +70,9 @@ export class Fly {
       <div class=vo3flr></div><div class=vo3flb></div><div class=vo3flf></div>
       <div class=vo3flg><h4>LANDING GUIDE &middot; RUNWAY 27</h4><div class=row><span>DISTANCE</span><b class=gdist>-</b></div><div class=row><span>LINE UP</span><b class=gloc>-</b></div><div class=bar><i class=gl style="left:50%"></i></div>
         <div class=row><span>GLIDE PATH</span><b class=ggs>-</b></div><div class=bar><i class=gg style="left:50%"></i></div><div class=row><span>SINK RATE</span><b class=gsink>-</b></div><div class=row><span>BANK</span><b class=gbank>-</b></div><div class=row><span>SPEED</span><b class=gspd>-</b></div><div class=row><span>GEAR</span><b class=ggear>-</b></div>
-        <div class=lim>TOUCHDOWN LIMITS: SINK UNDER ${LIMITS.sink} M/S (UNDER 3 IS SMOOTH) &middot; BANK UNDER ${LIMITS.bank}&deg; &middot; NOSE NOT DOWN MORE THAN ${-LIMITS.pitch}&deg; &middot; GEAR DOWN &middot; ON THE RUNWAY &middot; STOP BEFORE THE END</div></div>
+        <div class=lim></div></div>
       <label class=vo3flt title="How fast you turn with the arrow keys or WASD (same as driving)">TURNING<input type=range min=1 max=10 step=1 aria-label="Turn sensitivity"><b>5</b></label>
-      <div class=vo3flk><button data-a=assist class=on>ASSIST ON (T)</button><button data-a=gear>GEAR (G)</button><button data-a=practice>PRACTICE LANDING (R)</button></div>
+      <div class=vo3flk><button data-a=assist class=on>ASSIST ON (T)</button><button data-a=gear>GEAR (G)</button><button data-a=practice>PRACTICE LANDING (R)</button><button data-a=rules>CRASH RULES: NORMAL</button></div>
       <div class=vo3flp><span></span><button data-k=up>&#9650;</button><span></span><button data-k=left>&#9664;</button><button data-k=down>&#9660;</button><button data-k=right>&#9654;</button></div>
       <div class=vo3flq><button data-k=boost>THROTTLE +</button><button data-k=slow>THROTTLE -</button></div><button class=vo3flx>BACK TO THE HANGAR</button>`;
     O.el.appendChild(u);
@@ -80,7 +82,8 @@ export class Fly {
     this.sl = q('.vo3flt input'); this.slv = q('.vo3flt b');
     this.sl.addEventListener('input', () => this.setSens(+this.sl.value)); ['pointerdown', 'keydown'].forEach(ev => this.sl.addEventListener(ev, e => e.stopPropagation()));
     u.querySelectorAll('.vo3flp button,.vo3flq button').forEach(b => { const k = b.dataset.k, dn = e => { e.preventDefault(); this.keys[k] = 1; b.classList.add('on'); }, up = () => { this.keys[k] = 0; b.classList.remove('on'); }; b.addEventListener('pointerdown', dn); b.addEventListener('pointerup', up); b.addEventListener('pointerleave', up); b.addEventListener('pointercancel', up); });
-    u.querySelectorAll('.vo3flk button').forEach(b => b.onclick = e => { e.stopPropagation(); const a = b.dataset.a; if (a === 'assist') this.toggleAssist(); else if (a === 'gear') this.toggleGear(); else this.practice(); });
+    u.querySelectorAll('.vo3flk button').forEach(b => b.onclick = e => { e.stopPropagation(); const a = b.dataset.a; if (a === 'assist') this.toggleAssist(); else if (a === 'gear') this.toggleGear(); else if (a === 'rules') this.setRules(); else this.practice(); });
+    this.E.rules = q('[data-a=rules]'); this.E.lim = q('.lim'); let r0 = 'normal'; try { r0 = localStorage.getItem('owq_crash') || 'normal'; } catch (e) {} this.setRules(RULES[r0] ? r0 : 'normal', true);
     q('.vo3flx').onclick = e => { e.stopPropagation(); this.land(); };
     const KM = {ArrowUp: 'up', w: 'up', W: 'up', ArrowDown: 'down', s: 'down', S: 'down', ArrowLeft: 'left', a: 'left', A: 'left', ArrowRight: 'right', d: 'right', D: 'right', Shift: 'boost', ' ': 'slow'};
     addEventListener('keydown', e => {
@@ -98,6 +101,13 @@ export class Fly {
   }
   setSens(v) { v = Math.max(1, Math.min(10, Math.round(v) || 5)); this.sens = v; try { localStorage.setItem('owq_steer', String(v)); } catch (e) {} if (this.sl) { this.sl.value = v; this.slv.textContent = v; } if (this.O.drive) { this.O.drive.sens = v; if (this.O.drive.sl) { this.O.drive.sl.value = v; this.O.drive.slv.textContent = v; } } }
   toggleAssist() { this.assist = !this.assist; this.E.as.classList.toggle('on', this.assist); this.E.as.textContent = this.assist ? 'ASSIST ON (T)' : 'ASSIST OFF (T)'; this.big(this.assist ? 'LANDING ASSIST ON' : 'LANDING ASSIST OFF', this.assist ? 'IT LINES YOU UP, HOLDS THE GLIDE PATH AND FLARES' : 'YOU FLY IT ALL THE WAY DOWN'); }
+  // pick the crash rules (cycles easy -> normal -> strict); the landing guide lists them
+  setRules(k, quiet) {
+    const order = ['easy', 'normal', 'strict']; k = k || order[(order.indexOf(this.rules) + 1) % 3]; this.rules = k; Object.assign(LIMITS, RULES[k]);
+    try { localStorage.setItem('owq_crash', k); } catch (e) {}
+    if (this.E && this.E.rules) { this.E.rules.textContent = 'CRASH RULES: ' + k.toUpperCase(); this.E.lim.innerHTML = `CRASH RULES (${k.toUpperCase()}): SINK UNDER ${LIMITS.sink} M/S (UNDER 3 IS SMOOTH) &middot; BANK UNDER ${LIMITS.bank}&deg; &middot; NOSE NOT DOWN MORE THAN ${-LIMITS.pitch}&deg; &middot; UNDER ${Math.round(LIMITS.speed * 1.94)} KNOTS &middot; GEAR DOWN &middot; ON THE RUNWAY &middot; STOP BEFORE THE END`; }
+    if (!quiet) this.big('CRASH RULES: ' + k.toUpperCase(), 'SINK ' + LIMITS.sink + ' M/S · BANK ' + LIMITS.bank + '° · NOSE ' + (-LIMITS.pitch) + '° DOWN');
+  }
   toggleGear() { const f = this.me && this.me.fly; if (!f || f.gr) return; f.gear = f.gear ? 0 : 1; f.gearAuto = false; this.gearVis(f); this.O.sfx('click'); }
   // ---------- the Skyport
   build(G) {
@@ -106,6 +116,10 @@ export class Fly {
     const L = RWY.x1 - RWY.x0, cx = (RWY.x0 + RWY.x1) / 2, deckM = mat('concrete', {key: 'rwydeck', color: '#7a7e88'});
     // ---- the runway deck and the piers that hold it over the boulevard
     const dk = mbox(L, 1.6, RWY.dw * 2, 4); dk.translate(cx, Y - .81, RWY.z); add(dk, deckM, {cast: true});
+    // low parapets along both deck edges with a light line on top (the deck hangs high over the boulevard)
+    { const par = [], ln = [], seg = (x0, x1, sd) => { const l = x1 - x0, mx = (x0 + x1) / 2, z = RWY.z + sd * (RWY.dw - .2); par.push(plain(mbox(l, .9, .4, 2).translate(mx, Y + .45, z))); ln.push(plain(new THREE.BoxGeometry(l, .04, .06).translate(mx, Y + .92, z))); };
+      seg(RWY.x0, RWY.x1, -1); seg(APRON[2], RWY.x1, 1);   // the north side stays open along the apron
+      add(mergeGeometries(par), mat('concrete', {key: 'rwypar', color: '#9a9ea8'}), {cast: true}); add(mergeGeometries(ln), NEON(3.2, .3, .8), {recv: false}); }
     const piers = []; for (let x = RWY.x0 + 14; x < RWY.x1; x += 75) [-18, 6].forEach(dz => piers.push(plain(new THREE.CylinderGeometry(2.2, 2.7, Y - 1.6 - GROUNDY, 16).translate(x, (Y - 1.6 + GROUNDY) / 2, RWY.z + dz))));
     add(mergeGeometries(piers), mat('concrete', {key: 'rwypier', color: '#6c707a'}));
     // ---- runway surface: asphalt with every marking painted by the shader (edges, centreline, threshold keys, aiming point, touchdown zone)

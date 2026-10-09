@@ -80,9 +80,11 @@ try:
           O.walk.remote(b,{x:c.p.x,y:c.p.y,z:c.p.z,h:Math.atan2(c.t.x,c.t.z),f:'d',s:0});b.wk.hint=(i+30)%S.n;return b.id})""", [I])
         ok(w1, 'a bot walks out onto the deck', w1)
         A.evaluate(step, 2)
-        A.evaluate(place, [I, 0, 0, 2.4]); A.evaluate(place.replace('d.x=c.p.x+c.nx*lat', 'd.x=c.p.x+c.nx*lat+c.t.x*25').replace('d.z=c.p.z+c.nz*lat', 'd.z=c.p.z+c.nz*lat+c.t.z*25'), [I, 0, 0, 2.4])
-        A.evaluate(ff, [150, 1 / 60]); r4 = A.evaluate(rel, I); me = A.evaluate(pos)
-        ok(not A.evaluate("(id=>!!VO3.dbg().av.get(id).rd)", w1) and 30 - r4['along'] >= me['hl'] + .25, 'rolling slowly into someone, they stop the car (no knock-down)', [r4, me['hl']])
+        A.evaluate(place.replace('d.x=c.p.x+c.nx*lat', 'd.x=c.p.x+c.nx*lat+c.t.x*25').replace('d.z=c.p.z+c.nz*lat', 'd.z=c.p.z+c.nz*lat+c.t.z*25'), [I, 0, 0, 2.2])
+        # creep at walking pace (2.2 m/s held) right into them
+        creep = A.evaluate("""(([i])=>{const O=VO3.dbg(),D=O.drive,a=D.me,S=O.track.sky,c=S.S[i];let mn=1e9;for(let k=0;k<240;k++){const d=a.drv;d.vx=c.t.x*2.2;d.vz=c.t.z*2.2;window.__ct+=1/60;D.mine(a,d,1/60,window.__ct);mn=Math.min(mn,30-((d.x-c.p.x)*c.t.x+(d.z-c.p.z)*c.t.z))}return mn})""", [I])
+        me = A.evaluate(pos)
+        ok(not A.evaluate("(id=>!!VO3.dbg().av.get(id).rd)", w1) and me['hl'] + .25 <= creep < me['hl'] + .6, 'creeping into someone, they stop the car (no knock-down, no driving through)', [creep, me['hl']])
         # fast car vs walker: a ragdoll
         A.evaluate(place.replace('d.x=c.p.x+c.nx*lat', 'd.x=c.p.x+c.nx*lat+c.t.x*16').replace('d.z=c.p.z+c.nz*lat', 'd.z=c.p.z+c.nz*lat+c.t.z*16'), [I, 0, 0, 15])
         hitT = fly = lie = None; top = 0; up = None

@@ -36,4 +36,21 @@ for (const [name, make] of [['warehouse', T.warehouse], ['rooftop', T.rooftop], 
 { const M = T.warehouse(); M.C = M.boxes.filter(b => !b.nc && b.k !== 'ceil'); const B = {p: V(-20, 0, -14.3), v: V(0, 0, 0), g: 1, hh: 1.8};
   for (let i = 0; i < 480; i++) { B.v.x = 5; B.v.z = 0; B.v.y -= 20.3 / 120; T.slide(M, B, 1 / 120); }
   ok(B.p.y > 2.9 && B.p.x > -13, 'warehouse: the stairs take you up onto the catwalk', {x: B.p.x, y: B.p.y}); }
+// the practice bot: it sees you, reacts, turns to aim and fires bursts (each tag hit comes through hurt())
+{ const AR = await import('/home/claude/owq-src/vo/src/arena.js'); globalThis.addEventListener = globalThis.addEventListener || (() => {});
+  const M = T.warehouse(); M.C = M.boxes.filter(b => !b.nc && b.k !== 'ceil' && b.k !== 'oceil'); M.R = M.boxes.filter(b => !b.nb && !b.inv); M.nav = T.navGrid(M); M.def = {o: [0, -420, 0], id: 'warehouse'}; M.G = new THREE.Group();
+  const R = Object.create(AR.Arena.prototype), hits = []; R.O = {t: 0, sfx() {}}; R.v = V(0, 0, 0); R.v2 = V(0, 0, 0); R.v3 = V(0, 0, 0);
+  R.tracer = () => {}; R.zap = () => {}; R.impact = () => {}; R.place = () => {}; R.muzzleOf = () => V(0, 0, 0); R.hurt = (d, hd) => hits.push([d, hd]);
+  const me = {p: V(-15.6, 0, 0), v: V(0, 0, 0), c: 0, al: 1, hp: 100};
+  const mk = cfg => ({av: {root: new THREE.Object3D()}, nm: 'bot', P: {p: V(-7.6, 0, 0), v: V(0, 0, 0), g: 1, hh: 1.8}, yaw: -Math.PI / 2 + .6, pitch: 0, c: 0, hp: 100, al: 1, d: 0, deadT: 0, prot: 0, path: null, pi: 0, see: 0, seenT: -9, last: null, react: 0, aimE: 0, burst: 0, next: 0, strafe: 1, strafeT: 0, roamT: 0, cfg});
+  const run = (b, sec) => { R.match = {M, me, ph: 'play', bot: b}; let t = 10; hits.length = 0; let first = -1; for (let i = 0; i < sec * 60; i++) { t += 1 / 60; R.botTick(b, 1 / 60, t); if (first < 0 && hits.length) first = t - 10; } return {n: hits.length, first}; };
+  const n = run(mk({react: .4, turn: 6, err: .04, fire: .026, burst: 5, head: .15, strafe: .8}), 3);
+  ok(n.n >= 3 && n.first > .35, 'the normal bot spots you, reacts after its reaction time, turns to aim and tags you with a burst', n);
+  const e = run(mk({react: .62, turn: 3.2, err: .07, fire: .045, burst: 3, head: .05, strafe: .6}), 3), h = run(mk({react: .24, turn: 10, err: .02, fire: .014, burst: 8, head: .3, strafe: 1}), 3);
+  ok(e.first > h.first && h.n >= e.n, 'the hard bot reacts faster and lands more than the easy one', {easy: e, hard: h});
+  const behind = () => Object.assign(mk({react: .3, turn: 6, err: 0, fire: .02, burst: 5, head: .1, strafe: .8}), {yaw: Math.PI / 2});
+  me.p.set(-11, 0, 0); me.g = 1; me.v.set(0, 0, 0); const q = run(behind(), 2); me.v.set(6, 0, 0); const r = run(behind(), 2); me.v.set(0, 0, 0); me.p.set(-15.6, 0, 0);
+  ok(q.n === 0 && r.n > 0, 'sneaking up behind the bot it stays unaware; running footsteps give you away', {quiet: q, running: r});
+  me.al = 0; const z = run(mk({react: .05, turn: 9, err: 0, fire: 0, burst: 5, head: .1, strafe: 1}), 2); me.al = 1;
+  ok(z.n === 0, 'the bot holds fire while you are down', z); }
 console.log(`RESULT pass ${pass} fail ${fail}`);

@@ -27,6 +27,9 @@ try:
         A.evaluate("(()=>{const W=VO3.dbg().walk;W.me.wk.x=8;W.me.wk.z=-6.4;W.ride('r')})()"); A.evaluate(step, 16)
         r0 = A.evaluate(wk); ok(r0.get('f') == 'r', 'elevator to the Sky Park', r0); RY = r0.get('y', 0)
         # the START button behind home plate
+        # the derby gives up a stalled turn after 150 s of wall-clock time; this slow software renderer takes minutes per
+        # batch of frames, so hold the derby's clock still for the test
+        A.evaluate("VO3.dbg().derby.now=()=>1.7e12")
         A.evaluate(put, [-3, -13.6, 3.14159]); A.evaluate(step, 3)
         pp = A.evaluate(prompt); ok(pp and 'DERBY' in pp['t'], 'by the backstop the prompt offers the Home Run Derby', pp)
         if SHOTS: v7.shot(A, 'park_button', 300, floor=False)
@@ -80,7 +83,14 @@ try:
         A.keyboard.press('r'); A.wait_for_timeout(900); A.evaluate(step, 2)
         f4 = A.evaluate(fp); ok(f4 and f4['x'] > 1800 and abs(f4['z'] + 14) < 1 and f4['gear'] == 1 and f4['gr'] == 0, 'R puts you on a final approach 1.3 km out, gear down', f4)
         A.evaluate(ff, 3); ok(A.evaluate("document.querySelector('.vo3flg').classList.contains('on')"), 'the landing guide shows on final', A.evaluate("document.querySelector('.vo3flg').innerText"))
-        gtxt = A.evaluate("document.querySelector('.vo3flg').innerText"); ok('LINED UP' in gtxt and 'GLIDE PATH' in gtxt and 'TOUCHDOWN LIMITS' in gtxt, 'the guide says you are lined up, on the glide path, and lists the crash limits', gtxt)
+        gtxt = A.evaluate("document.querySelector('.vo3flg').innerText"); ok('LINED UP' in gtxt and 'GLIDE PATH' in gtxt and ('TOUCHDOWN LIMITS' in gtxt or 'CRASH RULES' in gtxt), 'the guide says you are lined up, on the glide path, and lists the crash limits', gtxt)
+        if A.evaluate("!!document.querySelector('.vo3flk [data-a=rules]')"):
+            rb = "document.querySelector('.vo3flk [data-a=rules]')"
+            A.evaluate(rb + ".click()"); r = A.evaluate("(()=>({t:%s.textContent,l:document.querySelector('.vo3flg .lim').textContent}))()" % rb)
+            ok('STRICT' in r['t'] and '4.5 M/S' in r['l'], 'CRASH RULES switches to strict and the guide lists the stricter limits', r)
+            A.evaluate(rb + ".click()"); r = A.evaluate("%s.textContent" % rb); ok('EASY' in r, 'then easy', r)
+            A.evaluate(rb + ".click()"); r = A.evaluate("(()=>({t:%s.textContent,l:document.querySelector('.vo3flg .lim').textContent}))()" % rb)
+            ok('NORMAL' in r['t'] and '7 M/S' in r['l'], 'and back to normal', r)
         if SHOTS: A.evaluate(step, 2); v7.shot(A, 'fly_final', 300, floor=False)
         landed = None
         for k in range(16):

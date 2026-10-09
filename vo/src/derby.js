@@ -219,6 +219,12 @@ export class Derby {
     // elevator hut (same shaft as every floor), doors face the plaza
     const hut = new THREE.MeshPhysicalMaterial({color: '#1a1920', metalness: .6, roughness: .3, clearcoat: .5});
     put(new THREE.BoxGeometry(3.2, 3.4, 2.6), hut, ELEVP.x, Y + 1.7, ELEVP.z - 1.32).castShadow = true;
+    { const steel = new THREE.MeshStandardMaterial({color: '#c9ccd4', metalness: 1, roughness: .3});
+      [[-1.62, .02], [1.62, .02], [-1.62, -2.66], [1.62, -2.66]].forEach(([dx, dz]) => { put(new THREE.BoxGeometry(.14, 3.5, .14), steel, ELEVP.x + dx, Y + 1.75, ELEVP.z + dz); FLOORBOX.r.push([ELEVP.x + dx - .08, ELEVP.z + dz - .08, ELEVP.x + dx + .08, ELEVP.z + dz + .08]); });
+      put(new THREE.BoxGeometry(3.7, .16, 1.3), steel, ELEVP.x, Y + 3.05, ELEVP.z + .58).castShadow = true;
+      put(new THREE.BoxGeometry(3.7, .05, .06), NEON(3.2, .3, .8), ELEVP.x, Y + 2.96, ELEVP.z + 1.22);
+      put(new THREE.BoxGeometry(1.6, .08, .08), steel, ELEVP.x, Y + 2.56, ELEVP.z + .03); [-.8, .8].forEach(dx => put(new THREE.BoxGeometry(.08, 2.56, .08), steel, ELEVP.x + dx, Y + 1.28, ELEVP.z + .03));
+      glowPoints(G, [[ELEVP.x - .9, Y + 2.95, ELEVP.z + .6, .6, 3, 2.8, 2.5], [ELEVP.x + .9, Y + 2.95, ELEVP.z + .6, .6, 3, 2.8, 2.5]]); lightPools(G, [[ELEVP.x, Y + .02, ELEVP.z + 1.1, 2.2, .16, .15, .13]]); }
     const brass = new THREE.MeshStandardMaterial({color: '#a88a3e', metalness: 1, roughness: .3});
     this.dL = put(new THREE.BoxGeometry(.66, 2.5, .04), brass, ELEVP.x - .33, Y + 1.25, ELEVP.z + .01); this.dR = put(new THREE.BoxGeometry(.66, 2.5, .04), brass, ELEVP.x + .33, Y + 1.25, ELEVP.z + .01);
     put(new THREE.PlaneGeometry(2.4, .5), BM({map: canvasTex(textCanvas('SKY PARK', 768, 160, {col: '#fff0f6', glow: '#ff2d78'})), transparent: true, depthWrite: false, color: new THREE.Color(2, 2, 2), toneMapped: false}), ELEVP.x, Y + 3.0, ELEVP.z + .02);
@@ -227,10 +233,18 @@ export class Derby {
     // the pitching machine on the mound
     const pm = this.machine = new THREE.Group(); pm.position.set(MOUND.x, Y, MOUND.z); G.add(pm);
     const mm = new THREE.MeshStandardMaterial({color: '#202027', metalness: .7, roughness: .35}), mr = new THREE.MeshStandardMaterial({color: '#ff1f4f', metalness: .3, roughness: .4});
-    pm.add(at(new THREE.Mesh(new THREE.CylinderGeometry(.08, .5, 1.1, 10), mm), new THREE.Vector3(0, .55, 0), null));
+    // tripod, a housing with the two throwing wheels, the feed chute and a basket of balls
+    const steelM = new THREE.MeshStandardMaterial({color: '#b9bec8', metalness: 1, roughness: .3}), tyreM = new THREE.MeshStandardMaterial({color: '#141416', roughness: .85});
+    [Math.PI / 2, Math.PI * 7 / 6, Math.PI * 11 / 6].forEach(a => { const fx = Math.cos(a) * .62, fz = Math.sin(a) * .62, L = Math.hypot(fx, .98, fz), leg = new THREE.Mesh(new THREE.CylinderGeometry(.025, .03, L, 8), steelM); leg.position.set(fx / 2, .49, fz / 2); leg.lookAt(fx, 0, fz); leg.rotateX(Math.PI / 2); pm.add(leg); const ft = new THREE.Mesh(new THREE.CylinderGeometry(.06, .07, .04, 10), tyreM); ft.position.set(fx, .02, fz); pm.add(ft); });
+    pm.add(at(new THREE.Mesh(new THREE.CylinderGeometry(.07, .07, .3, 12), mm), new THREE.Vector3(0, 1.0, 0), null));
     const head = new THREE.Group(); head.position.set(0, 1.25, 0); pm.add(head);
-    [-.32, .32].forEach(x => head.add(at(new THREE.Mesh(new THREE.CylinderGeometry(.3, .3, .14, 20), mr), new THREE.Vector3(x, 0, 0), new THREE.Euler(0, 0, Math.PI / 2))));
-    head.add(at(new THREE.Mesh(new THREE.CylinderGeometry(.09, .09, .7, 10), mm), new THREE.Vector3(0, .05, .2), new THREE.Euler(Math.PI / 2, 0, 0)));
+    head.add(at(new THREE.Mesh(mbox(.98, .16, .46, 1), mm), new THREE.Vector3(0, -.2, 0), null));
+    [-.32, .32].forEach(x => { head.add(at(new THREE.Mesh(new THREE.CylinderGeometry(.27, .27, .12, 24), tyreM), new THREE.Vector3(x, .02, 0), new THREE.Euler(0, 0, Math.PI / 2)));
+      head.add(at(new THREE.Mesh(new THREE.CylinderGeometry(.16, .16, .13, 20), mr), new THREE.Vector3(x, .02, 0), new THREE.Euler(0, 0, Math.PI / 2)));
+      head.add(at(new THREE.Mesh(new THREE.TorusGeometry(.31, .03, 8, 24, Math.PI), mm), new THREE.Vector3(x, .02, 0), new THREE.Euler(0, Math.PI / 2, 0))); });
+    head.add(at(new THREE.Mesh(new THREE.CylinderGeometry(.075, .085, .62, 14, 1, true), steelM), new THREE.Vector3(0, .04, .3), new THREE.Euler(Math.PI / 2, 0, 0)));
+    const bask = new THREE.Mesh(new THREE.CylinderGeometry(.22, .14, .3, 16, 1, true), new THREE.MeshStandardMaterial({color: '#c9ccd4', metalness: 1, roughness: .35, wireframe: true})); bask.position.set(0, .48, -.18); head.add(bask);
+    for (let k = 0; k < 7; k++) head.add(at(new THREE.Mesh(new THREE.SphereGeometry(.05, 10, 8), new THREE.MeshStandardMaterial({color: '#f4f2ea', roughness: .5})), new THREE.Vector3((k % 3 - 1) * .1, .38 + (k > 3 ? .08 : 0), -.18 + ((k >> 1) % 2 - .5) * .1), null));
     this.mLight = at(new THREE.Mesh(new THREE.SphereGeometry(.09, 10, 8), BM({color: new THREE.Color(.4, 3, .9), toneMapped: false})), new THREE.Vector3(0, .42, -.1), null); head.add(this.mLight);
     pm.traverse(o => { if (o.isMesh) o.castShadow = true; });
     FLOORBOX.r.push([MOUND.x - .6, MOUND.z - .6, MOUND.x + .6, MOUND.z + .6]);

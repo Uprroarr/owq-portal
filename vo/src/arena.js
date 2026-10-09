@@ -145,7 +145,7 @@ const mapOf = g => MAPS.findIndex(m => m.g === g);
 // surfaces (shared across maps)
 function kindMat(k) {
   switch (k) {
-    case 'wfloor': return patch(mat('polished', {key: 'ar_wf', color: '#5b5e67', bump: .7, env: .75}), {key: 'ar_wfp', frag: '{float n=vn(vWP.xz*.09,vec2(1e4))*.6+vn(vWP.xz*.37,vec2(1e4))*.4;diffuseColor.rgb*=.78+.4*n;float st=smoothstep(.66,.8,vn(vWP.xz*.21+5.,vec2(1e4)));diffuseColor.rgb*=1.-.3*st;rk=.75+.5*n-.3*st;vec2 j=abs(fract(vWP.xz/6.)-.5);float jt=step(.497,max(j.x,j.y));diffuseColor.rgb*=1.-.35*jt;}'});
+    case 'wfloor': return patch(mat('polished', {key: 'ar_wf', color: '#45484f', bump: .7, env: .7}), {key: 'ar_wfp', frag: '{float n=vn(vWP.xz*.09,vec2(1e4))*.6+vn(vWP.xz*.37,vec2(1e4))*.4;diffuseColor.rgb*=.78+.4*n;float st=smoothstep(.66,.8,vn(vWP.xz*.21+5.,vec2(1e4)));diffuseColor.rgb*=1.-.3*st;rk=.75+.5*n-.3*st;vec2 j=abs(fract(vWP.xz/6.)-.5);float jt=step(.497,max(j.x,j.y));diffuseColor.rgb*=1.-.35*jt;}'});
     case 'ceil': case 'oceil': return new THREE.MeshStandardMaterial({color: k === 'ceil' ? '#14151a' : '#d8d9de', roughness: .9});
     case 'wall': return mat('corrugated', {key: 'ar_wall', color: '#545a68'});
     case 'cont': return mat('container', {key: 'ar_cont', extra: {vertexColors: true}});
@@ -160,7 +160,7 @@ function kindMat(k) {
     case 'solar': return patch(new THREE.MeshStandardMaterial({color: '#0e1a33', roughness: .25, metalness: .4, envMapIntensity: 1.4}), {key: 'ar_solar', frag: '{vec2 g=fract(vWP.xz*1.6);float l=step(.93,max(g.x,g.y));diffuseColor.rgb=mix(diffuseColor.rgb,vec3(.55,.58,.65),l);}'});
     case 'skyl': case 'glass': return new THREE.MeshPhysicalMaterial({color: k === 'skyl' ? '#9fc9ff' : '#bcd8ff', roughness: .05, metalness: 0, transparent: true, opacity: k === 'skyl' ? .35 : .16, envMapIntensity: 1.6, depthWrite: false, side: THREE.DoubleSide});
     case 'ofloor': return mat('carpet', {key: 'ar_carpet', color: '#9aa2b8'});
-    case 'owall': case 'col': return mat('concrete', {key: 'ar_owall', color: '#e4e2df', bump: .35});
+    case 'owall': case 'col': return mat('concrete', {key: 'ar_owall', color: '#dcd9d4', bump: .18, noMap: true, rough: .9});
     case 'window': return null;
     case 'desk': return mat('wood', {key: 'ar_desk', color: '#e2c39d'});
     case 'part': return mat('carpet', {key: 'ar_part', color: '#6b7488'});
@@ -186,7 +186,8 @@ function rifle() {
     geo.translate(0, 0, -(w - bev * 2) / 2); geo.rotateY(Math.PI / 2); geo.translate(x, 0, 0); geo.computeVertexNormals(); const q = new THREE.Mesh(geo, m); g.add(q); return q; };
   // receiver (upper) and lower with the grip
   prof([[.08, .046], [.36, .046], [.44, .03], [.46, .006], [.46, -.022], [.36, -.03], [.08, -.03], [.04, -.006], [.04, .03]], .068, body);
-  prof([[.06, -.026], [.3, -.026], [.3, -.044], [.2, -.05], [.15, -.05], [.12, -.062], [.1, -.15], [.06, -.155], [.064, -.075], [.04, -.05]], .056, rubber, .006);
+  prof([[.08, -.026], [.3, -.026], [.3, -.042], [.15, -.046], [.08, -.04]], .056, body, .004);
+  prof([[.105, -.04], [.145, -.04], [.125, -.13], [.09, -.134], [.098, -.06]], .044, rubber, .006);
   // white shell panels on both sides, a crimson light line along them
   [-.036, .036].forEach(x => { prof([[.12, .036], [.33, .036], [.4, .022], [.4, -.012], [.12, -.012]], .006, shell, .0015, x); const ln = new THREE.Mesh(new THREE.BoxGeometry(.0025, .006, .22), red); ln.position.set(x * 1.06, .006, -.25); g.add(ln); });
   // energy cell under the receiver with a cyan window
@@ -209,8 +210,6 @@ function rifle() {
   prof([[.17, .056], [.27, .056], [.26, .1], [.25, .104], [.19, .104], [.18, .1]], .05, body, .003);
   const pane = new THREE.Mesh(new THREE.PlaneGeometry(.038, .036), new THREE.MeshPhysicalMaterial({color: '#ff9fb6', roughness: .02, metalness: .1, transparent: true, opacity: .22, depthWrite: false})); pane.position.set(0, .08, -.262); g.add(pane);
   const dot = new THREE.Mesh(new THREE.CircleGeometry(.0022, 10), NEON(4, .3, .5)); dot.position.set(0, .08, -.2635); g.add(dot);
-  // a stub of the stock reaching back toward the shoulder
-  prof([[-.06, .032], [.05, .036], [.05, -.02], [-.02, -.05], [-.06, -.05]], .05, rubber, .006);
   return {g, tip: new THREE.Vector3(0, .008, -.67)};
 }
 
@@ -260,10 +259,10 @@ function buildMap(def, scene) {
   if (M.lights && M.lights.length) {
     const indoor = !M.sky, pg = [];
     M.lights.forEach(([x, y, z]) => { pg.push(indoor ? plain(new THREE.BoxGeometry(def.id === 'office' ? 1.2 : 5.2, .06, def.id === 'office' ? .6 : .5)).translate(x, y - .03, z) : plain(new THREE.BoxGeometry(.5, .3, .5)).translate(x, y, z)); });
-    G.add(new THREE.Mesh(mergeGeometries(pg), NEON(3.2, 3.05, 2.8)));
+    G.add(new THREE.Mesh(mergeGeometries(pg), def.id === 'office' ? NEON(2.3, 2.25, 2.1) : NEON(3.2, 3.05, 2.8)));
     if (!indoor) { const posts = M.lights.map(([x, y, z]) => plain(new THREE.CylinderGeometry(.08, .1, y, 8)).translate(x, y / 2, z)); const pm = new THREE.Mesh(mergeGeometries(posts), kindMat('metal')); pm.castShadow = true; G.add(pm); }
-    lightPools(G, M.lights.map(([x, y, z]) => [x, .02, z, indoor ? (def.id === 'office' ? 3.2 : 7.5) : 9, .22, .2, .17]));
-    glowPoints(G, M.lights.map(([x, y, z]) => [x, y - .1, z, indoor ? 1.2 : 1.6, 1.4, 1.3, 1.15]));
+    lightPools(G, M.lights.map(([x, y, z]) => [x, .02, z, indoor ? (def.id === 'office' ? 3.2 : 7.5) : 9, ...(def.id === 'warehouse' ? [.14, .13, .11] : [.22, .2, .17])]));
+    glowPoints(G, M.lights.map(([x, y, z]) => [x, y - .1, z, indoor ? (def.id === 'office' ? .7 : 1.2) : 1.6, 1.4, 1.3, 1.15]));
   }
   (M.neon || []).forEach(([x0, y0, z0, x1, y1, z1, c]) => { const m = new THREE.Mesh(new THREE.BoxGeometry(x1 - x0, y1 - y0, z1 - z0), NEON(c[0], c[1], c[2])); m.position.set((x0 + x1) / 2, (y0 + y1) / 2, (z0 + z1) / 2); G.add(m); });
   (M.signs || []).forEach(([txt, x, y, z, ry, w, h]) => {
@@ -307,7 +306,7 @@ function skyline(G, def) {
     fragmentShader: 'varying vec3 vD;float h(vec3 p){return fract(sin(dot(p,vec3(12.9,78.2,37.7)))*43758.5);}void main(){float y=vD.y;vec3 c=mix(vec3(.24,.05,.13),vec3(.012,.01,.035),smoothstep(-.05,.5,y));c+=vec3(.3,.07,.14)*exp(-abs(y+.02)*10.);vec3 q=floor(vD*420.);float s=step(.9965,h(q))*smoothstep(.05,.3,y);c+=vec3(.9,.92,1.)*s;vec3 md=normalize(vec3(-.42,.5,-.75));float mo=max(0.,dot(vD,md));c+=vec3(1.,.95,.88)*(smoothstep(.9993,.9996,mo)*2.5+pow(mo,60.)*.25);gl_FragColor=vec4(c,1.);}'}));
   dome.renderOrder = -10; dome.frustumCulled = false; G.add(dome);
   const N = 240, geo = new THREE.BoxGeometry(1, 1, 1).translate(0, .5, 0), m = new THREE.ShaderMaterial({uniforms: {uFog: {value: new THREE.Color('#1a0a18')}},
-    vertexShader: 'varying vec3 vW;varying vec3 vN;varying vec3 vO;varying vec3 vC;void main(){mat4 m=modelMatrix*instanceMatrix;vec4 w=m*vec4(position,1.);vW=w.xyz;vN=normalize(mat3(m)*normal);vO=(m*vec4(0.,0.,0.,1.)).xyz;vC=instanceColor;gl_Position=projectionMatrix*viewMatrix*w;}',
+    vertexShader: 'varying vec3 vW;varying vec3 vN;varying vec3 vO;varying vec3 vC;void main(){\n#ifdef USE_INSTANCING\nmat4 m=modelMatrix*instanceMatrix;\n#else\nmat4 m=modelMatrix;\n#endif\n#ifdef USE_INSTANCING_COLOR\nvC=instanceColor;\n#else\nvC=vec3(.2,.12,.22);\n#endif\nvec4 w=m*vec4(position,1.);vW=w.xyz;vN=normalize(mat3(m)*normal);vO=(m*vec4(0.,0.,0.,1.)).xyz;gl_Position=projectionMatrix*viewMatrix*w;}',
     fragmentShader: 'uniform vec3 uFog;varying vec3 vW;varying vec3 vN;varying vec3 vO;varying vec3 vC;float h1(vec2 p){return fract(sin(dot(p,vec2(127.1,311.7)))*43758.5453);}void main(){vec3 N=normalize(vN);vec3 col=vec3(.02,.02,.03)+vC*.03;if(N.y<.5){vec2 f=abs(N.x)>.5?vec2(vW.z,vW.y):vec2(vW.x,vW.y);vec2 g=f/vec2(3.2,3.7);vec2 id=floor(g);vec2 fr=fract(g);float win=step(.18,fr.x)*step(fr.x,.82)*step(.22,fr.y)*step(fr.y,.8);float lit=step(.55,h1(id+vO.xz*.07));float wm=h1(id*1.7+5.);vec3 wc=mix(vec3(1.,.72,.42),vec3(.62,.8,1.),step(.72,wm));vec2 fw=fwidth(g);float far=smoothstep(.3,.85,max(fw.x,fw.y));col+=mix(win*lit*wc*(.8+.6*h1(id+9.)),vec3(.36,.28,.2),far);}float d=length(cameraPosition-vW);col=mix(col,uFog,smoothstep(150.,1300.,d)*.85);gl_FragColor=vec4(col,1.);}'});
   const im = new THREE.InstancedMesh(geo, m, N), M4 = new THREE.Matrix4(), C = new THREE.Color(), pal = ['#2a3a6a', '#3a2550', '#1f3f4a', '#4a2030', '#2b2b3b', '#5a1a32'];
   let r = 7; const rnd = () => { r = (r * 16807) % 2147483647; return r / 2147483647; };
@@ -315,7 +314,7 @@ function skyline(G, def) {
     M4.makeScale(w, top + 320, dd); M4.setPosition(Math.cos(a) * d, -320, Math.sin(a) * d); im.setMatrixAt(i, M4); C.set(pal[i % pal.length]); im.setColorAt(i, C); }
   im.instanceMatrix.needsUpdate = true; if (im.instanceColor) im.instanceColor.needsUpdate = true; im.frustumCulled = false; G.add(im);
   // the building under the roof, and red beacons on the tall ones
-  const under = new THREE.Mesh(new THREE.BoxGeometry(43, 320, 35).translate(0, -160.5, 0), m.clone()); under.material = m; G.add(under);
+  const under = new THREE.Mesh(new THREE.BoxGeometry(43, 320, 35).translate(0, -160.5, 0), m.clone()); G.add(under);
   glowPoints(G, [[0, 0, 0, 0, 0, 0, 0]].slice(0, 0).concat(Array.from({length: 24}, (_, i) => { const a = i / 24 * 6.283 + .3, d = 160 + (i % 5) * 90; return [Math.cos(a) * d, 60 + (i % 4) * 30, Math.sin(a) * d, 4, 4, .25, .3]; })), {blink: .6});
 }
 
@@ -610,7 +609,7 @@ export class Arena {
   }
   // challenges for me (shown anywhere on the floor)
   invTick() {
-    if ((this.pollT -= 1) > 0) return; this.pollT = 20;
+    const ot = this.O.t || 0; if (ot - (this.pollT || -9) < .35 && ot >= (this.pollT || -9)) return; this.pollT = ot;   // about three times a second, however fast the frames come
     const me = this.myId(), now = this.now();
     const inv = this.match || (this.mp && this.mp.st !== 'w') ? null : this.peers().filter(p => !p.me && p.aq && /^tag/.test(p.aq.g) && p.aq.st === 'w' && p.aq.to === me && now - (+p.aq.t || 0) < 60000 && !this.dis[p.id + ':' + p.aq.t]).sort((a, b) => b.aq.t - a.aq.t)[0] || null;
     const k = inv ? inv.id + ':' + inv.aq.t : '';
@@ -702,7 +701,8 @@ export class Arena {
     // can I see the player?
     const eye = this.v.set(P.p.x, P.p.y + EYE, P.p.z), tgt = this.v2.set(me.p.x, me.p.y + lerp(1.3, .9, me.c), me.p.z), dx = tgt.x - eye.x, dy = tgt.y - eye.y, dz = tgt.z - eye.z, dist = Math.hypot(dx, dy, dz);
     let see = 0;
-    if (me.al && dist < 70 && M.ph === 'play') { const d = this.v3.set(dx / dist, dy / dist, dz / dist), h = rayMap(map, eye, d, dist); if (!h.hit || h.t >= dist - .2) { const yawTo = Math.atan2(dx, dz); let off = yawTo - b.yaw; off = Math.atan2(Math.sin(off), Math.cos(off)); see = Math.abs(off) < 1.1 || t - b.seenT < 1.5 || t - (M.lastShotT || -9) < 1.2 ? 1 : 0; } }
+    if (me.al && dist < 70 && M.ph === 'play') { const d = this.v3.set(dx / dist, dy / dist, dz / dist), h = rayMap(map, eye, d, dist); if (!h.hit || h.t >= dist - .2) { const yawTo = Math.atan2(dx, dz); let off = yawTo - b.yaw; off = Math.atan2(Math.sin(off), Math.cos(off)); const heard = dist < 9 && me.g && Math.hypot(me.v.x, me.v.z) > RUN * .6;   // running footsteps give you away (walk with SHIFT to sneak)
+        see = Math.abs(off) < 1.1 || heard || t - b.seenT < 1.5 || t - (M.lastShotT || -9) < 1.2 ? 1 : 0; } }
     if (see) { if (!b.see) b.react = t + cfg.react * (.8 + Math.random() * .5); b.seenT = t; b.last = {x: me.p.x, z: me.p.z}; }
     b.see = see;
     // where to go
@@ -744,7 +744,7 @@ export class Arena {
     const s = cfg.fire * (.5 + Math.random()); d.x += (Math.random() - .5) * s * 2; d.y += (Math.random() - .5) * s * 2; d.z += (Math.random() - .5) * s * 2; d.normalize();
     const wall = rayMap(M.M, eye, d, GUN.range), z = me.al ? rayZones(eye, d, zones(me.p.x, me.p.y, me.p.z, me.c)) : null;
     const end = z && z.t < wall.t ? eye.clone().addScaledVector(d, z.t) : eye.clone().addScaledVector(d, wall.t);
-    this.tracer(this.muzzleOf(b.av, eye, d), end, [.3, 2.2, 3]); this.zap(.5, b.av.root.position);
+    this.tracer(this.muzzleOf(b.av, eye, d), end, [.3, 2.2, 3]); this.zap(.5, b.av.root.getWorldPosition(this.v3));
     if (z && z.t < wall.t) this.hurt(GUN[z.k], z.k === 'head', {x: P.p.x, z: P.p.z}, b.nm);
     else this.impact(end, wall.n, [.3, 2.2, 3]);
   }
@@ -852,7 +852,7 @@ export class Arena {
         if (o.seen < 0) { o.p.copy(o.tp); o.yaw = o.tyaw; o.hseen = Array.isArray(s.hits) && s.hits.length ? Math.max(...s.hits.map(h => +h[0] || 0)) : 0; o.sh = +s.sh || 0; o.d = +s.d || 0; }
         o.seen = 1; o.at = t;
         // their shots: tracer and sound; their hits on me: I take the damage
-        if ((+s.sh || 0) !== o.sh) { o.sh = +s.sh || 0; if (Array.isArray(s.se) && o.av) { const e = new THREE.Vector3(+s.se[0] || 0, +s.se[1] || 0, +s.se[2] || 0); this.tracer(this.muzzleOf(o.av, null, null), e, [.3, 2.2, 3]); this.zap(.55, o.av.root.position); } }
+        if ((+s.sh || 0) !== o.sh) { o.sh = +s.sh || 0; if (Array.isArray(s.se) && o.av) { const e = new THREE.Vector3(+s.se[0] || 0, +s.se[1] || 0, +s.se[2] || 0); this.tracer(this.muzzleOf(o.av, null, null), e, [.3, 2.2, 3]); this.zap(.55, o.av.root.getWorldPosition(this.v3)); } }
         if (Array.isArray(s.hits)) s.hits.forEach(h => { const n = +h[0] || 0; if (n > o.hseen) { o.hseen = n; this.hurt(clamp(+h[1] || 0, 0, 100), !!h[2], {x: o.p.x, z: o.p.z}, M.oppName); } });
         // they were tagged: my point
         const d = clamp(+s.d || 0, 0, 99); if (d > o.d) { o.d = d; M.score[0] = d; this.feed(this.myName(), M.oppName, !!(s.kb && s.kb.hd), true); this.kill(!!(s.kb && s.kb.hd)); }
@@ -984,8 +984,9 @@ export class Arena {
     } else if (a._agun) { a.rig.remove(a._agun); a._agun = null; if (a.blaster) a.blaster.visible = true; a.poseFx = null; }
   }
   place(av, p, yaw, pitch, c, sp, dt, map, down) {
-    const o = map.def.o, r = av.root, ox = r.position.x;
-    r.position.set(o[0] + p.x, o[1] + p.y, o[2] + p.z); r.rotation.set(down ? -1.45 : 0, yaw, 0); r.scale.setScalar(AS);
+    // avatars in a match live inside the map's group (which sits at the map's origin): their position is map-local
+    const o = map.def.o, r = av.root, k = r.parent === map.G ? 0 : 1;
+    r.position.set(o[0] * k + p.x, o[1] * k + p.y, o[2] * k + p.z); r.rotation.set(down ? -1.45 : 0, yaw, 0); r.scale.setScalar(AS);
     av._apitch = pitch; av._acr = c; const moved = sp * dt; av.mv = sp > .6 && !down ? 1 : 0; av.runK = damp(av.runK || 0, sp > 4 ? 1 : 0, 6, dt); av.walkPh += moved * 5.4 / AS;
     if (!av.me && av.bot) av.update(dt, this.O.t, {cam: this.O.cam.position, focusSpeaker: null, shareStart: 0});
   }
@@ -1002,7 +1003,7 @@ export class Arena {
       const fl = this.vmFlash = new THREE.Sprite(new THREE.SpriteMaterial({color: new THREE.Color(4, .8, 1.6), transparent: true, depthWrite: false, blending: THREE.AdditiveBlending}));
       fl.position.copy(R.tip); fl.scale.setScalar(.16); fl.visible = false; G.add(fl);
       let first = true; G.traverse(m => { if (m.isMesh || m.isSprite) { m.renderOrder = first ? 1000 : 1001; m.material.transparent = true; m.material.depthWrite = true; m.frustumCulled = false; m.castShadow = false; if (first) { m.onBeforeRender = r => r.clearDepth(); first = false; } } });
-      G.position.set(.17, -.18, -.36); G.visible = false; O.cam.add(G); if (!O.cam.parent) O.scene.add(O.cam);
+      G.position.set(.19, -.2, -.38); G.visible = false; O.cam.add(G); if (!O.cam.parent) O.scene.add(O.cam);
     }
     this.vm.visible = !!on;
   }
@@ -1010,7 +1011,7 @@ export class Arena {
     const M = this.match, me = M.me, G = this.vm; if (!G) return;
     G.visible = me.al && M.ph !== 'end';
     const sp = clamp(Math.hypot(me.v.x, me.v.z) / RUN, 0, 1), b = me.g ? sp : .3, rl = me.rl > 0 ? Math.sin(clamp(1 - me.rl / GUN.reload, 0, 1) * Math.PI) : 0;
-    G.position.set(.17 + Math.sin(me.bob * .95) * .012 * b, -.18 + Math.abs(Math.cos(me.bob * .95)) * .01 * b - rl * .12 - me.c * .01, -.36 + me.kick * .035);
+    G.position.set(.19 + Math.sin(me.bob * .95) * .012 * b, -.2 + Math.abs(Math.cos(me.bob * .95)) * .01 * b - rl * .12 - me.c * .01, -.38 + me.kick * .035);
     G.rotation.set(me.kick * .05 + rl * .9, rl * .3, rl * -.35);
     if (this.flashT > 0) { this.flashT -= dt; this.vmFlash.visible = this.flashT > 0; this.vmFlash.material.rotation = Math.random() * 6; }
   }

@@ -42,13 +42,13 @@ try:
             y0 = A.evaluate("VO3.dbg().arena.match.me.yaw"); A.evaluate("VO3.dbg().arena.look(1000,0)"); y1 = A.evaluate("VO3.dbg().arena.match.me.yaw")
             ok(abs(abs(y1 - y0) * 180 / math.pi - 55) < .01, name + ': mouse look follows the CS:GO scale (1000 counts = 55 deg at 2.5)', (y0, y1))
             A.evaluate("VO3.dbg().arena.look(-1000,0)")
-            # wait out the countdown, then move with W
-            step(70)
+            # wait out the countdown (the whole 3.2 s on the first map, a short one after that), then move with W
+            if mi: A.evaluate("VO3.dbg().arena.match.warm=.25"); step(10)
+            else: step(70)
             ok(A.evaluate("VO3.dbg().arena.match.ph") == 'play', name + ': the countdown ends and play starts', A.evaluate("VO3.dbg().arena.match.ph"))
             p0 = A.evaluate("(()=>{const p=VO3.dbg().arena.match.me.p;return [p.x,p.z]})()"); A.keyboard.down('w'); step(10); A.keyboard.up('w')
             p1 = A.evaluate("(()=>{const p=VO3.dbg().arena.match.me.p;return [p.x,p.z]})()"); sp = math.hypot(p1[0] - p0[0], p1[1] - p0[1])
             ok(sp > 1.5, name + ': W runs forward', (p0, p1))
-            vmax = A.evaluate("(()=>{const R=VO3.dbg().arena;return 0})()")
             # jump
             A.keyboard.press(' '); step(3); jy = A.evaluate("VO3.dbg().arena.match.me.p.y"); step(20)
             ok(jy > .3, name + ': SPACE jumps', jy)
@@ -57,6 +57,8 @@ try:
             step(2)
             def aim_head():
                 A.evaluate("""(()=>{const R=VO3.dbg().arena,M=R.match,me=M.me,b=M.bot,e=R.eye(new me.p.constructor());const dx=b.P.p.x-e.x,dz=b.P.p.z-e.z,dy=b.P.p.y+1.5-e.y;me.yaw=Math.atan2(dx,dz);me.pitch=Math.atan2(dy,Math.hypot(dx,dz))})()""")
+            wp = A.evaluate("(()=>{const M=VO3.dbg().arena.match,b=M.bot,o=M.M.def.o,v=b.av.root.getWorldPosition(new b.P.p.constructor());return {dx:v.x-(o[0]+b.P.p.x),dy:v.y-(o[1]+b.P.p.y),dz:v.z-(o[2]+b.P.p.z),vis:b.av.root.visible}})()")
+            ok(wp['vis'] and abs(wp['dx']) + abs(wp['dy']) + abs(wp['dz']) < .05, name + ': the bot is drawn exactly where it stands', wp)
             d0 = A.evaluate("VO3.dbg().arena.match.bot.d"); aim_head()
             A.evaluate("(()=>{const R=VO3.dbg().arena;R.match.me.next=0;R.match.me.burst=0;R.fire(VO3.dbg().t)})()"); step(2)
             d1 = A.evaluate("VO3.dbg().arena.match.bot.d")
@@ -78,7 +80,7 @@ try:
                 A.evaluate("(()=>{const R=VO3.dbg().arena;R.match.me.next=0;R.match.me.burst=0;R.match.me.v.set(0,0,0);R.fire(VO3.dbg().t)})()"); hp.append(A.evaluate("VO3.dbg().arena.match.bot.hp"))
             ok(hp[0] == 66 and hp[1] == 32 and hp[2] == 0, name + ': three body shots tag (34 each)', hp)
             # the bot fights back: give it its reactions and stand in its sight
-            A.evaluate("""(()=>{const R=VO3.dbg().arena,M=R.match,me=M.me;me.hp=100;me.al=1;me.prot=0;M.bot.al=1;M.bot.hp=100;M.bot.prot=0;M.bot.deadT=0;M.bot.next=0;M.bot.burst=0;M.bot.cfg=Object.assign({},M.bot.cfg,{react:.05,err:0,fire:0});M.bot.P.p.set(me.p.x+8,0,me.p.z);M.bot.yaw=-Math.PI/2})()""")
+            A.evaluate("""(()=>{const R=VO3.dbg().arena,M=R.match,me=M.me;me.hp=100;me.al=1;me.prot=0;M.bot.al=1;M.bot.hp=100;M.bot.prot=0;M.bot.deadT=0;M.bot.next=0;M.bot.burst=0;M.bot.react=0;M.bot.see=0;M.bot.cfg=Object.assign({},M.bot.cfg,{react:.05,err:0,fire:0});M.bot.P.p.set(me.p.x+8,0,me.p.z);M.bot.yaw=-Math.PI/2})()""")
             step(40)
             ok(A.evaluate("VO3.dbg().arena.match.me.hp") < 100 or A.evaluate("VO3.dbg().arena.match.me.d") > 0, name + ': the bot shoots back', A.evaluate("(()=>{const M=VO3.dbg().arena.match;return [M.me.hp,M.me.d,M.bot.see,M.bot.burst]})()"))
             # leave the match: back on the range floor
@@ -87,7 +89,7 @@ try:
             step(4)
             ok(A.evaluate("VO3.dbg().wld.zone") == 'g', name + ': the camera is back on the range', A.evaluate("VO3.dbg().wld.zone"))
         # a full match to five against an easy bot: tag it five times
-        A.evaluate("(()=>{const R=VO3.dbg().arena;R.mapI=0;R.diff='easy';R.startBot()})()"); step(75)
+        A.evaluate("(()=>{const R=VO3.dbg().arena;R.mapI=0;R.diff='easy';R.startBot()})()"); step(4); A.evaluate("VO3.dbg().arena.match.warm=.25"); step(10)
         for k in range(5):
             A.evaluate("""(()=>{const R=VO3.dbg().arena,M=R.match,me=M.me,b=M.bot;if(!b.al){b.deadT=0}})()"""); step(3)
             A.evaluate("""(()=>{const R=VO3.dbg().arena,M=R.match,me=M.me,b=M.bot;me.p.set(-10,0,0);me.v.set(0,0,0);b.P.p.set(-3,0,0);b.P.v.set(0,0,0);b.prot=0;b.cfg=Object.assign({},b.cfg,{react:99})})()""")
@@ -97,7 +99,7 @@ try:
         st = A.evaluate("(()=>{const M=VO3.dbg().arena.match;return M&&{ph:M.ph,s:M.score}})()")
         ok(st and st['ph'] == 'end' and st['s'][0] == 5, 'five tags win the match', st)
         if SHOTS: v7.shot(A, 'arena_victory', 600)
-        step(150)
+        A.evaluate("(()=>{const M=VO3.dbg().arena.match;if(M&&M.ph==='end')M.endT=Math.min(M.endT,.4)})()"); step(16)
         ok(A.evaluate("!VO3.dbg().arena.match"), 'after the result you are back on the range', A.evaluate("!!VO3.dbg().arena.match"))
         ok(not errs and not A.evaluate("VO3.dbg().errs||0"), 'no errors', errs[:6])
         print('RESULT', res, flush=True)

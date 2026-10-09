@@ -60,7 +60,8 @@ try:
   ok(hitB,'and John sees himself get knocked over too')
   B.wait_for_timeout(800);B.screenshot(path=OUT+'/duo_knock_john.png',timeout=180000)
   A.bring_to_front();A.keyboard.press('e');A.wait_for_timeout(1200)
-  # Home Run Derby queue
+  # Home Run Derby queue (both derby clocks held still: the software renderer is far slower than the 150 s turn limit)
+  for P in (A,B):P.evaluate("VO3.dbg().derby.now=()=>1.7e12")
   for P in (A,B):
     P.bring_to_front();P.evaluate("(()=>{const W=VO3.dbg().walk;if(!W.me){const O=VO3.dbg();O.cardA=O.meAv;O.cardAct('walk')}})()");P.wait_for_timeout(800)
     P.evaluate("(()=>{const W=VO3.dbg().walk;W.me.wk.x=8;W.me.wk.z=-6.4;W.ride('r')})()");P.wait_for_timeout(2500)
