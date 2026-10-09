@@ -992,7 +992,7 @@ uniform sampler2D tRefl;uniform float uRK;varying vec4 vRU;varying vec3 vRW;`).r
   zoneVis(){const z=this.wld.zone,see={o:{o:1,d:1},g:{g:1},r:{r:1,d:1},d:{d:1,r:1,o:1},a:{a:1}}[z]||{o:1};
     this.av.forEach(a=>{const v=!!see[this.floorOf(a)];a._zv=v;if(!v&&a.root.visible){a.root.visible=false;a._zh=1}else if(v&&a._zh){a.root.visible=true;a._zh=0}if(a.drv&&a.drv.car)a.drv.car.visible=v});
     const st=this.room.static;if(st&&this._stz!==z){this._stz=z;const show=z==='o'||z==='d';st.forEach(m=>m.visible=show);this.room.group.visible=z!=='a'}
-    this.ui.place({o:'SALES FLOOR',d:'SKY DECK',r:'SKY PARK',g:'FIRING RANGE',a:'LASER TAG ARENA'}[z]);
+    this.ui.place(z==='r'&&this.cam.position.x>15?'SKYPORT':{o:'SALES FLOOR',d:'SKY DECK',r:'SKY PARK',g:'FIRING RANGE',a:'LASER TAG ARENA'}[z]);
     this.sys.forEach(S0=>S0.zone&&S0.zone(z))}
   // other systems (Sky Park, range, planes) answer questions from walking
   hook(name,...args){for(const S0 of this.sys){if(S0[name]){const r=S0[name](...args);if(r)return r}}return null}

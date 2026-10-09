@@ -186,7 +186,7 @@ export class Walk {
     if (this.me) {
       const p = this.prompt(); const k = p ? p.k + p.t : '';
       if (k !== this._pk) { this._pk = k; this.prE.classList.toggle('on', !!p); if (p) this.prT.textContent = p.t; }
-      const f = this.me.wk && this.me.wk.f; if (f !== this._fl) { this._fl = f; this.floorE.textContent = f === 'd' ? 'SKY DECK' : (FLOORS[f] || {}).name || ''; }
+      const w0 = this.me.wk, f = w0 && (w0.f === 'r' && w0.x > 15 ? 'p' : w0.f); if (f !== this._fl) { this._fl = f; this.floorE.textContent = f === 'd' ? 'SKY DECK' : f === 'p' ? 'SKYPORT' : (FLOORS[f] || {}).name || ''; }
     }
   }
   mine(a, dt, t) {

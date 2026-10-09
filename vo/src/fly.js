@@ -122,7 +122,7 @@ export class Fly {
       diffuseColor.rgb=mix(diffuseColor.rgb,vec3(.86,.86,.84),clamp(m,0.,1.));rk=mix(rk,.7,clamp(m,0.,1.));}`});
     add(rw, rwM);
     // runway numbers, read from the approach end
-    [['27', THRE - 62, -Math.PI / 2], ['09', THRW + 62, Math.PI / 2]].forEach(([t, x, r]) => { const c = textCanvas(t, 512, 512, {col: '#ffffff', size: 420, weight: 700}); const m = put(new THREE.PlaneGeometry(14, 14).rotateX(-Math.PI / 2), new THREE.MeshStandardMaterial({map: canvasTex(c), transparent: true, depthWrite: false, roughness: .7, polygonOffset: true, polygonOffsetFactor: -2}), x, Y + .02, RWY.z, 0, r, 0); m.renderOrder = 1; });
+    [['27', THRE - 62, Math.PI / 2], ['09', THRW + 62, -Math.PI / 2]].forEach(([t, x, r]) => { const c = textCanvas(t, 512, 512, {col: '#ffffff', size: 420, weight: 700}); const m = put(new THREE.PlaneGeometry(14, 14).rotateX(-Math.PI / 2), new THREE.MeshStandardMaterial({map: canvasTex(c), transparent: true, depthWrite: false, roughness: .7, polygonOffset: true, polygonOffsetFactor: -2}), x, Y + .02, RWY.z, 0, r, 0); m.renderOrder = 1; });
     // ---- lights: edge (white), centreline (white, red near the end), threshold (green), end (red), approach strobes, PAPI
     const edge = [], cen = [], thr = [], end = [];
     for (let x = RWY.x0 + 3; x <= RWY.x1 - 3; x += 30) [-1, 1].forEach(s => edge.push([x, Y + .35, RWY.z + s * (RWY.hw + .7), .9, 2.4, 2.3, 2]));
@@ -148,13 +148,15 @@ export class Fly {
     [BRIDGE[1], BRIDGE[3]].forEach(z => { put(new THREE.PlaneGeometry(bl, 1.1), glass, BRIDGE[0] + bl / 2, Y + .55, z); put(new THREE.BoxGeometry(bl, .04, .06), NEON(3.2, .3, .8), BRIDGE[0] + bl / 2, Y + .03, z); });
     const ap = mbox(APRON[2] - APRON[0], 1.2, APRON[3] - APRON[1], 4); ap.translate((APRON[0] + APRON[2]) / 2, Y - .6, (APRON[1] + APRON[3]) / 2); add(ap, deckM, {cast: true});
     const apM = patch(mat('concrete', {key: 'apron', color: '#8d9099', bump: .6}), {key: 'apron', frag: `{vec2 p=vWP.xz;float m=0.;
-      vec2 g=fract(p/7.5);m-=.25*step(min(g.x,g.y),.01);
+      vec2 g=fract(p/7.5);m-=.3*step(min(g.x,g.y),.012);float sl=h12(floor(p/7.5)+3.);float nz=vn(p*.03,vec2(1e4))*.6+vn(p*.11,vec2(1e4))*.4;diffuseColor.rgb*=(.86+.2*sl)*(.88+.24*nz);
+      float oil=smoothstep(.62,.8,vn(p*.07+7.,vec2(1e4)));diffuseColor.rgb*=1.-.22*oil;rk=1.-.25*oil;
       float tx=step(abs(p.x-${STAND.x}.),.18)*step(${RWY.z + RWY.dw}.,p.y)*step(p.y,${STAND.z - 4}.);
       float tl=step(abs(p.y-21.),.18)*step(55.,p.x)*step(p.x,${STAND.x}.);
       vec2 b=abs(p-vec2(${STAND.x}.,${STAND.z + 2}.))-vec2(7.,8.);float bx=step(abs(max(b.x,b.y)),.15);
-      float hs=step(abs(p.y-${RWY.z + RWY.dw + 1.2}.),.15)+step(abs(p.y-${RWY.z + RWY.dw + 1.8}.),.15)*step(.5,fract(p.x/2.));
+      float hs=step(abs(p.y-${(RWY.z + RWY.dw + 1.2).toFixed(2)}),.15)+step(abs(p.y-${(RWY.z + RWY.dw + 1.8).toFixed(2)}),.15)*step(.5,fract(p.x/2.));
       float y=clamp(tx+tl+bx+hs*step(70.,p.x)*step(p.x,135.),0.,1.);diffuseColor.rgb=mix(diffuseColor.rgb*(1.+m),vec3(.95,.72,.08),y);ek=y;eC=vec3(.25,.18,.02)*y;}`});
-    const apTop = new THREE.PlaneGeometry(APRON[2] - APRON[0], APRON[3] - APRON[1]).rotateX(-Math.PI / 2); apTop.translate((APRON[0] + APRON[2]) / 2, Y + .008, (APRON[1] + APRON[3]) / 2); add(apTop, apM);
+    const apTop = new THREE.PlaneGeometry(APRON[2] - APRON[0], APRON[3] - APRON[1]).rotateX(-Math.PI / 2); apTop.translate((APRON[0] + APRON[2]) / 2, Y + .008, (APRON[1] + APRON[3]) / 2);
+    { const P = apTop.getAttribute('position'), UV = apTop.getAttribute('uv'); for (let i = 0; i < P.count; i++) UV.setXY(i, P.getX(i) / 7.5, P.getZ(i) / 7.5); } add(apTop, apM);
     // taxi edge lights (blue) from the stand to the runway
     const tlts = []; for (let z = RWY.z + RWY.dw + 1; z < STAND.z - 3; z += 6) [-1, 1].forEach(s => tlts.push([STAND.x + s * 5, Y + .25, z, .55, .3, .6, 3.2]));
     for (let x = 58; x < STAND.x - 5; x += 8) [-1, 1].forEach(s => tlts.push([x, Y + .25, 21 + s * 5, .55, .3, .6, 3.2])); glowPoints(G, tlts);
@@ -162,23 +164,38 @@ export class Fly {
     const H = HANGAR, hw = (H.x1 - H.x0) / 2, hd = H.z1 - H.z0, hx = (H.x0 + H.x1) / 2, sy = H.h / hw;
     const arch = new THREE.CylinderGeometry(hw, hw, hd, 48, 1, true, Math.PI / 2, Math.PI); arch.rotateX(Math.PI / 2); arch.scale(1, sy, 1); arch.translate(hx, Y, (H.z0 + H.z1) / 2);
     const auv = arch.getAttribute('uv'); for (let i = 0; i < auv.count; i++) auv.setXY(i, auv.getX(i) * 60 / 4, auv.getY(i) * hd / 4);
-    add(arch, mat('corrugated', {key: 'hangar', color: '#5d6270', extra: {side: THREE.DoubleSide}}), {cast: true});
+    const lit = (m, key, k) => patch(m, {key, frag: `{float h=vWP.y-${Y.toFixed(1)};ek=(1.-smoothstep(0.,16.,h))*${k}+.06;eC=vec3(.62,.58,.52);}`});
+    add(arch, lit(mat('corrugated', {key: 'hangar', color: '#9097a6', extra: {side: THREE.DoubleSide}}), 'hangarlit', '.42'), {cast: true});
     const half = (hole) => { const s = new THREE.Shape(); s.moveTo(-hw, 0); for (let k = 0; k <= 32; k++) { const a = Math.PI - k / 32 * Math.PI; s.lineTo(Math.cos(a) * hw, Math.sin(a) * H.h); } s.lineTo(-hw, 0); if (hole) { const h = new THREE.Path(); h.moveTo(-hw + 3, 0); h.lineTo(hw - 3, 0); h.lineTo(hw - 3, H.h - 5); h.lineTo(-hw + 3, H.h - 5); h.lineTo(-hw + 3, 0); s.holes.push(h); } return new THREE.ShapeGeometry(s, 12); };
-    const back = half(false); back.translate(hx, Y, H.z1); add(back, mat('metal', {key: 'hangarwall', color: '#3c404a', extra: {side: THREE.DoubleSide}}));
-    const front = half(true); front.translate(hx, Y, H.z0); add(front, mat('metal', {key: 'hangarwall', color: '#3c404a', extra: {side: THREE.DoubleSide}}), {cast: true});
+    const wallM = lit(mat('metal', {key: 'hangarwall', color: '#6a707d', extra: {side: THREE.DoubleSide}}), 'hangarwlit', '.5');
+    const back = half(false); back.translate(hx, Y, H.z1); add(back, wallM);
+    const front = half(true); front.translate(hx, Y, H.z0); add(front, wallM, {cast: true});
     put(new THREE.BoxGeometry(hw * 2 - 6, .5, .5), NEON(3.2, .3, .8), hx, Y + H.h - 5.25, H.z0 - .1);
+    // door frame posts and the header, and inside: a bright end wall, an epoxy floor, work lights
+    [hx - hw + 3, hx + hw - 3].forEach(x => put(new THREE.BoxGeometry(.6, H.h - 5, .8), mat('metal', {key: 'hangarpost', color: '#2b2f38'}), x, Y + (H.h - 5) / 2, H.z0 - .2).castShadow = true);
+    put(mbox(34, 11, .3, 2.5), lit(mat('metal', {key: 'hangarend', color: '#c9cdd5', bump: .5}), 'hangarendlit', '.25'), hx, Y + 6.2, H.z1 - .75);
+    put(new THREE.PlaneGeometry(hw * 2 - 2.6, hd - 1.2).rotateX(-Math.PI / 2), mat('polished', {key: 'hangarfloor', color: '#d9dce2', bump: .25, env: .35, emissive: '#3a3c42', ei: .55}), hx, Y + .012, (H.z0 + H.z1) / 2);
+    put(new THREE.PlaneGeometry(26, 6.5), new THREE.MeshBasicMaterial({map: canvasTex(textCanvas('OWQ AIR', 1024, 256, {bg: '#b3122f', col: '#ffffff', size: 170})), toneMapped: false, color: new THREE.Color(1.15, 1.15, 1.15)}), hx, Y + 8.2, H.z1 - .55, 0, Math.PI, 0);
+    { const wl = []; for (let x = hx - 20; x <= hx + 20.1; x += 10) for (let z = H.z0 + 6; z < H.z1 - 4; z += 9) wl.push([x, Y + H.h * Math.sqrt(Math.max(0, 1 - ((x - hx) / hw) ** 2)) - 1.6, z, 1.6, 3.2, 3.1, 2.9]); glowPoints(G, wl); }
     put(new THREE.PlaneGeometry(16, 3.4), new THREE.MeshBasicMaterial({map: canvasTex(textCanvas('OWQ AIR', 1024, 220, {col: '#fff0f6', glow: '#ff2d78'})), transparent: true, depthWrite: false, toneMapped: false, color: new THREE.Color(2.4, 2.4, 2.4)}), hx, Y + H.h - 2.6, H.z0 - .2, 0, Math.PI, 0);
     const strips = []; for (let x = H.x0 + 8; x < H.x1 - 6; x += 8) strips.push(plain(new THREE.BoxGeometry(.4, .12, hd - 4).translate(x, Y + H.h * Math.sqrt(Math.max(0, 1 - ((x - hx) / hw) ** 2)) - .8, (H.z0 + H.z1) / 2)));
-    add(mergeGeometries(strips), NEON(3, 2.9, 2.7), {recv: false});
-    lightPools(G, [[hx - 14, Y + .02, H.z0 + 12, 12, .2, .19, .17], [hx + 14, Y + .02, H.z0 + 12, 12, .2, .19, .17], [hx, Y + .02, H.z0 + 26, 13, .2, .19, .17]]);
-    const logo = put(new THREE.PlaneGeometry(22, 8).rotateX(-Math.PI / 2), new THREE.MeshBasicMaterial({map: canvasTex(textCanvas('OWQ AIR', 1024, 372, {col: '#ff1f4f', size: 230})), transparent: true, opacity: .5, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -2}), hx, Y + .02, H.z0 + 20); logo.renderOrder = 1;
+    add(mergeGeometries(strips), NEON(4, 3.9, 3.6), {recv: false});
+    lightPools(G, [[hx - 14, Y + .02, H.z0 + 12, 12, .42, .4, .36], [hx + 14, Y + .02, H.z0 + 12, 12, .42, .4, .36], [hx, Y + .02, H.z0 + 24, 15, .45, .43, .39], [hx - 14, Y + .02, H.z1 - 8, 10, .3, .29, .26], [hx + 14, Y + .02, H.z1 - 8, 10, .3, .29, .26], [hx, Y + .02, H.z0 - 6, 16, .16, .15, .13]]);
+    const logo = put(new THREE.PlaneGeometry(22, 8).rotateX(-Math.PI / 2), new THREE.MeshBasicMaterial({map: canvasTex(textCanvas('OWQ AIR', 1024, 372, {col: '#ff1f4f', size: 230})), transparent: true, opacity: .5, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -2}), hx, Y + .02, H.z0 + 20, 0, Math.PI, 0); logo.renderOrder = 1;
     // a jet on display inside
-    try { const jet = EXT.plane ? EXT.plane(9) : null; if (jet) { const sp = jet.userData.span || 10; jet.scale.setScalar(16 / sp); const bb = new THREE.Box3().setFromObject(jet); jet.position.set(hx, Y - bb.min.y, H.z0 + 22); jet.rotation.y = Math.PI / 2; G.add(jet); } } catch (e) {}
+    try { const jet = EXT.plane ? EXT.plane(9) : null; if (jet) { const sp = jet.userData.span || 10; jet.scale.setScalar(16 / sp); const bb = new THREE.Box3().setFromObject(jet); jet.position.set(hx, Y - bb.min.y, H.z0 + 22); jet.rotation.y = Math.PI / 2;
+      jet.traverse(o => { if (o.isMesh && o.material && o.material.color) { o.material = o.material.clone(); o.material.emissive = o.material.color.clone().multiplyScalar(.32); o.material.emissiveIntensity = 1; o.castShadow = true; } }); G.add(jet); } } catch (e) {}
     // tool chests and a fuel truck
     const red = new THREE.MeshPhysicalMaterial({color: '#b3122f', roughness: .35, metalness: .3, clearcoat: .7});
     [[H.x0 + 4, H.z1 - 3], [H.x0 + 7, H.z1 - 3], [H.x1 - 4, H.z1 - 3]].forEach(([x, z]) => put(new THREE.BoxGeometry(2.4, 1.6, 1).translate(0, .8, 0), red, x, Y, z).castShadow = true);
     const truck = new THREE.Group(); truck.position.set(STAND.x + 16, Y, STAND.z - 2); truck.rotation.y = .4; G.add(truck);
-    [[new THREE.BoxGeometry(2.6, 2.2, 2.4), '#e9e6de', [3.2, 1.5, 0]], [new THREE.CylinderGeometry(1.15, 1.15, 5.6, 20).rotateZ(Math.PI / 2), '#d8d4ca', [-.6, 1.6, 0]], [new THREE.BoxGeometry(8.2, .5, 2.3), '#2a2d35', [.3, .5, 0]]].forEach(([g, c, p]) => { const m = new THREE.Mesh(g, new THREE.MeshStandardMaterial({color: c, roughness: .45, metalness: .3})); m.position.set(...p); m.castShadow = true; truck.add(m); });
+    [[new THREE.BoxGeometry(2.6, 2.2, 2.4), '#e9e6de', [3.2, 1.5, 0]], [new THREE.CylinderGeometry(1.15, 1.15, 5.6, 20).rotateZ(Math.PI / 2), '#d8d4ca', [-.6, 1.75, 0]], [new THREE.BoxGeometry(8.2, .4, 2.3), '#2a2d35', [.3, .75, 0]]].forEach(([g, c, p]) => { const m = new THREE.Mesh(g, new THREE.MeshStandardMaterial({color: c, roughness: .45, metalness: .3})); m.position.set(...p); m.castShadow = true; truck.add(m); });
+    { const tyre = new THREE.MeshStandardMaterial({color: '#141416', roughness: .9}), hub = new THREE.MeshStandardMaterial({color: '#b9bcc4', metalness: 1, roughness: .3}), wg = new THREE.CylinderGeometry(.52, .52, .42, 18).rotateX(Math.PI / 2), hg = new THREE.CylinderGeometry(.24, .24, .44, 12).rotateX(Math.PI / 2);
+      [3.3, -1.2, -2.6].forEach(x => [-1.08, 1.08].forEach(z => { const w = new THREE.Mesh(wg, tyre); w.position.set(x, .52, z); truck.add(w); const h = new THREE.Mesh(hg, hub); h.position.set(x, .52, z); truck.add(h); }));
+      const ws = new THREE.Mesh(new THREE.BoxGeometry(.06, .85, 2.1), new THREE.MeshPhysicalMaterial({color: '#1d2a3c', roughness: .05, metalness: .2, envMapIntensity: 1.6})); ws.position.set(4.52, 1.95, 0); truck.add(ws);
+      [-1.21, 1.21].forEach(z => { const sw = new THREE.Mesh(new THREE.BoxGeometry(1.2, .7, .04), ws.material); sw.position.set(3.4, 2, z); truck.add(sw); });
+      const reel = new THREE.Mesh(new THREE.CylinderGeometry(.45, .45, .5, 16).rotateX(Math.PI / 2), new THREE.MeshStandardMaterial({color: '#c4122f', roughness: .5})); reel.position.set(-3.7, 1.4, 0); truck.add(reel);
+      const bcn = new THREE.Mesh(new THREE.CylinderGeometry(.12, .12, .16, 10), NEON(3.6, 1.8, .2)); bcn.position.set(3.2, 2.7, 0); truck.add(bcn); }
     FLOORBOX.r.push([STAND.x + 11.5, STAND.z - 6, STAND.x + 20.5, STAND.z + 2]);
     // hangar walls block walkers (the front is open)
     FLOORBOX.r.push([H.x0, H.z0, H.x0 + 1.2, H.z1], [H.x1 - 1.2, H.z0, H.x1, H.z1], [H.x0, H.z1 - .6, H.x1, H.z1 + .3], [H.x0, H.z0 - .3, H.x0 + 3, H.z0 + .3], [H.x1 - 3, H.z0 - .3, H.x1, H.z0 + .3]);
@@ -187,10 +204,14 @@ export class Fly {
     const cab = put(new THREE.CylinderGeometry(5.4, 4.4, 4.6, 8), new THREE.MeshPhysicalMaterial({color: '#4d6b8a', emissive: new THREE.Color('#2a3b52'), emissiveIntensity: .8, roughness: .05, metalness: .3, transparent: true, opacity: .8}), T.x, Y + 28.3, T.z); cab.castShadow = true;
     put(new THREE.CylinderGeometry(5.8, 5.8, .6, 8), mat('metal', {key: 'ctwrroof', color: '#2a2d35'}), T.x, Y + 30.9, T.z); put(new THREE.CylinderGeometry(4.6, 4.6, .6, 8), mat('metal', {key: 'ctwrroof', color: '#2a2d35'}), T.x, Y + 25.8, T.z);
     put(new THREE.CylinderGeometry(.08, .08, 6, 6), mat('metal', {key: 'ctwrroof', color: '#2a2d35'}), T.x, Y + 34, T.z);
+    put(new THREE.TorusGeometry(5.6, .05, 6, 8), mat('metal', {key: 'ctwrrail', color: '#c9ccd4'}), T.x, Y + 31.8, T.z, Math.PI / 2, 0, Math.PI / 8);
+    put(mbox(12, 5, 9, 3), mat('concrete', {key: 'ctwrbase', color: '#b8bbc4'}), T.x + 2, Y + 2.5, T.z + 1).castShadow = true;
+    put(new THREE.PlaneGeometry(10, 1.3), new THREE.MeshStandardMaterial({color: '#ffd6a0', emissive: new THREE.Color('#ffb870'), emissiveIntensity: 1.2, roughness: .2}), T.x + 2, Y + 3.2, T.z - 3.52, 0, Math.PI, 0);
+    glowPoints(G, [[hx, Y + H.h + .35, H.z0 + 1.5, 1.4, 3.4, .25, .3], [hx, Y + H.h + .35, H.z1 - 1.5, 1.4, 3.4, .25, .3]], {blink: .5});
     put(new THREE.PlaneGeometry(10, 1.6), new THREE.MeshBasicMaterial({map: canvasTex(textCanvas('OWQ SKYPORT', 1024, 160, {col: '#fff0f6', glow: '#ff2d78'})), transparent: true, depthWrite: false, toneMapped: false, color: new THREE.Color(2.2, 2.2, 2.2)}), T.x, Y + 23.5, T.z - 3.3, 0, Math.PI, 0);
     const bc = glowPoints(G, [[T.x, Y + 37.2, T.z, 2.4, 0, 0, 0]]), bcc = bc.geometry.getAttribute('color');
     GFX.ticks.push(t => { const ph = (t * .75) % 1, on = ph < .12 ? 1 : ph > .5 && ph < .62 ? 2 : 0; bcc.setXYZ(0, on === 1 ? .3 : on === 2 ? 3.4 : 0, on ? 3.2 : 0, on === 1 ? 1 : on === 2 ? 3.2 : 0); bcc.needsUpdate = true; });
-    FLOORBOX.r.push([T.x - 3.4, T.z - 3.4, T.x + 3.4, T.z + 3.4]);
+    FLOORBOX.r.push([T.x - 3.4, T.z - 3.4, T.x + 3.4, T.z + 3.4], [T.x - 4, T.z - 3.5, T.x + 8, T.z + 5.5]);
     // windsock on the apron corner
     const ws = this.sock = new THREE.Group(); ws.position.set(44, Y, 24); G.add(ws);
     const pole = new THREE.Mesh(new THREE.CylinderGeometry(.08, .1, 6.5, 8), mat('metal', {key: 'sockpole', color: '#c9ccd4'})); pole.position.y = 3.25; ws.add(pole);
@@ -327,7 +348,8 @@ export class Fly {
     if (f.gearAuto) { const want = ap.on && h < 160 ? 1 : h > 30 && f.v > VR && !ap.on ? 0 : f.gear; if (want !== f.gear) { f.gear = want; this.gearVis(f); this.O.sfx('click', .5); } }
     const cp = Math.cos(f.pitch); f.x += Math.sin(f.yaw) * cp * f.v * dt; f.z += Math.cos(f.yaw) * cp * f.v * dt; f.vy = Math.sin(f.pitch) * f.v - (f.stall ? (vst - f.v) * .4 : 0); f.y += f.vy * dt;
     // the city edge and the ceiling
-    const r = Math.hypot(f.x, f.z); if (r > 1600) { const back = Math.atan2(-f.x, -f.z); let dy = back - f.yaw; dy = Math.atan2(Math.sin(dy), Math.cos(dy)); f.yaw += dy * dt * .8; if (!this._edge || t - this._edge > 4) { this._edge = t; this.big('TURN BACK', 'THE SKYPORT IS BEHIND YOU'); } }
+    // the edge of the map: past 2.6 km from the tower, heading away, the plane turns back toward the city
+    const r = Math.hypot(f.x, f.z); if (r > 2600) { const back = Math.atan2(-f.x, -f.z); let dy = back - f.yaw; dy = Math.atan2(Math.sin(dy), Math.cos(dy)); if (Math.abs(dy) > .7) { f.yaw += Math.sign(dy) * dt * .5; if (!this._edge || t - this._edge > 4) { this._edge = t; this.big('TURN BACK', 'THE CITY AND THE SKYPORT ARE BEHIND YOU'); } } }
     if (f.y > 650) { f.y = 650; f.pitch = Math.min(f.pitch, 0); }
     // touching down, or hitting something
     const hit = this.hit(f); if (hit) { this.crash(hit); return; }
@@ -389,8 +411,8 @@ export class Fly {
     if (f.y < ROOFY + 1 && f.y > ROOFY - 2.2 && onRwyDeck(f.x, f.z) && Math.abs(f.z - RWY.z) > RWY.hw) return 'MISSED THE RUNWAY';
     if (f.y < ROOFY - 2 && f.y > ROOFY - 3.5 && (onRwyDeck(f.x, f.z) || onRect(APRON, f.x, f.z))) return 'HIT THE DECK FROM BELOW';
     const H = HANGAR; if (f.x > H.x0 - 1 && f.x < H.x1 + 1 && f.z > H.z0 - 1 && f.z < H.z1 + 1 && f.y < ROOFY + H.h + 1) return 'HIT THE HANGAR';
-    if (Math.hypot(f.x - CTWR.x, f.z - CTWR.z) < 6.5 && f.y < ROOFY + 37) return 'HIT THE CONTROL TOWER';
-    const B = this.O.wld && this.O.wld.blds; if (B) for (const b of B) { if (Math.abs(f.x - b[0]) < b[2] / 2 + 1.5 && Math.abs(f.z - b[1]) < b[3] / 2 + 1.5 && f.y < GROUNDY + b[4] + 1) return 'HIT A BUILDING'; }
+    if ((Math.hypot(f.x - CTWR.x, f.z - CTWR.z) < 6.5 && f.y < ROOFY + 37) || (f.x > CTWR.x - 5 && f.x < CTWR.x + 9 && f.z > CTWR.z - 4.5 && f.z < CTWR.z + 6.5 && f.y < ROOFY + 6)) return 'HIT THE CONTROL TOWER';
+    const W = this.O.wld, B = W && (W.bldNear ? W.bldNear(f.x, f.z) : W.blds); if (B) for (const b of B) { if (Math.abs(f.x - b[0]) < b[2] / 2 + 1.5 && Math.abs(f.z - b[1]) < b[3] / 2 + 1.5 && f.y < GROUNDY + b[4] + 1) return 'HIT A BUILDING'; }
     return null;
   }
   place(a, f) {

@@ -357,11 +357,36 @@ export function scatter(geo, list) {
 // strip extra attributes so geometries from different sources merge
 export function plain(g) { const o = g.index ? g : g; ['color', 'aTrk', 'uv1', 'tangent'].forEach(k => { if (o.getAttribute(k)) o.deleteAttribute(k); }); if (!o.getAttribute('uv')) o.setAttribute('uv', new THREE.Float32BufferAttribute(new Float32Array(o.getAttribute('position').count * 2), 2)); return o; }
 
+// planting: rows of shrubs in a planter ({k:'shrub', x, y, z, w, d}) and small trees ({k:'tree', x, y, z, h}); lumpy
+// low-poly leaf clusters with vertex colours (darker underneath), merged into two meshes
+const LEAF = ['#1f4d28', '#2b6233', '#173f22', '#3a6d2c', '#245a35'].map(c => new THREE.Color(c));
+export function plants(G, items, o = {}) {
+  const parts = [], trunks = []; let seed = o.seed || 11; const R = () => { seed = (seed * 16807) % 2147483647; return seed / 2147483647; };
+  const blob = (r, x, y, z, col, sq = 1) => { const g = new THREE.IcosahedronGeometry(r, 1), P = g.getAttribute('position');
+    for (let i = 0; i < P.count; i++) { const k = 1 + Math.sin(P.getX(i) * 9.1 + x * 3.1) * Math.cos(P.getZ(i) * 7.3 + z * 2.3) * .2; P.setXYZ(i, P.getX(i) * k, P.getY(i) * k * sq, P.getZ(i) * k); }
+    g.translate(x, y, z); if (g.getAttribute('uv')) g.deleteAttribute('uv'); const C = new Float32Array(P.count * 3);
+    for (let i = 0; i < P.count; i++) { const sh = .62 + .5 * clamp01((P.getY(i) - y + r) / (2 * r)); C[i * 3] = col.r * sh; C[i * 3 + 1] = col.g * sh; C[i * 3 + 2] = col.b * sh; }
+    g.setAttribute('color', new THREE.BufferAttribute(C, 3)); g.computeVertexNormals(); parts.push(g); };
+  items.forEach((it, n) => {
+    if (it.k === 'tree') { const h = it.h || 2.6; trunks.push(plain(new THREE.CylinderGeometry(.06, .11, h, 8).translate(it.x, it.y + h / 2, it.z)));
+      [[0, .9, 0, .82], [.5, .55, .2, .62], [-.45, .6, -.15, .64], [.1, .45, -.5, .56], [-.1, 1.35, .1, .56], [.35, 1.05, -.3, .5]].forEach(([dx, dy, dz, r], k) => blob(r * (it.s || 1), it.x + dx * (it.s || 1), it.y + h + dy * (it.s || 1) - .5, it.z + dz * (it.s || 1), LEAF[(k + n) % 5]));
+    } else { const w = it.w || 2, d = it.d || 1.2, nx = Math.max(2, Math.round(w / .36)); for (let k = 0; k < nx; k++) blob(.24 + R() * .16, it.x - w / 2 + .2 + (w - .4) * k / (nx - 1) + (R() - .5) * .1, it.y + .12 + R() * .1, it.z + (R() - .5) * (d - .5), LEAF[(k + n) % 5], .82); }
+  });
+  const out = {};
+  if (parts.length) { out.leaves = new THREE.Mesh(mergeGeometries(parts), new THREE.MeshStandardMaterial({vertexColors: true, roughness: .86, flatShading: true})); out.leaves.castShadow = true; out.leaves.receiveShadow = true; G.add(out.leaves); }
+  if (trunks.length) { out.trunks = new THREE.Mesh(mergeGeometries(trunks), mat('wood', {key: 'trunk', color: '#5a4030'})); out.trunks.castShadow = true; G.add(out.trunks); }
+  return out;
+}
+const clamp01 = v => Math.max(0, Math.min(1, v));
+
 // text on a canvas (signs, numbers, ad boards)
 export function textCanvas(txt, w, h, o = {}) {
   const c = cv(w, h), x = c.getContext('2d'); if (o.bg) { x.fillStyle = o.bg; x.fillRect(0, 0, w, h); }
-  x.font = `${o.weight || 900} ${o.size || Math.round(h * .62)}px ${o.font || 'Verdana,sans-serif'}`; x.textAlign = 'center'; x.textBaseline = 'middle';
-  if (o.glow) { x.shadowColor = o.glow; x.shadowBlur = o.blur ?? h * .18; } x.fillStyle = o.col || '#fff'; if (o.ls) x.letterSpacing = o.ls + 'px';
+  let sz = o.size || Math.round(h * .62); const font = () => { x.font = `${o.weight || 900} ${sz}px ${o.font || 'Verdana,sans-serif'}`; }; font(); x.textAlign = 'center'; x.textBaseline = 'middle';
+  if (o.ls) x.letterSpacing = o.ls + 'px';
+  // shrink to fit the canvas (leaves room for the glow)
+  if (o.fit !== false && x.measureText) { const room = w * (o.glow ? .84 : .94), mw = x.measureText(txt).width; if (mw > room) { sz = Math.max(8, Math.floor(sz * room / mw)); font(); } }
+  if (o.glow) { x.shadowColor = o.glow; x.shadowBlur = o.blur ?? h * .18; } x.fillStyle = o.col || '#fff';
   x.fillText(txt, w / 2, h / 2 + (o.dy || 0)); if (o.glow) { x.shadowBlur = 0; x.fillText(txt, w / 2, h / 2 + (o.dy || 0)); }
   return c;
 }

@@ -3,7 +3,7 @@
 // two jumps over open air, boost pads, banked corners with kerbs, concrete barriers with a crimson LED line, street
 // lamps, gantries and cable-stayed towers. Everything here is in Sales Floor coordinates (office floor y = 0).
 import * as THREE from 'three';
-import {GFX, mat, patch, sweep, mbox, scatter, glowPoints, lightPools, crowd, textCanvas, canvasTex, NEON, mergeGeometries, plain} from './gfx.js';
+import {GFX, mat, patch, sweep, mbox, scatter, glowPoints, lightPools, crowd, plants, textCanvas, canvasTex, NEON, mergeGeometries, plain} from './gfx.js';
 import {cv, tex} from './tex.js';
 
 // opening in the west wall of the Sales Floor
@@ -143,6 +143,8 @@ export function buildSky(parent) {
   const roadM = patch(mat('asphalt', {key: 'track', bump: 1.1, env: .9}), {key: 'trackroad', uniforms: {uHW: {value: HW}, uStart: {value: D.start}, uLen: {value: L}, uT: {value: 0}, uB: {value: D.boosts.concat([-999, -999, -999]).slice(0, 8)}, uG: {value: D.gaps.flatMap(g => [g.s0, g.s1])}},
     fragHead: 'uniform float uHW,uStart,uLen,uT;uniform float uB[8];uniform float uG[4];',
     frag: `{float s=vTrk.x,lat=vTrk.y,al=abs(lat),fw=fwidth(lat)*1.3+.004;
+      float nz=vn(vWP.xz*.035,vec2(1e4))*.55+vn(vWP.xz*.12+3.,vec2(1e4))*.3+vn(vWP.xz*.5+9.,vec2(1e4))*.15;diffuseColor.rgb*=.82+.36*nz;rk*=.92+.16*nz;
+      float pt=smoothstep(.72,.86,vn(vec2(s*.05,lat*.4)+17.,vec2(1e4)));diffuseColor.rgb*=1.-.28*pt;rk=mix(rk,.8,pt*.6);
       float sh=smoothstep(uHW-.03,uHW+.03,al);diffuseColor.rgb=mix(diffuseColor.rgb,diffuseColor.rgb*1.45+vec3(.012),sh*.7);rk=mix(rk,1.12,sh);
       float e1=smoothstep(uHW-.5-fw,uHW-.5+fw,al)*(1.-smoothstep(uHW-.24-fw,uHW-.24+fw,al));diffuseColor.rgb=mix(diffuseColor.rgb,vec3(.78,.78,.76),e1*.95);rk=mix(rk,.62,e1);
       float rl=exp(-pow((lat-1.6*sin(s*.011))/2.4,2.));diffuseColor.rgb*=1.-.22*rl;rk=mix(rk,.78,rl*.5);
@@ -351,9 +353,7 @@ export function buildSky(parent) {
     [[-20, -5.6], [-28, -5.6], [-20, 13.6], [-28, 13.6]].forEach(([x, z]) => be.push(plain(mbox(2.2, .12, .6, 1)).translate(x, .48, z), plain(mbox(.1, .45, .5, 1)).translate(x - .9, .23, z), plain(mbox(.1, .45, .5, 1)).translate(x + .9, .23, z)));
     add(mergeGeometries(pl), mat('concrete', {key: 'planter', color: '#55575f'}), {cast: true});
     add(mergeGeometries(be), mat('wood', {key: 'bench', color: '#c08a5a'}), {cast: true});
-    const leaf = new THREE.MeshStandardMaterial({color: '#1d4a26', roughness: .85});
-    tr.forEach(([x, y, z]) => { const t = new THREE.Mesh(new THREE.IcosahedronGeometry(.9, 1), leaf); t.position.set(x, y + 1.15, z); t.scale.set(1.2, 1, .9); t.castShadow = true; G.add(t);
-      const k = new THREE.Mesh(new THREE.CylinderGeometry(.06, .09, 1, 6), rail); k.position.set(x, y + .4, z); G.add(k); });
+    plants(G, tr.flatMap(([x, y, z], i) => [{k: 'shrub', x, y: y - .04, z, w: 2.2, d: 1.2}, {k: 'tree', x, y, z, h: 2.2, s: .9}]), {seed: 3});
     lightPools(G, [[pcx, .02, pcz, 13, .14, .07, .1], [-16, .02, 4, 6, .22, .2, .18], [-30, .02, 4, 6, .22, .2, .18]]);
     // "SKY DECK" over the door on the tower face
     const sm = new THREE.MeshBasicMaterial({map: canvasTex(textCanvas('OWQ SKY DECK', 1024, 180, {col: '#fff0f6', glow: '#ff2d78'})), transparent: true, depthWrite: false, toneMapped: false, color: new THREE.Color(2.4, 2.4, 2.4)});

@@ -8,6 +8,9 @@ import {clamp, damp} from './util.js';
 import {RANGEY, ELEVP} from './world.js';
 import {FLOORBOX, FLOORRECT} from './walk.js';
 import {EXT} from './cosm.js';
+import {mat} from './gfx.js';
+// plane geometry with uvs in tiles of `t` metres (for the tiled gfx surfaces)
+const tiled = (w, h, t) => { const g = new THREE.PlaneGeometry(w, h), uv = g.getAttribute('uv'); for (let i = 0; i < uv.count; i++) uv.setXY(i, uv.getX(i) * w / t, uv.getY(i) * h / t); return g; };
 
 const Y = RANGEY;
 const LANES = [-7.4, -2.6, 2.2, 6.8].map((x, i) => ({i, x, z: -3.6}));
@@ -67,17 +70,17 @@ export class Range {
     const H = 5.2, conc = cv(512, 512), cx = conc.getContext('2d'); cx.fillStyle = '#1b1a1f'; cx.fillRect(0, 0, 512, 512);
     const id = cx.getImageData(0, 0, 512, 512); for (let i = 0; i < id.data.length; i += 4) { const k = (Math.random() - .5) * 18; id.data[i] += k; id.data[i + 1] += k; id.data[i + 2] += k; } cx.putImageData(id, 0, 0);
     const cT = tex(conc, {mips: true}); cT.wrapS = cT.wrapT = THREE.RepeatWrapping; cT.repeat.set(4, 4);
-    const wall = new THREE.MeshStandardMaterial({map: cT, roughness: .9, color: '#8c8794'}), floor = new THREE.MeshStandardMaterial({map: cT, roughness: .7, color: '#5e5a66'});
-    add(new THREE.PlaneGeometry(20.2, 18.6).rotateX(-Math.PI / 2), floor, 0, Y, 2.3);
+    const wall = mat('concrete', {key: 'rngwall', color: '#a29fab', bump: .8}), floor = mat('polished', {key: 'rngfloor', color: '#7d7f88', bump: .5, env: 1.1});
+    add(tiled(20.2, 18.6, 3).rotateX(-Math.PI / 2), floor, 0, Y, 2.3).receiveShadow = true;
     add(new THREE.PlaneGeometry(20.2, 18.6).rotateX(Math.PI / 2), new THREE.MeshStandardMaterial({color: '#141317', roughness: 1}), 0, Y + H, 2.3);
-    add(new THREE.PlaneGeometry(20.2, H), wall, 0, Y + H / 2, -7.0); add(new THREE.PlaneGeometry(20.2, H), wall, 0, Y + H / 2, 11.6, 0, Math.PI, 0);
-    add(new THREE.PlaneGeometry(18.6, H), wall, -10.05, Y + H / 2, 2.3, 0, Math.PI / 2, 0); add(new THREE.PlaneGeometry(18.6, H), wall, 10.05, Y + H / 2, 2.3, 0, -Math.PI / 2, 0);
+    add(tiled(20.2, H, 3), wall, 0, Y + H / 2, -7.0).receiveShadow = true; add(tiled(20.2, H, 3), wall, 0, Y + H / 2, 11.6, 0, Math.PI, 0);
+    add(tiled(18.6, H, 3), wall, -10.05, Y + H / 2, 2.3, 0, Math.PI / 2, 0).receiveShadow = true; add(tiled(18.6, H, 3), wall, 10.05, Y + H / 2, 2.3, 0, -Math.PI / 2, 0).receiveShadow = true;
     // lights: crimson strips, white down lights over each lane
     const neon = BM({color: new THREE.Color(3.2, .35, .85), toneMapped: false}), cool = BM({color: new THREE.Color(3, 3.1, 3.4), toneMapped: false});
     add(new THREE.BoxGeometry(20, .06, .06), neon, 0, Y + H - .2, -6.9); add(new THREE.BoxGeometry(20, .06, .06), neon, 0, Y + .25, 11.5);
     [-10, 10].forEach(x => add(new THREE.BoxGeometry(.06, .06, 18.4), neon, x * .995, Y + 3.2, 2.3));
     // the counter and lane dividers
-    const top = new THREE.MeshStandardMaterial({color: '#25232b', roughness: .35, metalness: .6});
+    const top = mat('metal', {key: 'rngtop', color: '#3a3842', bump: .6});
     add(new THREE.BoxGeometry(19.8, 1.0, .55), top, 0, Y + .5, LINE); add(new THREE.BoxGeometry(19.8, .05, .62), neon, 0, Y + 1.02, LINE);
     const glass = new THREE.MeshBasicMaterial({color: '#9fd8ff', transparent: true, opacity: .1, side: THREE.DoubleSide, depthWrite: false});
     LANES.forEach((l, i) => { if (i) { const x = (LANES[i - 1].x + l.x) / 2; add(new THREE.PlaneGeometry(2.6, 2.4), glass, x, Y + 1.2, LINE - 1.1, 0, Math.PI / 2, 0); add(new THREE.BoxGeometry(.06, 2.4, .06), top, x, Y + 1.2, LINE - 2.4); FLOORBOX.g.push([x - .08, LINE - 2.4, x + .08, LINE]); } });

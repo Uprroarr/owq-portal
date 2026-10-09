@@ -16,6 +16,7 @@ try:
         if SHOTS: v7.expand(A)
         A.evaluate(v7.FREEZE); step = lambda n: A.evaluate(v7.STEP, n)
         ok(A.evaluate("!!VO3.dbg().arena"), 'the arena system is on the floor')
+        A.evaluate("VO3.dbg().arena.noSpread=1")   # exact aim for the hit checks (spread itself is checked below)
         # walk down to the range and up to the terminal
         A.evaluate("VO3.dbg().walk.start()"); step(4)
         A.evaluate("(()=>{const W=VO3.dbg().walk;W.ride('g')})()"); step(20)
@@ -77,7 +78,7 @@ try:
                 A.evaluate("(()=>{const R=VO3.dbg().arena;R.match.me.next=0;R.match.me.burst=0;R.match.me.v.set(0,0,0);R.fire(VO3.dbg().t)})()"); hp.append(A.evaluate("VO3.dbg().arena.match.bot.hp"))
             ok(hp[0] == 66 and hp[1] == 32 and hp[2] == 0, name + ': three body shots tag (34 each)', hp)
             # the bot fights back: give it its reactions and stand in its sight
-            A.evaluate("""(()=>{const R=VO3.dbg().arena,M=R.match,me=M.me;me.hp=100;me.al=1;me.prot=0;M.bot.al=1;M.bot.hp=100;M.bot.prot=0;M.bot.cfg=Object.assign({},M.bot.cfg,{react:.05,err:0,fire:0});M.bot.P.p.set(me.p.x+8,0,me.p.z);M.bot.yaw=-Math.PI/2})()""")
+            A.evaluate("""(()=>{const R=VO3.dbg().arena,M=R.match,me=M.me;me.hp=100;me.al=1;me.prot=0;M.bot.al=1;M.bot.hp=100;M.bot.prot=0;M.bot.deadT=0;M.bot.next=0;M.bot.burst=0;M.bot.cfg=Object.assign({},M.bot.cfg,{react:.05,err:0,fire:0});M.bot.P.p.set(me.p.x+8,0,me.p.z);M.bot.yaw=-Math.PI/2})()""")
             step(40)
             ok(A.evaluate("VO3.dbg().arena.match.me.hp") < 100 or A.evaluate("VO3.dbg().arena.match.me.d") > 0, name + ': the bot shoots back', A.evaluate("(()=>{const M=VO3.dbg().arena.match;return [M.me.hp,M.me.d,M.bot.see,M.bot.burst]})()"))
             # leave the match: back on the range floor

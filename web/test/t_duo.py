@@ -53,10 +53,10 @@ try:
   # Cole drives into John
   A.evaluate("voDrive()");A.wait_for_timeout(1500)
   B.bring_to_front();ok(until(B,"(()=>{const a=[...VO3.dbg().av.values()].find(x=>x.nm==='Cole Leckey');return a&&a.drv})()",15),'John sees Cole\'s car');A.bring_to_front()
-  A.evaluate("(()=>{const d=VO3.dbg().drive.me.drv;d.x=-7.2;d.z=1.5;d.h=0;d.v=6})()")
+  A.evaluate("(()=>{const d=VO3.dbg().drive.me.drv;d.x=-7.2;d.z=1.5;d.h=0;d.v=6;d.vx=6;d.vz=0;d.w=0})()")
   A.keyboard.down('w');hitA=until(A,"(()=>{const a=[...VO3.dbg().av.values()].find(x=>x.nm==='John Montini');return a&&a.knd})()",12);A.keyboard.up('w')
   ok(hitA,'driving into John knocks him over on Cole\'s screen')
-  B.bring_to_front();hitB=until(B,"(()=>{const a=VO3.dbg().meAv;return a&&(a.knd||VO3.dbg().walk.kn>0)})()",15)
+  B.bring_to_front();hitB=until(B,"(()=>{const a=VO3.dbg().meAv;return a&&!!a.knd})()",15)
   ok(hitB,'and John sees himself get knocked over too')
   B.wait_for_timeout(800);B.screenshot(path=OUT+'/duo_knock_john.png',timeout=180000)
   A.bring_to_front();A.keyboard.press('e');A.wait_for_timeout(1200)
@@ -64,10 +64,10 @@ try:
   for P in (A,B):
     P.bring_to_front();P.evaluate("(()=>{const W=VO3.dbg().walk;if(!W.me){const O=VO3.dbg();O.cardA=O.meAv;O.cardAct('walk')}})()");P.wait_for_timeout(800)
     P.evaluate("(()=>{const W=VO3.dbg().walk;W.me.wk.x=8;W.me.wk.z=-6.4;W.ride('r')})()");P.wait_for_timeout(2500)
-  A.bring_to_front();A.evaluate("(()=>{const W=VO3.dbg().walk,w=W.me.wk;w.x=-15.6;w.z=18.6})()");A.wait_for_timeout(800);A.evaluate("VO3.dbg().walk.use()")
+  A.bring_to_front();A.evaluate("(()=>{const W=VO3.dbg().walk,w=W.me.wk;w.x=-3;w.z=-13.6})()");A.wait_for_timeout(800);A.evaluate("VO3.dbg().walk.use()")
   ok(until(A,"!!VO3.dbg().derby.turn",15),'Cole presses START and bats')
   A.wait_for_timeout(1500)
-  B.bring_to_front();B.evaluate("(()=>{const W=VO3.dbg().walk,w=W.me.wk;w.x=-15.6;w.z=18.8})()");B.wait_for_timeout(1500)
+  B.bring_to_front();B.evaluate("(()=>{const W=VO3.dbg().walk,w=W.me.wk;w.x=-2.1;w.z=-13.9})()");B.wait_for_timeout(1500)
   pt=None
   for k in range(20):
     pt=B.evaluate("(()=>{const p=VO3.dbg().walk.prompt();return p&&p.t})()")

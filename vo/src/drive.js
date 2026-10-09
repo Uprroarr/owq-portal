@@ -301,12 +301,12 @@ class Drive {
   // ---------------------------------------------------------------- my car
   mine(a, d, dt, t) {
     const n = Math.min(4, Math.ceil(dt / (1 / 90)));
-    for (let i = 0; i < n; i++) this.step(a, d, dt / n, t);
+    for (let i = 0; i < n; i++) { this.step(a, d, dt / n, t); this.hitCars(a, d, t); }
     // out the door and onto the deck (and back in)
     if (!d.k && d.x < TOWER.x0 + .3) { d.k = 1; d.hint = -1; d.lap = null; if (!this.deckSeen) { this.deckSeen = 1; this.O.ui.toast('OWQ SKY DECK: 2.5 km. Boost pads, two jumps, the tunnel. SPACE to drift.'); } this.send(1); }
     else if (d.k && d.x > TOWER.x0 + .5 && d.z > DOOR.z0 - .2 && d.z < DOOR.z1 + .2) { d.k = 0; d.y = 0; d.air = 0; d.vy = 0; this.lapE.textContent = ''; this.send(1); }
     if (d.k) this.deck(a, d, dt, t); else { d.y = 0; d.pitch = damp(d.pitch, -clamp(d.acc || 0, -12, 12) * .004, 8, dt); d.roll = damp(d.roll, -clamp(d.w * d.v, -40, 40) * .002, 8, dt); }
-    this.hitPeople(a, d, t); this.hitCars(a, d, t);
+    this.hitPeople(a, d, t);
     this.fxSlide(a, d, 0);
     if ((this.sendT -= dt) <= 0) { this.sendT = .08; this.send(); }
     this.hud(d, t);
@@ -321,6 +321,7 @@ class Drive {
       // engine, brakes, reverse
       if (thr > 0) { const a0 = d.k ? 15 : 7; vF += (vF < -.3 ? 22 : a0 * clamp(1.1 - vF / vmax, .12, 1)) * dt; }
       else if (thr < 0) { if (vF > .4) vF -= 26 * dt; else vF = Math.max(-VREV, vF - 7 * dt); }
+      else if (d.k) { const dec = (1.1 + Math.abs(vF) * .04) * dt; vF = Math.abs(vF) <= dec ? 0 : vF - Math.sign(vF) * dec; }   // coasting on the deck: rolling resistance, a little engine braking
       else vF *= Math.exp(-.35 * dt);
       if (hb) vF *= Math.exp(-.9 * dt);
       vF -= vF * Math.abs(vF) * (d.k ? .0011 : .02) * dt;             // air drag
@@ -381,7 +382,7 @@ class Drive {
       if (hit > 2.5) {
         if ((d.wallT || 0) < t - .25) { O.sfx('thud', Math.min(1, hit / 14)); O.shk = Math.max(O.shk || 0, Math.min(.7, hit * .045)); }
         if (O.pfx) for (let k = 0; k < Math.min(26, 4 + hit * 1.4); k++) O.pfx.emit('spark', best.px, d.y + .3, best.pz, tx * vt * .6 + nx * 3 + (Math.random() - .5) * 4, 1 + Math.random() * 3, tz * vt * .6 + nz * 3 + (Math.random() - .5) * 4);
-        if (hit > 14) this.big('CRASH!');
+        if (hit > 11) this.big('CRASH!');
       } else if (Math.abs(vt) > 4 && O.pfx && Math.random() < .6) O.pfx.emit('spark', best.px, d.y + .25, best.pz, tx * vt * .5 + (Math.random() - .5) * 2, Math.random() * 2, tz * vt * .5 + (Math.random() - .5) * 2);
       d.wallT = t;
     }
@@ -506,25 +507,34 @@ class Drive {
       }
     });
   }
-  // cars as three circles each: separate, then trade momentum (each car applies its own half, so both screens agree)
+  // cars against cars: oriented boxes (separating axes), pushed apart along the shallowest axis, then a proper impulse at
+  // the contact point (spin included) with scrape friction. Each car applies its own half, so both screens agree.
   hitCars(a, d, t) {
-    const O = this.O, c = carH(d.h), r = d.hw * 1.02;
+    const O = this.O, c = carH(d.h);
     O.av.forEach(b => {
       const e = b.drv; if (b === a || !e || e.k !== d.k || Math.abs(d.y - e.y) > 1.4) return;
-      if (Math.hypot(d.x - e.x, d.z - e.z) > d.hl + e.hl + 1) return;
-      const ce = carH(e.h); let bestD = 0, N = null, P = null;
-      for (const ka of [-.6, 0, .6]) for (const kb of [-.6, 0, .6]) {
-        const ax = d.x + c.x * d.hl * ka * 1.2, az = d.z + c.z * d.hl * ka * 1.2, bx = e.x + ce.x * e.hl * kb * 1.2, bz = e.z + ce.z * e.hl * kb * 1.2;
-        const dx = ax - bx, dz = az - bz, dd = Math.hypot(dx, dz), lim = r + e.hw * 1.02;
-        if (dd < lim && dd > 1e-4 && lim - dd > bestD) { bestD = lim - dd; N = [dx / dd, dz / dd]; P = [ka * d.hl * 1.2, (ax + bx) / 2, (az + bz) / 2]; }
+      const dx = d.x - e.x, dz = d.z - e.z, R = d.hl + d.hw + e.hl + e.hw; if (dx * dx + dz * dz > R * R) return;
+      const ce = carH(e.h), AX = [[c.x, c.z], [-c.z, c.x], [ce.x, ce.z], [-ce.z, ce.x]];
+      let pen = 1e9, nx = 0, nz = 0;
+      for (const [ax, az] of AX) {
+        const rA = d.hl * Math.abs(c.x * ax + c.z * az) + d.hw * Math.abs(-c.z * ax + c.x * az);
+        const rB = e.hl * Math.abs(ce.x * ax + ce.z * az) + e.hw * Math.abs(-ce.z * ax + ce.x * az);
+        const dist = dx * ax + dz * az, ov = rA + rB - Math.abs(dist);
+        if (ov <= 0) return;                                   // a separating axis: no contact
+        if (ov < pen) { pen = ov; const sg = dist >= 0 ? 1 : -1; nx = ax * sg; nz = az * sg; }
       }
-      if (!N) return;
-      d.x += N[0] * bestD; d.z += N[1] * bestD;
-      const rvx = d.vx - (e.vx || 0), rvz = d.vz - (e.vz || 0), vn = rvx * N[0] + rvz * N[1];
+      // contact point: the deepest corners of each box along the normal, averaged
+      const sup = (x0, z0, f, hl, hw, sx, sz) => { let m = -1e9, px = 0, pz = 0, k = 0; for (const u of [-1, 1]) for (const v of [-1, 1]) { const vx = x0 + f.x * hl * u - f.z * hw * v, vz = z0 + f.z * hl * u + f.x * hw * v, q = vx * sx + vz * sz; if (q > m + 1e-3) { m = q; px = vx; pz = vz; k = 1; } else if (q > m - 1e-3) { px += vx; pz += vz; k++; } } return [px / k, pz / k]; };
+      const pB = sup(e.x, e.z, ce, e.hl, e.hw, nx, nz), pA = sup(d.x, d.z, c, d.hl, d.hw, -nx, -nz), cx = (pA[0] + pB[0]) / 2, cz = (pA[1] + pB[1]) / 2;
+      d.x += nx * pen; d.z += nz * pen;
+      const ox = cx - d.x, oz = cz - d.z, I = (d.hl * d.hl + d.hw * d.hw) / 3, rn = oz * nx - ox * nz;
+      const vpx = d.vx + d.w * oz - (e.vx || 0), vpz = d.vz - d.w * ox - (e.vz || 0), vn = vpx * nx + vpz * nz;
       if (vn < 0) {
-        const j = -(1.3) * vn / 2; d.vx += j * N[0]; d.vz += j * N[1];
-        const rx = -c.z, rz = c.x, lever = P[0]; d.w += (j * (N[0] * rx + N[1] * rz)) * lever * .25;
-        if (-vn > 2 && (d._bump || 0) < t - .3) { d._bump = t; O.sfx('thud', Math.min(1, -vn / 10)); O.shk = Math.max(O.shk || 0, Math.min(.5, -vn * .05)); if (O.pfx) for (let k = 0; k < 14; k++) O.pfx.emit('spark', P[1], d.y + .4, P[2], (Math.random() - .5) * 5, 1 + Math.random() * 2, (Math.random() - .5) * 5); }
+        const j = -(1 + .28) * vn / (2 + rn * rn / I);
+        d.vx += j * nx; d.vz += j * nz; d.w += j * rn / I;
+        const tx = -nz, tz = nx, vt = vpx * tx + vpz * tz, rt = oz * tx - ox * tz, jt = clamp(-vt / (2 + rt * rt / I), -.4 * j, .4 * j);
+        d.vx += jt * tx; d.vz += jt * tz; d.w += jt * rt / I;
+        if (-vn > 2 && (d._bump || 0) < t - .3) { d._bump = t; O.sfx('thud', Math.min(1, -vn / 10)); O.shk = Math.max(O.shk || 0, Math.min(.5, -vn * .05)); if (O.pfx) for (let k = 0; k < 14; k++) O.pfx.emit('spark', cx, d.y + .4, cz, (Math.random() - .5) * 5 + nx * 2, 1 + Math.random() * 2, (Math.random() - .5) * 5 + nz * 2); if (-vn > 9) this.big('CRASH!'); }
       }
     });
   }

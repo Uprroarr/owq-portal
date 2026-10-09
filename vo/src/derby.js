@@ -9,7 +9,7 @@ import {cv, tex} from './tex.js';
 import {clamp, damp, lerp} from './util.js';
 import {ROOFY, ELEVP, GROUNDY} from './world.js';
 import {FLOORBOX, FLOORRECT, inAreas} from './walk.js';
-import {GFX, mat, patch, sweep, mbox, scatter, plain, glowPoints, lightPools, crowd, textCanvas, canvasTex, NEON, mergeGeometries} from './gfx.js';
+import {GFX, mat, patch, sweep, mbox, scatter, plain, glowPoints, lightPools, crowd, plants, textCanvas, canvasTex, NEON, mergeGeometries} from './gfx.js';
 import {RD} from './ragdoll.js';
 
 export const PLATE = {x: 2, z: -24};
@@ -106,17 +106,24 @@ export class Derby {
     put(new THREE.ShapeGeometry(pl).rotateX(-Math.PI / 2), white, PLATE.x, Y + .03, PLATE.z + .22);
     // ---- outfield wall: padded, ad panels with the team's words and the distances, a yellow line on top
     const wallS = arcS(FOUL, -FOUL, 'fence', 1), wlen = wallS[wallS.length - 1].s;
-    const wc = cv(4096, 256), wx = wc.getContext('2d'); wx.fillStyle = '#0d1426'; wx.fillRect(0, 0, 4096, 256);
+    // ad boards: the canvas keeps the wall's proportions (about 70 m by 2.8 m), so the words aren't stretched; every word fits its board
+    const WH = 168, wc = cv(4096, WH), wx = wc.getContext('2d'); wx.fillStyle = '#0d1426'; wx.fillRect(0, 0, 4096, WH);
     const words = ['OWQ', 'ONLY WINNERS', '330', 'DISCIPLINE', 'OWNERSHIP', 'OWQ', '346', 'LEADERS BUILD LEADERS', '331', 'MEASURE WHAT MATTERS', 'OWQ', 'PROTECT FAMILIES', '330'];
-    words.forEach((w, i) => { const x0 = i * 4096 / words.length, w0 = 4096 / words.length; const num = /^\d+$/.test(w); wx.fillStyle = num ? '#0d1426' : i % 2 ? '#7a0f26' : '#121c34'; wx.fillRect(x0 + 6, 18, w0 - 12, 210); wx.fillStyle = num ? '#ffd166' : '#ffffff'; wx.font = `900 ${num ? 120 : w.length > 12 ? 40 : 64}px Verdana,sans-serif`; wx.textAlign = 'center'; wx.textBaseline = 'middle'; wx.fillText(w, x0 + w0 / 2, 124); });
-    const wallT = canvasTex(wc);
+    words.forEach((w, i) => { const w0 = 4096 / words.length, x0 = i * w0, num = /^\d+$/.test(w), two = !num && w.length > 12 && w.includes(' ');
+      wx.fillStyle = num ? '#0d1426' : i % 2 ? '#7a0f26' : '#121c34'; wx.fillRect(x0 + 4, 12, w0 - 8, 132); wx.fillStyle = 'rgba(255,255,255,.12)'; wx.fillRect(x0 + 4, 12, w0 - 8, 3);
+      wx.fillStyle = num ? '#ffd166' : '#ffffff'; wx.textAlign = 'center'; wx.textBaseline = 'middle';
+      const lines = two ? (() => { const p = w.split(' '), h = Math.ceil(p.length / 2); return [p.slice(0, h).join(' '), p.slice(h).join(' ')]; })() : [w];
+      let fs = num ? 92 : two ? 40 : 52; wx.font = `900 ${fs}px Verdana,sans-serif`; const mw = Math.max(...lines.map(l => wx.measureText(l).width)); if (mw > w0 - 30) { fs = Math.floor(fs * (w0 - 30) / mw); wx.font = `900 ${fs}px Verdana,sans-serif`; }
+      lines.forEach((l, k) => wx.fillText(l, x0 + w0 / 2, 78 + (lines.length > 1 ? (k ? 1 : -1) * fs * .58 : 0))); });
+    const wallT = canvasTex(wc); wallT.repeat.x = -1; wallT.offset.x = 1;   // the sweep runs right field -> left field: mirror so the words read from home plate
     add(sweep(wallS, [[0, 0], [0, 2.55], [.12, 2.76], [.42, 2.8], [.62, 2.6], [.62, 0]], {closed: false, us: wlen, vs: 2.8}), new THREE.MeshStandardMaterial({map: wallT, roughness: .7}), {cast: true});
     add(sweep(wallS, [[.05, 2.81], [.45, 2.825]], {closed: false}), NEON(3.4, 2.4, .4), {recv: false});
     // foul poles with screens
     const yel = NEON(3.6, 2.7, .5);
     [FOUL, -FOUL].forEach(a => { const [x, z] = ARC(a, fenceR(a) + .3); put(new THREE.CylinderGeometry(.14, .16, 18, 10), yel, x, Y + 9, z); const sc = put(new THREE.BoxGeometry(.04, 9, 1.2), yel, x, Y + 11, z); sc.rotation.y = a; });
     // batter's eye and the jumbotron
-    const [bex, bez] = ARC(0, 48.5); put(new THREE.BoxGeometry(16, 8, 1.2), new THREE.MeshStandardMaterial({color: '#0b1210', roughness: 1}), bex, Y + 4, bez).castShadow = true;
+    const [bex, bez] = ARC(0, 48.5); put(mbox(16, 8, 1.2, 2), mat('grass', {key: 'ivy', color: '#1d4a26', bump: 1.4}), bex, Y + 4, bez).castShadow = true;
+    put(new THREE.BoxGeometry(16.4, .3, 1.5), mat('metal', {key: 'parkjumbo', color: '#16181e'}), bex, Y + 8.1, bez);
     this.sbC = cv(1024, 576); this.sbT = tex(this.sbC, {mips: false});
     const jz = PLATE.z - 56;
     put(new THREE.BoxGeometry(22, 13, 1.2), mat('metal', {key: 'parkjumbo', color: '#16181e'}), PLATE.x, Y + 16, jz - .7).castShadow = true;
@@ -138,23 +145,45 @@ export class Derby {
     add(mergeGeometries(fascia), NEON(3.2, .3, .8), {recv: false});
     const seatG = mergeGeometries([plain(new THREE.BoxGeometry(.46, .07, .42).translate(0, .32, 0)), plain(new THREE.BoxGeometry(.46, .48, .06).rotateX(-.12).translate(0, .58, -.2)), plain(new THREE.BoxGeometry(.06, .3, .4).translate(-.24, .18, 0))]);
     add(scatter(seatG, seats.map(q => [q[0], q[1], q[2], q[3]])), new THREE.MeshStandardMaterial({color: '#a3122e', roughness: .5, metalness: .1}));
-    if (GFX.level !== 'low') { this.crowd = crowd(G, GFX.level === 'high' ? fans : fans.filter((f, i) => i % 2 === 0), {colors: ['#ff1f4f', '#ffffff', '#1b1b22', '#ff1f4f', '#ffd166', '#4cc9f0', '#ff1f4f', '#2a2a33', '#3ddc97']}); }
+    this.crowds = [];
+    if (GFX.level !== 'low') { this.crowd = crowd(G, GFX.level === 'high' ? fans : fans.filter((f, i) => i % 2 === 0), {colors: ['#ff1f4f', '#ffffff', '#1b1b22', '#ff1f4f', '#ffd166', '#4cc9f0', '#ff1f4f', '#2a2a33', '#3ddc97']}); this.crowds.push(this.crowd); }
     // bleachers in left- and right-centre behind the wall
     [[-.72, -.24], [.24, .72]].forEach(([a0, a1]) => {
       const S = arcS(a1, a0, 50, .8), bp = [[0, 0], [0, 1.6]]; for (let r = 0; r < 9; r++) { const l = .3 + r * .9, y = 1.6 + r * .5; bp.push([l, y], [l + .9, y], [l + .9, y + .5]); } bp.push([8.4, 6.1], [8.4, 0]);
       add(sweep(S, bp, {closed: false, us: 3, vs: 3}), standM, {cast: true});
       const bf = []; S.forEach((c, k) => { for (let r = 0; r < 9; r++) if (Math.random() < .5 && k % 2 === 0) bf.push([c.p.x + c.nx * (.75 + r * .9), c.p.y + 1.62 + r * .5, c.p.z + c.nz * (.75 + r * .9), Math.atan2(-c.nx, -c.nz)]); });
-      if (GFX.level === 'high') crowd(G, bf);
+      if (GFX.level !== 'low') this.crowds.push(crowd(G, GFX.level === 'high' ? bf : bf.filter((f, i) => i % 2 === 0), {colors: ['#ff1f4f', '#ffffff', '#1b1b22', '#ffd166', '#4cc9f0', '#ff1f4f']}));
     });
-    // dugouts along each line (open front, roof, bench, rail)
-    const dg = [], dark = mat('metal', {key: 'parkdug', color: '#22252d'});
-    [1, -1].forEach(s => { const c = LINE(s, 16, 2.6);
-      const g = new THREE.Group(); g.position.set(c[0], Y, c[1]); g.rotation.y = s > 0 ? Math.PI / 4 : -Math.PI / 4; G.add(g);
-      const box = (w, h, d, x, y, z, m) => { const q = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), m); q.position.set(x, y, z); q.castShadow = true; q.receiveShadow = true; g.add(q); };
-      box(8, 2.4, .2, 0, 1.2, s > 0 ? 1.3 : 1.3, dark); box(8.4, .18, 2.9, 0, 2.5, 0, dark); box(.2, 2.4, 2.8, -4, 1.2, 0, dark); box(.2, 2.4, 2.8, 4, 1.2, 0, dark); box(7.4, .45, .5, 0, .23, .9, mat('wood', {key: 'parkbench', color: '#b07a4a'}));
-      box(8, .06, .06, 0, 1.05, -1.35, NEON(3.2, .3, .8));
+    // dugouts along each line: padded back wall with the team logo, glass ends, a roof with a lit fascia and downlights,
+    // a padded front wall with a rail, a bench, a helmet rack and a cooler
+    const navy = new THREE.MeshStandardMaterial({color: '#1c2744', roughness: .78}), roofM = mat('concrete', {key: 'parkdugroof', color: '#8a8f99', bump: .6}), soffit = new THREE.MeshStandardMaterial({color: '#d4d7de', roughness: .6, emissive: new THREE.Color('#3a3b44'), emissiveIntensity: .6});
+    const glassD = new THREE.MeshPhysicalMaterial({color: '#a9c8ff', roughness: .05, transparent: true, opacity: .22, envMapIntensity: 1.5, depthWrite: false, side: THREE.DoubleSide});
+    const railM = new THREE.MeshStandardMaterial({color: '#c7cbd3', metalness: 1, roughness: .28}), woodM = mat('wood', {key: 'parkbench', color: '#b07a4a'});
+    const dugLogo = BM({map: canvasTex(textCanvas('OWQ', 512, 200, {col: '#ffffff', glow: '#ff1f4f'})), transparent: true, depthWrite: false, toneMapped: false, color: new THREE.Color(1.8, 1.8, 1.8)});
+    const dLights = [], dPools = [];
+    [1, -1].forEach(s => { const c = LINE(s, 16, 2.6), ry = s > 0 ? Math.PI / 4 : -Math.PI / 4;
+      const g = new THREE.Group(); g.position.set(c[0], Y, c[1]); g.rotation.y = ry; G.add(g);
+      const box = (w, h, d, x, y, z, m, sh = true) => { const q = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), m); q.position.set(x, y, z); q.castShadow = sh; q.receiveShadow = true; g.add(q); return q; };
+      const W = (lx, ly, lz) => [c[0] + Math.cos(ry) * lx + Math.sin(ry) * lz, Y + ly, c[1] - Math.sin(ry) * lx + Math.cos(ry) * lz];
+      box(8, .04, 2.9, 0, .02, 0, mat('polished', {key: 'parkdugfloor', color: '#3a3f4a', bump: .3}), false);
+      box(8, 2.4, .2, 0, 1.2, 1.3, navy); box(8.6, .2, 3.3, 0, 2.62, -.05, roofM);
+      const sf = new THREE.Mesh(new THREE.PlaneGeometry(8.2, 3), soffit); sf.rotation.x = Math.PI / 2; sf.position.set(0, 2.51, -.05); g.add(sf);
+      box(8.6, .34, .12, 0, 2.55, -1.66, roofM); box(8.6, .07, .14, 0, 2.47, -1.68, NEON(3.2, .3, .8), false);
+      box(8.7, .16, .5, 0, 2.8, -1.45, new THREE.MeshStandardMaterial({color: '#a3122e', roughness: .6})); box(8.7, .16, .2, 0, 2.8, 1.45, navy);
+      [-4.1, 4.1].forEach(x => { box(.12, 2.5, .12, x, 1.25, -1.5, railM); box(.12, 2.5, .12, x, 1.25, 1.2, railM); const gl = new THREE.Mesh(new THREE.PlaneGeometry(2.7, 2.3), glassD); gl.rotation.y = Math.PI / 2; gl.position.set(x, 1.25, -.15); g.add(gl); });
+      box(8, .95, .26, 0, .48, -1.36, navy); box(8.06, .1, .32, 0, .99, -1.36, new THREE.MeshStandardMaterial({color: '#e0b432', roughness: .55}), false); box(8.06, .02, .02, 0, .935, -1.53, NEON(3.2, .3, .8), false);
+      const rail = new THREE.Mesh(new THREE.CylinderGeometry(.045, .045, 8, 8).rotateZ(Math.PI / 2), railM); rail.position.set(0, 1.42, -1.36); g.add(rail);
+      for (let x = -3.6; x <= 3.61; x += 1.8) box(.05, .42, .05, x, 1.2, -1.36, railM, false);
+      box(7.4, .08, .46, 0, .46, .86, woodM); box(7.4, .4, .06, 0, .78, 1.12, woodM); for (let x = -3.4; x <= 3.41; x += 1.7) box(.08, .42, .36, x, .22, .86, railM, false);
+      const lg = new THREE.Mesh(new THREE.PlaneGeometry(2.4, .94), dugLogo); lg.position.set(0, 1.72, 1.19); lg.rotation.y = Math.PI; g.add(lg);
+      const helm = new THREE.SphereGeometry(.16, 12, 8, 0, Math.PI * 2, 0, Math.PI / 2), hm = [new THREE.MeshPhysicalMaterial({color: '#c4122f', roughness: .2, clearcoat: 1}), new THREE.MeshPhysicalMaterial({color: '#f2f2f4', roughness: .2, clearcoat: 1})];
+      box(3.4, .05, .22, -2, 1.3, 1.1, railM, false); for (let k = 0; k < 8; k++) { const h = new THREE.Mesh(helm, hm[k % 2]); h.position.set(-3.5 + k * .42, 1.33, 1.08); g.add(h); }
+      const cool = new THREE.Mesh(new THREE.CylinderGeometry(.24, .24, .62, 16), new THREE.MeshStandardMaterial({color: '#ff7a1a', roughness: .45})); cool.position.set(3.3, .81, .9); g.add(cool); box(.6, .5, .5, 3.3, .25, .9, railM);
+      for (let x = -3; x <= 3.01; x += 2) dLights.push([...W(x, 2.49, -.05), .7, 3, 2.85, 2.6]);
+      dPools.push([...W(0, .03, -.1), 3.4, .16, .15, .13]);
       FLOORBOX.r.push([c[0] - 2.2, c[1] - 2.2, c[0] + 2.2, c[1] + 2.2]);
     });
+    glowPoints(G, dLights); lightPools(G, dPools);
     // ---- light towers (LED banks aimed at the field) and the light they throw
     const ledC = cv(256, 160), lx = ledC.getContext('2d'); lx.fillStyle = '#15161b'; lx.fillRect(0, 0, 256, 160); for (let i = 0; i < 6; i++) for (let j = 0; j < 4; j++) { const g = lx.createRadialGradient(22 + i * 42, 20 + j * 40, 0, 22 + i * 42, 20 + j * 40, 17); g.addColorStop(0, '#ffffff'); g.addColorStop(.6, '#fff4dc'); g.addColorStop(1, '#15161b'); lx.fillStyle = g; lx.fillRect(i * 42 + 2, j * 40, 40, 40); }
     const ledM = BM({map: canvasTex(ledC), toneMapped: false, color: new THREE.Color(2.6, 2.5, 2.3)}), towM = mat('metal', {key: 'parktower', color: '#2a2d35'}), heads = [];
@@ -180,11 +209,13 @@ export class Derby {
     const sbox = (w, h, d, x, y, z, m) => { const q = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), m); q.position.set(x, y, z); q.castShadow = true; suite.add(q); };
     sbox(20, .5, 7, 0, 0, 0, towM); sbox(20, .5, 7, 0, 3.4, 0, towM); sbox(20, 2.9, .1, 0, 1.7, -3.45, glassS); sbox(.2, 2.9, 7, -10, 1.7, 0, towM); sbox(.2, 2.9, 7, 10, 1.7, 0, towM); sbox(20, 2.9, .2, 0, 1.7, 3.4, towM);
     put(new THREE.PlaneGeometry(8, 1.2), BM({map: canvasTex(textCanvas('OWQ SUITE', 1024, 160, {col: '#fff0f6', glow: '#ff2d78'})), transparent: true, depthWrite: false, toneMapped: false, color: new THREE.Color(2, 2, 2)}), 2, Y + 9.4, -4.46, 0, Math.PI, 0);
+    put(new THREE.PlaneGeometry(19.6, 6.6), new THREE.MeshStandardMaterial({color: '#cfd2da', roughness: .55, emissive: new THREE.Color('#4a4652'), emissiveIntensity: .7}), 2, Y + 4.94, -1, Math.PI / 2, 0, 0);
+    { const dl = [], pp = []; for (let x = -6; x <= 10.01; x += 4) for (const z of [-3.2, -1, 1.2]) { dl.push([x, Y + 4.9, z, .8, 3, 2.8, 2.5]); pp.push([x, Y + .02, z, 3.2, .1, .09, .08]); } glowPoints(G, dl); lightPools(G, pp); }
     [[-7.5, -4], [11.5, -4], [-7.5, 2], [11.5, 2]].forEach(([x, z]) => { put(new THREE.BoxGeometry(.6, 5.2, .6), towM, x, Y + 2.6, z).castShadow = true; FLOORBOX.r.push([x - .4, z - .4, x + .4, z + .4]); });
     // planters and benches on the plaza
     const plg = [], bng = []; [[-8, 6], [14, 6], [-8, -10], [14, -10]].forEach(([x, z]) => { plg.push(plain(mbox(2.2, .7, 1.4, 1.2)).translate(x, Y + .35, z)); FLOORBOX.r.push([x - 1.2, z - .8, x + 1.2, z + .8]); });
     add(mergeGeometries(plg), mat('concrete', {key: 'parkplanter', color: '#45474f'}), {cast: true});
-    [[-8, 6], [14, 6], [-8, -10], [14, -10]].forEach(([x, z]) => { const t = put(new THREE.IcosahedronGeometry(.85, 1), new THREE.MeshStandardMaterial({color: '#1f4d28', roughness: .85}), x, Y + 1.7, z); t.castShadow = true; });
+    plants(G, [[-8, 6], [14, 6], [-8, -10], [14, -10]].flatMap(([x, z], i) => i >= 2 ? [{k: 'shrub', x, y: Y + .66, z, w: 2, d: 1.2}, {k: 'tree', x, y: Y + .7, z, h: 2.5}] : [{k: 'shrub', x, y: Y + .66, z, w: 2, d: 1.2}]), {seed: 5});
     // elevator hut (same shaft as every floor), doors face the plaza
     const hut = new THREE.MeshPhysicalMaterial({color: '#1a1920', metalness: .6, roughness: .3, clearcoat: .5});
     put(new THREE.BoxGeometry(3.2, 3.4, 2.6), hut, ELEVP.x, Y + 1.7, ELEVP.z - 1.32).castShadow = true;
@@ -421,7 +452,7 @@ export class Derby {
     if (O.meAv && O.meAv.wk && O.meAv.wk.f === 'r' && Math.abs(O.meAv.wk.x - ELEVP.x) < 1.3 && O.meAv.wk.z < ELEVP.z + 1.4) d.hold = Math.max(d.hold, .6);
     this.btnTop.position.y = 1.12 - (this.btnT && O.t - this.btnT < .25 ? .06 : 0);
     if (this.flashT > 0) this.flashT -= dt; else if ((this._sbT = (this._sbT || 0) - dt) <= 0) { this._sbT = .5; this.board(st); }
-    this.cheer = Math.max(0, this.cheer - dt); if (this.crowd) this.crowd.userData.U.uCheer.value = damp(this.crowd.userData.U.uCheer.value, this.cheer > 0 ? 1 : .08, 3, dt);
+    this.cheer = Math.max(0, this.cheer - dt); (this.crowds || []).forEach(c => { if (c) c.userData.U.uCheer.value = damp(c.userData.U.uCheer.value, this.cheer > 0 ? 1 : .08, 3, dt); });
   }
   // how far a home run would have carried (to deck height)
   carry(b) { const p = b.p.clone(), v = b.vel.clone(); for (let i = 0; i < 600 && p.y > ROOFY; i++) { const sp = v.length(), k = .0042, dt = 1 / 60; v.x -= v.x * sp * k * dt; v.z -= v.z * sp * k * dt; v.y -= (9.8 + v.y * sp * k) * dt; p.addScaledVector(v, dt); } return Math.hypot(p.x - PLATE.x, p.z - PLATE.z); }

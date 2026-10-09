@@ -1,6 +1,9 @@
-/*WRLDstart: walking, the Sky Deck, the Sky Park (Home Run Derby and the hangar) and the Firing Range.
-  Everything rides on Sales Floor presence: wk = walking, fl = flying, hr = derby turn / queue, rg = range lane.
-  Team bests live in the shared 'arc' collection next to the desk arcade scores (games 'derby', 'range', 'rings'). */
+/*WRLDstart: walking, the Sky Deck circuit, the Sky Park ballpark (Home Run Derby), the Skyport (runway, hangar, landings),
+  the Firing Range and its Laser Tag 1v1 arena.
+  Everything rides on Sales Floor presence: wk = walking, fl = flying, hr = derby turn / queue, rg = range lane; laser tag
+  matchmaking uses the arcade queue (aq) and each match runs in its own small room (arcNet).
+  Team bests live in the shared 'arc' collection next to the desk arcade scores (games 'derby', 'longball', 'range', 'rings',
+  'landing', 'lasertag'). */
 (function(){const w=setInterval(()=>{if(typeof voApi==='undefined'||!voApi.people||typeof vcList!=='function')return;clearInterval(w);
   const num=(v,a,b)=>{v=+v;return isFinite(v)?Math.max(a,Math.min(b,v)):0};
   const small=o=>{if(!o||typeof o!=='object')return null;let j='';try{j=JSON.stringify(o)}catch(e){return null}return j.length<900?o:null};

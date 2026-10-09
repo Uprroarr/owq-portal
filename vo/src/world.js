@@ -13,7 +13,7 @@ export const TOWER = {x0: -10.45, x1: 10.45, z0: -7.45, z1: 12.05, top: 5.6};
 export const ELEVP = {x: 8, z: -7.05};   // elevator doors (same shaft on every floor)
 export const FLOORS = {
   o: {y: 0, name: 'SALES FLOOR', sub: 'Desks, TV, arcade, Sky Deck door'},
-  r: {y: ROOFY, name: 'SKY PARK', sub: 'Home Run Derby and the hangar'},
+  r: {y: ROOFY, name: 'SKY PARK', sub: 'Home Run Derby, skybridge to the Skyport'},
   g: {y: RANGEY, name: 'FIRING RANGE', sub: 'Target practice with your blaster'},
 };
 export const LAYER_OUT = 2;   // outdoor things: not drawn in the floor reflection
@@ -124,15 +124,15 @@ export class World {
     for (let i = 0; i < 1800; i++) { const u = r() * 2 - 1, a = r() * Math.PI * 2, y = Math.abs(u) * .95 + .05, k = Math.sqrt(1 - y * y); sp.push(Math.cos(a) * k * 3200, y * 3200, Math.sin(a) * k * 3200); }
     const sg = new THREE.BufferGeometry(); sg.setAttribute('position', new THREE.Float32BufferAttribute(sp, 3));
     const stars = new THREE.Points(sg, new THREE.PointsMaterial({color: '#dfe6ff', size: 2.2, sizeAttenuation: false, fog: false, transparent: true, opacity: .85}));
-    stars.frustumCulled = false; G.add(stars);
+    stars.frustumCulled = false; G.add(stars); this.stars = stars;
     const mc = cv(256, 256), mx = mc.getContext('2d'), mg = mx.createRadialGradient(128, 128, 20, 128, 128, 128);
     mg.addColorStop(0, 'rgba(255,248,236,1)'); mg.addColorStop(.38, 'rgba(255,240,220,.95)'); mg.addColorStop(.42, 'rgba(255,120,170,.25)'); mg.addColorStop(1, 'rgba(255,40,100,0)');
     mx.fillStyle = mg; mx.fillRect(0, 0, 256, 256);
     const moon = new THREE.Sprite(new THREE.SpriteMaterial({map: tex(mc, {mips: true}), color: new THREE.Color(2.2, 2.1, 2), fog: false, depthWrite: false, transparent: true}));
-    moon.position.set(-900, 1150, -1900); moon.scale.setScalar(420); G.add(moon);
+    moon.position.set(-900, 1150, -1900); moon.scale.setScalar(420); G.add(moon); this.moonS = moon; this.moonP = moon.position.clone();
     // street level
     const gm = new THREE.ShaderMaterial({uniforms: this.uni, fog: false, vertexShader: 'varying vec3 vW;void main(){vec4 w=modelMatrix*vec4(position,1.);vW=w.xyz;gl_Position=projectionMatrix*viewMatrix*w;}', fragmentShader: GND_FS});
-    const gnd = new THREE.Mesh(new THREE.PlaneGeometry(7000, 7000), gm); gnd.rotation.x = -Math.PI / 2; gnd.position.y = GROUNDY; G.add(gnd);
+    const gnd = new THREE.Mesh(new THREE.PlaneGeometry(9000, 9000), gm); gnd.rotation.x = -Math.PI / 2; gnd.position.y = GROUNDY; G.add(gnd);
     // the city: instanced boxes with procedural lit windows; nothing too close to the tower or the Sky Deck
     const bm = new THREE.ShaderMaterial({uniforms: this.uni, vertexShader: BLD_VS, fragmentShader: BLD_FS, fog: false});
     const boxes = [];
@@ -146,9 +146,17 @@ export class World {
       for (const p of SKY.pylons) if ((p.x - x) * (p.x - x) + (p.z - z) * (p.z - z) < (rad * .7) * (rad * .7)) return false;
       return true;
     };
-    for (let gx = -half; gx <= half; gx++) for (let gz = -half; gz <= half; gz++) {
+    for (let gx = -30; gx <= 30; gx++) for (let gz = -30; gz <= 30; gz++) {
       const cx = gx * B, cz = gz * B, dist = Math.hypot(cx, cz);
-      if (dist > 1000) continue;
+      if (dist > 2150) continue;
+      if (dist > 1000) {   // suburbs: one or two low blocks per lot, thinning out toward the edge
+        if (R() > .78 - (dist - 1000) / 2600) continue;
+        const n2 = R() < .5 ? 1 : 2;
+        for (let k = 0; k < n2; k++) { const w = 18 + R() * 22, d = 18 + R() * 22, x = cx + 37 + (n2 > 1 ? (k ? 14 : -14) : 0) + (R() - .5) * 8, z = cz + 37 + (R() - .5) * 8; let h = 12 + Math.pow(R(), 2) * 46; if (R() < .05) h += 60;
+          if (x > 900 && Math.abs(z - RUNWAY_Z) < 46) continue;   // a lit boulevard under the approach to runway 27
+          if (clearOf(x, z, Math.max(w, d) * .72 + 6)) boxes.push([x, z, w, d, h]); }
+        continue;
+      }
       const lots = R() < .45 ? 1 : R() < .7 ? 2 : 4;
       for (let k = 0; k < lots; k++) {
         const w = lots === 1 ? 34 + R() * 20 : lots === 2 ? 22 + R() * 8 : 18 + R() * 6, d = lots === 1 ? 34 + R() * 20 : 22 + R() * 10;
@@ -169,6 +177,9 @@ export class World {
     // hero towers near the Sky Deck, standing just outside its corridor
     [[-75, 20, 26, 26, 210], [-150, -60, 30, 30, 240], [-40, 95, 32, 28, 190], [-175, 55, 28, 34, 170], [-95, -110, 34, 30, 260], [20, 110, 30, 30, 160]].forEach(b => { if (clearOf(b[0], b[1], Math.max(b[2], b[3]) * .72 + 12)) boxes.push(b); });
     this.blds = boxes;
+    // a coarse grid over the buildings so a plane only tests the few near it
+    const GC = 80, grid = this.bgrid = new Map(); boxes.forEach(b => { const r = Math.max(b[2], b[3]) / 2 + 2; for (let gx = Math.floor((b[0] - r) / GC); gx <= Math.floor((b[0] + r) / GC); gx++) for (let gz = Math.floor((b[1] - r) / GC); gz <= Math.floor((b[1] + r) / GC); gz++) { const k = gx + ',' + gz; let L = grid.get(k); if (!L) grid.set(k, L = []); L.push(b); } });
+    this.bldNear = (x, z) => grid.get(Math.floor(x / GC) + ',' + Math.floor(z / GC)) || [];
     const im = new THREE.InstancedMesh(new THREE.BoxGeometry(1, 1, 1).translate(0, .5, 0), bm, boxes.length);
     const m4 = new THREE.Matrix4(), col = new THREE.Color(), pal = ['#2a3a6a', '#3a2550', '#1f3f4a', '#4a2030', '#2b2b3b', '#5a1a32'];
     boxes.forEach((b, i) => { m4.makeScale(b[2], b[4], b[3]); m4.setPosition(b[0], GROUNDY, b[1]); im.setMatrixAt(i, m4); col.set(pal[i % pal.length]); im.setColorAt(i, col); });
@@ -216,6 +227,7 @@ export class World {
     // the default Sales Floor camera sits just outside the open front wall: still the Sales Floor
     if (p.y > -.3 && p.y < 7 && p.x > T.x0 - .2 && p.x < T.x1 + .2 && p.z > T.z0 && p.z < T.z1 + 9) return 'o';
     if (p.y > ROOFY - .5 && p.y < ROOFY + 45 && p.x > -46 && p.x < 52 && p.z > -96 && p.z < 16) return 'r';   // inside the ballpark
+    if (p.y > ROOFY - .5 && p.y < ROOFY + 60 && p.x > 15 && p.x < 960 && p.z > -46 && p.z < 82) return 'r';   // the skybridge and the Skyport (same floor)
     return 'd';
   }
   // lighting rig per zone. Indoors the room's ceiling spotlight is the key light (on the range it hangs over the lanes).
@@ -265,6 +277,7 @@ export class World {
   update(dt, t) {
     this.uni.uT.value = t % 1000;
     const cam = this.O.cam, z = this.zoneAt(cam.position);
+    if (this.dome) { const c = cam.position; this.dome.position.set(c.x, 0, c.z); if (this.stars) this.stars.position.set(c.x, 0, c.z); if (this.moonS) this.moonS.position.set(this.moonP.x + c.x, this.moonP.y, this.moonP.z + c.z); }
     this.setZone(z);
     // from inside the tower the outside only shows through the west door: skip drawing it unless the camera looks that way
     let show = true;

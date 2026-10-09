@@ -64,12 +64,12 @@ try:
   A.evaluate("voApi.setLook('W8')");A.wait_for_timeout(2500);A.evaluate(step,4)
   A.evaluate("voDrive()");A.evaluate(step,4);ok(A.evaluate("VO3.driving()"),'you hop in your car')
   pos="(()=>{const d=VO3.dbg().drive.me.drv;return {x:+d.x.toFixed(2),y:+d.y.toFixed(2),z:+d.z.toFixed(2),h:+d.h.toFixed(2),v:+d.v.toFixed(2),k:d.k,air:d.air,s:+(d.s||0).toFixed(1)}})()"
-  A.evaluate("(()=>{const d=VO3.dbg().drive.me.drv;d.x=-7.6;d.z=3.6;d.h=Math.PI;d.v=3})()");A.keyboard.down('w');A.evaluate(step,40);A.keyboard.up('w')
+  A.evaluate("(()=>{const d=VO3.dbg().drive.me.drv;d.x=-7.6;d.z=3.6;d.h=Math.PI;d.v=3;d.vx=-3;d.vz=0;d.w=0})()");A.keyboard.down('w');A.evaluate(step,40);A.keyboard.up('w')
   p1=A.evaluate(pos);ok(p1['k']==1 and p1['x']<-10.5,'driving through the west door goes straight onto the Sky Deck (no fade)',p1)
   ok(not A.evaluate("document.querySelector('.vo3drf').classList.contains('on')"),'no black screen on the way out')
   if SHOTS:A.evaluate(step,4);A.screenshot(path=OUT+'/drive_deck0.png',timeout=180000)
   # turn left onto the loop and drive
-  put="s=>{const D=VO3.dbg().drive,d=D.me.drv,S=VO3.dbg().track.sky,i=Math.round(s/S.len*S.n)%S.n,a=S.S[i];d.x=a.p.x;d.z=a.p.z;d.y=a.p.y;d.h=Math.atan2(-a.t.z,a.t.x);d.v=12;d.hint=i;d.air=0;d.vy=0;return S.len}"
+  put="s=>{const D=VO3.dbg().drive,d=D.me.drv,S=VO3.dbg().track.sky,i=Math.round(s/S.len*S.n)%S.n,a=S.S[i];d.x=a.p.x;d.z=a.p.z;d.y=a.p.y;d.h=Math.atan2(-a.t.z,a.t.x);d.v=12;d.vx=a.t.x*12;d.vz=a.t.z*12;d.w=0;d.hint=i;d.air=0;d.vy=0;return S.len}"
   L=A.evaluate(put,60);A.keyboard.down('w');A.evaluate(step,16);A.keyboard.up('w');p2=A.evaluate(pos)
   ry=A.evaluate("(()=>{const d=VO3.dbg().drive.me.drv;return VO3.dbg().track.sky.S[d.hint].p.y})()")
   ok(p2['k']==1 and p2['v']>8 and p2['s']>66,'the car runs along the deck',[p2,L])
@@ -80,7 +80,7 @@ try:
     A.evaluate("(()=>{const O=VO3.dbg();O.dbgCam={P:new O.cam.position.constructor(40,30,60),T:new O.cam.position.constructor(-5,5,-5),F:50}})()");A.evaluate(step,3);A.screenshot(path=OUT+'/world_tower.png',timeout=180000)
     A.evaluate("(()=>{VO3.dbg().dbgCam=null})()")
   # put the car before the first jump at speed
-  jp=A.evaluate("(()=>{const D=VO3.dbg().drive,d=D.me.drv;const S=VO3.dbg().track.sky,g=S.gaps[0];const i=Math.round((g.s0-12)/S.len*S.n)%S.n,a=S.S[i];d.x=a.p.x;d.z=a.p.z;d.y=a.p.y;d.h=Math.atan2(-a.t.z,a.t.x);d.v=21;d.hint=i;d.air=0;return {s0:g.s0,s1:g.s1}})()")
+  jp=A.evaluate("(()=>{const D=VO3.dbg().drive,d=D.me.drv;const S=VO3.dbg().track.sky,g=S.gaps[0];const i=Math.round((g.s0-12)/S.len*S.n)%S.n,a=S.S[i];d.x=a.p.x;d.z=a.p.z;d.y=a.p.y;d.h=Math.atan2(-a.t.z,a.t.x);d.v=21;d.vx=a.t.x*21;d.vz=a.t.z*21;d.w=0;d.hint=i;d.air=0;return {s0:g.s0,s1:g.s1}})()")
   A.keyboard.down('w');air=False;landed=None
   for k in range(40):
     A.evaluate(step,1);q=A.evaluate(pos)
