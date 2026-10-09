@@ -143,7 +143,7 @@ export function buildSky(parent) {
   const roadM = patch(mat('asphalt', {key: 'track', bump: 1.1, env: .9}), {key: 'trackroad', uniforms: {uHW: {value: HW}, uStart: {value: D.start}, uLen: {value: L}, uT: {value: 0}, uB: {value: D.boosts.concat([-999, -999, -999]).slice(0, 8)}, uG: {value: D.gaps.flatMap(g => [g.s0, g.s1])}},
     fragHead: 'uniform float uHW,uStart,uLen,uT;uniform float uB[8];uniform float uG[4];',
     frag: `{float s=vTrk.x,lat=vTrk.y,al=abs(lat),fw=fwidth(lat)*1.3+.004;
-      float nz=vn(vWP.xz*.035,vec2(1e4))*.55+vn(vWP.xz*.12+3.,vec2(1e4))*.3+vn(vWP.xz*.5+9.,vec2(1e4))*.15;diffuseColor.rgb*=.82+.36*nz;rk*=.92+.16*nz;
+      float nz=vn(vWP.xz*.035,vec2(1e4))*.55+vn(vWP.xz*.12+3.,vec2(1e4))*.3+vn(vWP.xz*.5+9.,vec2(1e4))*.15;diffuseColor.rgb*=.88+.24*nz;rk*=.94+.12*nz;
       float pt=smoothstep(.72,.86,vn(vec2(s*.05,lat*.4)+17.,vec2(1e4)));diffuseColor.rgb*=1.-.28*pt;rk=mix(rk,.8,pt*.6);
       float sh=smoothstep(uHW-.03,uHW+.03,al);diffuseColor.rgb=mix(diffuseColor.rgb,diffuseColor.rgb*1.45+vec3(.012),sh*.7);rk=mix(rk,1.12,sh);
       float e1=smoothstep(uHW-.5-fw,uHW-.5+fw,al)*(1.-smoothstep(uHW-.24-fw,uHW-.24+fw,al));diffuseColor.rgb=mix(diffuseColor.rgb,vec3(.78,.78,.76),e1*.95);rk=mix(rk,.62,e1);
