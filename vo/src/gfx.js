@@ -7,7 +7,7 @@ import {cv} from './tex.js';
 
 // ---------------------------------------------------------------- quality
 const QK = 'owq_gfx';
-export const GFX = {r: null, aniso: 8, level: 'high', pref: 'auto', baker: null, mats: {}, env: null, t: 0, onLevel: []};
+export const GFX = {r: null, aniso: 8, level: 'high', pref: 'auto', baker: null, mats: {}, env: null, t: 0, onLevel: [], pts: [], anim: [], ticks: [], tex: 0};
 export function gfxPref() { try { const v = localStorage.getItem(QK); return v === 'high' || v === 'medium' || v === 'low' ? v : 'auto'; } catch (e) { return 'auto'; } }
 function autoLevel() {
   const ua = (globalThis.navigator && navigator.userAgent) || '', mob = /Mobi|Android|iPhone|iPad/i.test(ua);
@@ -19,18 +19,34 @@ export function gfxLevel() { return GFX.pref === 'auto' ? GFX.auto || (GFX.auto 
 export function setGfxPref(v) {
   GFX.pref = v === 'high' || v === 'medium' || v === 'low' ? v : 'auto';
   try { localStorage.setItem(QK, GFX.pref); } catch (e) {}
-  GFX.level = gfxLevel(); GFX.onLevel.forEach(f => { try { f(GFX.level); } catch (e) {} });
+  GFX.level = gfxLevel(); relink(); GFX.onLevel.forEach(f => { try { f(GFX.level); } catch (e) {} });
 }
 // the automatic setting steps down when frames run long (called by the frame governor)
-export function gfxStepDown() { if (GFX.pref !== 'auto') return false; const L = GFX.auto || 'high'; const n = L === 'high' ? 'medium' : L === 'medium' ? 'low' : null; if (!n) return false; GFX.auto = n; GFX.level = n; GFX.onLevel.forEach(f => { try { f(n); } catch (e) {} }); return true; }
+export function gfxStepDown() { if (GFX.pref !== 'auto') return false; const L = GFX.auto || 'high'; const n = L === 'high' ? 'medium' : L === 'medium' ? 'low' : null; if (!n) return false; GFX.auto = n; GFX.level = n; relink(); GFX.onLevel.forEach(f => { try { f(n); } catch (e) {} }); return true; }
 export const TEXSIZE = () => ({high: 1024, medium: 512, low: 256})[GFX.level] || 512;
 
 export function initGfx(renderer) {
   if (GFX.r === renderer) return GFX;
   GFX.r = renderer; GFX.pref = gfxPref(); GFX.level = gfxLevel();
   try { GFX.aniso = Math.min(16, renderer.capabilities.getMaxAnisotropy() || 4); } catch (e) { GFX.aniso = 4; }
-  GFX.baker = new Baker(renderer); GFX.mats = {};
+  GFX.baker = new Baker(renderer); GFX.mats = {}; GFX.tex = TEXSIZE();
   return GFX;
+}
+// a new quality level: bake the surface textures at the new size and swap them into every material (same texture
+// kinds, so no shader recompiles), then free the old ones
+function relink() {
+  const B = GFX.baker, size = TEXSIZE(); if (!B || size === GFX.tex) return; GFX.tex = size;
+  const old = B.cache; B.cache = {};
+  Object.values(GFX.mats).forEach(M => { const g = M.userData.gfx; if (!g) return; const set = B.set(g.name, size); if (!set) return; const o = g.o;
+    M.map = o.noMap ? null : set.map; M.normalMap = set.normalMap; M.roughnessMap = set.orm; M.metalnessMap = o.metalMap === false ? null : set.orm; M.aoMap = o.ao === false ? null : set.orm; });
+  Object.values(old).forEach(st => [st.map, st.normalMap, st.orm].forEach(t => { try { t.userData.rt && t.userData.rt.dispose(); } catch (e) {} }));
+}
+// once per frame: lamp glows keep their size on screen, scrolling road chevrons, blinking lights, the crowd
+export function gfxFrame(t, cam, hpx) {
+  const tt = t % 1000, px = hpx / (2 * Math.tan(cam.fov * Math.PI / 360));
+  for (const m of GFX.pts) { m.uniforms.uT.value = tt; m.uniforms.uPx.value = px; }
+  for (const U of GFX.anim) U.uT.value = tt;
+  for (const f of GFX.ticks) { try { f(t); } catch (e) {} }
 }
 
 // ---------------------------------------------------------------- tileable noise (GLSL)
@@ -50,11 +66,11 @@ vec3 wor(vec2 p,vec2 P){vec2 i=floor(p),f=fract(p);float d1=9.,d2=9.,id=0.;
 // surface recipes: H = height (for the normal map), A = albedo (linear), R = (ao, roughness, metalness)
 const RECIPES = {
   asphalt: {ns: .0055, glsl: `
-float H(vec2 uv){vec3 w=wor(uv*56.,vec2(56.));float st=smoothstep(.62,.16,w.x)*(.55+.45*w.z);return st*.75+fbm(uv*24.,vec2(24.),3)*.25;}
-vec3 A(vec2 uv){vec3 w=wor(uv*56.,vec2(56.));float st=smoothstep(.55,.14,w.x);vec3 base=vec3(.03,.031,.035);
+float H(vec2 uv){vec3 w=wor(uv*84.,vec2(84.));float st=smoothstep(.62,.16,w.x)*(.55+.45*w.z);return st*.75+fbm(uv*30.,vec2(30.),3)*.25;}
+vec3 A(vec2 uv){vec3 w=wor(uv*84.,vec2(84.));float st=smoothstep(.55,.14,w.x);vec3 base=vec3(.03,.031,.035);
   vec3 stone=mix(vec3(.05,.05,.054),vec3(.14,.135,.13),w.z);vec3 c=mix(base,stone,st*.85);
   c*=.74+.52*fbm(uv*4.,vec2(4.),5);c*=.9+.2*vn(uv*512.,vec2(512.));return c;}
-vec3 R(vec2 uv){float wet=smoothstep(.55,.74,fbm(uv*3.+.37,vec2(3.),4));float st=smoothstep(.55,.14,wor(uv*56.,vec2(56.)).x);
+vec3 R(vec2 uv){float wet=smoothstep(.6,.78,fbm(uv*3.+.37,vec2(3.),4));float st=smoothstep(.55,.14,wor(uv*84.,vec2(84.)).x);
   float r=mix(.88,.64,st);r=mix(r,.3,wet*.7);return vec3(1.-.25*(1.-st),r,0.);}`},
   concrete: {ns: .003, glsl: `
 float H(vec2 uv){float p=smoothstep(.08,.0,wor(uv*96.,vec2(96.)).x);return fbm(uv*8.,vec2(8.),5)*.6-p*.4;}
@@ -117,7 +133,7 @@ export class Baker {
     this.quad.material = m;
     const r = this.r, prev = r.getRenderTarget(), ac = r.autoClear, tm = r.toneMapping; r.toneMapping = THREE.NoToneMapping; r.autoClear = true;
     r.setRenderTarget(rt); r.render(this.scene, this.cam); r.setRenderTarget(prev); r.autoClear = ac; r.toneMapping = tm;
-    m.dispose(); return rt.texture;
+    m.dispose(); rt.texture.userData.rt = rt; return rt.texture;
   }
   // albedo, normal and AO/roughness/metal maps for one recipe
   set(name, size) {
@@ -136,7 +152,7 @@ ${mode === 0 ? 'gl_FragColor=vec4(A(uv),1.);' : mode === 1 ? 'float e=1./uSize;f
 // mat('asphalt', {color, rough, metal, bump, ...}) -> MeshStandardMaterial (cached by name + key). The baked textures
 // are render targets shared by every material of that kind, so tiling comes from the geometry's uvs (in tiles).
 export function mat(name, o = {}) {
-  const key = name + '|' + (o.key || '') + '|' + GFX.level;
+  const key = name + '|' + (o.key || '');
   if (GFX.mats[key]) return GFX.mats[key];
   const set = GFX.baker ? GFX.baker.set(name, TEXSIZE()) : null;
   const P = Object.assign({color: o.color || '#ffffff', roughness: o.rough ?? 1, metalness: o.metal ?? (name === 'metal' || name === 'corrugated' || name === 'container' ? 1 : 0), envMapIntensity: o.env ?? 1}, o.extra || {});
@@ -146,7 +162,7 @@ export function mat(name, o = {}) {
     M.roughnessMap = set.orm; M.metalnessMap = o.metalMap === false ? null : set.orm; M.aoMap = o.ao === false ? null : set.orm; M.aoMapIntensity = o.aoK ?? .8;
   }
   if (o.emissive) { M.emissive = new THREE.Color(o.emissive); M.emissiveIntensity = o.ei ?? 1; }
-  M.name = 'gfx:' + name;
+  M.name = 'gfx:' + name; M.userData.gfx = {name, o};
   GFX.mats[key] = M; return M;
 }
 
@@ -165,7 +181,7 @@ export function patch(M, h) {
       .replace('#include <emissivemap_fragment>', '#include <emissivemap_fragment>\ntotalEmissiveRadiance+=eC*ek;');
   };
   M.customProgramCacheKey = () => 'owqp:' + (h.key || 'x');
-  M.userData.U = U;
+  M.userData.U = U; if (U.uT) GFX.anim.push(U);
   return M;
 }
 
@@ -212,7 +228,7 @@ export function glowPoints(parent, pts, o = {}) {
     vertexShader: `attribute float sz;varying vec3 vC;uniform float uPx,uT,uBl;void main(){vC=color;vec4 mv=modelViewMatrix*vec4(position,1.);gl_Position=projectionMatrix*mv;
       float bl=uBl>0.?step(.5,fract(uT*uBl+position.x*.013+position.z*.007)):1.;gl_PointSize=clamp(sz*uPx/-mv.z,1.5,180.)*bl;}`,
     fragmentShader: 'uniform sampler2D uMap;varying vec3 vC;void main(){vec4 t=texture2D(uMap,gl_PointCoord);gl_FragColor=vec4(vC*t.a,t.a);}', vertexColors: true});
-  const pm = new THREE.Points(g, m); pm.frustumCulled = false; pm.renderOrder = 2; parent.add(pm); pm.userData.mat = m; return pm;
+  const pm = new THREE.Points(g, m); pm.frustumCulled = false; pm.renderOrder = 2; parent.add(pm); pm.userData.mat = m; GFX.pts.push(m); return pm;
 }
 
 // pools of light on the ground under lamps (additive decals, one draw call): list = [[x,y,z,radius,r,g,b], ...]
@@ -239,7 +255,7 @@ void main(){vUv=uv;vC=iC;vec4 mv=modelViewMatrix*vec4(iP,1.);vec2 q=position.xy*
   vec3 vv=(modelViewMatrix*vec4(iV,0.)).xyz;float L=length(vv.xy);if(L>.5){vec2 d=vv.xy/L,n=vec2(-d.y,d.x);q=d*position.y*(iS.x+L*.035)+n*position.x*iS.x*.4;}
   mv.xy+=q;gl_Position=projectionMatrix*mv;}`,
       fragmentShader: `uniform sampler2D uMap;varying vec4 vC;varying vec2 vUv;void main(){vec4 t=texture2D(uMap,vUv);float a=t.a*vC.a;gl_FragColor=vec4(vC.rgb*${add ? 'a' : '1.'},a);}`});
-    const mesh = new THREE.Mesh(g, m); mesh.frustumCulled = false; mesh.renderOrder = add ? 6 : 5; parent.add(mesh);
+    const mesh = new THREE.Mesh(g, m); mesh.frustumCulled = false; mesh.renderOrder = add ? 6 : 5; mesh.visible = false; parent.add(mesh);
     return {mesh, g, iP, iC, iS, iV, P: [], N};
   }
   // kind: 'smoke' | 'dust' | 'spark' | 'flame' | 'glow'
@@ -263,7 +279,7 @@ void main(){vUv=uv;vC=iC;vec4 mv=modelViewMatrix*vec4(iP,1.);vec2 q=position.xy*
       pl.iV.array[w * 3] = p.st ? p.vx : 0; pl.iV.array[w * 3 + 1] = p.st ? p.vy : 0; pl.iV.array[w * 3 + 2] = p.st ? p.vz : 0;
       P[w++] = p;
     }
-    P.length = w; pl.g.instanceCount = w;
+    P.length = w; pl.g.instanceCount = w; pl.mesh.visible = w > 0;
     if (w) { pl.iP.needsUpdate = pl.iC.needsUpdate = pl.iS.needsUpdate = pl.iV.needsUpdate = true; pl.iP.clearUpdateRanges(); pl.iC.clearUpdateRanges(); pl.iS.clearUpdateRanges(); pl.iV.clearUpdateRanges(); pl.iP.addUpdateRange(0, w * 3); pl.iC.addUpdateRange(0, w * 4); pl.iS.addUpdateRange(0, w * 2); pl.iV.addUpdateRange(0, w * 3); }
   }
 }
@@ -299,12 +315,13 @@ export function crowd(parent, seats, o = {}) {
   });
   geo.setAttribute('iPh', new THREE.InstancedBufferAttribute(ph, 1)); geo.setAttribute('iSkin', new THREE.InstancedBufferAttribute(sk, 3));
   im.instanceMatrix.needsUpdate = true; if (im.instanceColor) im.instanceColor.needsUpdate = true;
-  im.castShadow = false; im.receiveShadow = true; parent.add(im); im.userData.U = U; return im;
+  im.castShadow = false; im.receiveShadow = true; parent.add(im); im.userData.U = U; GFX.anim.push(U); return im;
 }
 
 // ---------------------------------------------------------------- geometry helpers
 export {mergeGeometries};
 // sweep a cross-section along a path. S: samples [{p:Vector3, nx, nz, bank, s}], prof: [[lat, dy], ...] (a polyline
+// going toward +lat faces up / toward the road; flip turns it over;
 // across the path; each segment gets its own vertices so edges stay sharp). keep(i) skips quads (gaps). uvs: u along
 // (metres / us), v across (metres / vs). aTrk = (metres along, lateral offset).
 export function sweep(S, prof, o = {}) {
@@ -317,7 +334,7 @@ export function sweep(S, prof, o = {}) {
     for (let i = 0; i < cnt; i++) {
       const c = S[i % n], cb = Math.cos(c.bank || 0), sb = Math.sin(c.bank || 0), s = i === n ? sEnd : c.s;
       [a, b].forEach((q, j) => { const lat = q[0]; pos.push(c.p.x + c.nx * lat * cb, c.p.y + q[1] + lat * sb, c.p.z + c.nz * lat * cb); uv.push(s / us, (j ? v1 : v0) / vs); trk.push(s, lat); });
-      if (i) { const k0 = vbase + (i - 1) * 2, k1 = vbase + i * 2; if (!o.keep || o.keep(i % n, (i - 1 + n) % n)) { if (o.flip) idx.push(k0, k0 + 1, k1, k1, k0 + 1, k1 + 1); else idx.push(k0, k1, k0 + 1, k0 + 1, k1, k1 + 1); } }
+      if (i) { const k0 = vbase + (i - 1) * 2, k1 = vbase + i * 2; if (!o.keep || o.keep(i % n, (i - 1 + n) % n)) { if (o.flip) idx.push(k0, k1, k0 + 1, k0 + 1, k1, k1 + 1); else idx.push(k0, k0 + 1, k1, k1, k0 + 1, k1 + 1); } }
     }
     vbase += cnt * 2;
   });

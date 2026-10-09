@@ -1,11 +1,11 @@
 // Walking: get up from your desk and walk the Sales Floor, out the west door onto the Sky Deck, and up and down in
 // the elevator (Sky Park on the roof, Firing Range one floor down). Everyone sees everyone walk (presence 'wk').
-// Cars knock walkers over (presence 'dv.kn' from the driver), walkers bump each other softly.
+// Cars send walkers flying (ragdoll.js; presence 'dv.kn' from the driver), walkers bump each other softly.
 import * as THREE from 'three';
 import {clamp, damp, lerp} from './util.js';
 import {SEATS} from './layout.js';
 import {FLOORS, ELEVP, TOWER, ROOFY, RANGEY} from './world.js';
-import {DOOR, skyAt, skyRail, skyPose} from './sky.js';
+import {DOOR, skyAt, skyWall} from './sky.js';
 
 const WR = .27;            // walker radius
 const SPD = 2.3, RUN = 5.2, G = 15;
@@ -172,7 +172,7 @@ export class Walk {
     const O = this.O;
     O.av.forEach(a => {
       if (a === this.me) { this.mine(a, dt, t); return; }
-      if (a.wk && a.wk.rt) this.follow(a, dt);
+      if (a.wk && a.wk.rt && !a.rd) this.follow(a, dt);
     });
     const lk = !!(this.me && this.lock); if (lk !== !!this._lk) { this._lk = lk; this.ui.classList.toggle('lk', lk); }
     if (this.me) {
@@ -183,26 +183,25 @@ export class Walk {
   }
   mine(a, dt, t) {
     const w = a.wk; if (!w) return;
+    if (a.rd) return;     // flying / lying after a hit: the ragdoll moves the body (and the camera follows it)
     const K = this.lock ? {} : this.keys, f = (K.up ? 1 : 0) - (K.down ? 1 : 0), s = (K.right ? 1 : 0) - (K.left ? 1 : 0);
     // camera-relative: forward is where the camera looks
     const fx = Math.sin(this.yaw), fz = Math.cos(this.yaw), rx = -fz, rz = fx;
     let mx = fx * f + rx * s, mz = fz * f + rz * s; const ml = Math.hypot(mx, mz);
     const run = K.run ? 1 : 0, spd = run ? RUN : SPD;
-    if (a.knd) { mx = mz = 0; }
     const tvx = ml ? mx / ml * spd : 0, tvz = ml ? mz / ml * spd : 0;
     const acc = w.air ? 3 : 12;
     w.vx = damp(w.vx, tvx, acc, dt); w.vz = damp(w.vz, tvz, acc, dt);
-    if (ml && !a.knd) { let dh = Math.atan2(mx, mz) - w.h; dh = Math.atan2(Math.sin(dh), Math.cos(dh)); w.h += dh * Math.min(1, dt * 12); }
+    if (ml) { let dh = Math.atan2(mx, mz) - w.h; dh = Math.atan2(Math.sin(dh), Math.cos(dh)); w.h += dh * Math.min(1, dt * 12); }
     const ox = w.x, oz = w.z;
     const p = {x: w.x + w.vx * dt, z: w.z + w.vz * dt};
-    if (a.knd) { const k = a.knd; p.x += k.dx * k.v * dt; p.z += k.dz * k.v * dt; k.v = Math.max(0, k.v - 9 * dt); }
     this.collide(a, w, p, ox, oz, dt);
     // vertical: jumping and falling
     const gy = this.groundY(w);
     if (w.air) { w.vy -= G * dt; w.y += w.vy * dt; if (gy !== null && w.y <= gy && w.vy <= 0) { w.y = gy; w.air = 0; w.vy = 0; } }
     else if (gy === null) { w.air = 1; w.vy = 0; }
     else w.y = damp(w.y, gy, 30, dt);
-    if (w.y < -40 && w.f === 'd') this.respawn(a);
+    if ((w.y < -40 && w.f === 'd') || (w.f === 'r' && w.y < ROOFY - 30)) this.respawn(a);
     // walking animation
     const moved = Math.hypot(w.x - ox, w.z - oz); w.sp = moved / Math.max(dt, 1e-3);
     a.mv = w.sp > .15 && !w.air ? 1 : 0; a.runK = damp(a.runK || 0, w.sp > 3.4 ? 1 : 0, 6, dt); a.walkPh += moved * 5.4;
@@ -232,7 +231,7 @@ export class Walk {
       if (Math.abs(p.x - ELEVP.x) < 1.2 && p.z < -5.6) O.room.elevOpen(1.2);
     } else if (w.f === 'd') {
       if (p.x > TOWER.x0 - .05 && p.z > DOOR.z0 && p.z < DOOR.z1) { if (p.x > TOWER.x0 + .1) w.f = 'o'; }
-      else if (skyRail(p.x, p.z, WR, w.hint)) { p.x = ox; p.z = oz; w.vx *= -.2; w.vz *= -.2; }
+      else for (let k = 0; k < 2; k++) { const c = skyWall(p.x, p.z, WR, w.hint); if (!c) break; p.x += c.nx * c.d; p.z += c.nz * c.d; const vn = w.vx * c.nx + w.vz * c.nz; if (vn < 0) { w.vx -= vn * c.nx; w.vz -= vn * c.nz; } }
     } else {
       const R = FLOORRECT[w.f];
       const inElev = p.x > ELEV.x0 + WR && p.x < ELEV.x1 - WR;
@@ -247,13 +246,23 @@ export class Walk {
       if (b === a || !b.wk || b.wk.f !== w.f || b.leaving) return; const bx = b.root.position.x, bz = b.root.position.z, dx = p.x - bx, dz = p.z - bz, d = Math.hypot(dx, dz);
       if (d < WR * 2 && d > 1e-4) { const k = (WR * 2 - d) / d * .6; p.x += dx * k; p.z += dz * k; }
     });
-    // parked or moving cars block walkers
-    O.av.forEach(b => { const d0 = b.drv; if (!d0 || (d0.k ? 'd' : 'o') !== w.f) return; const dx = p.x - d0.x, dz = p.z - d0.z, d = Math.hypot(dx, dz), rr = .95 + WR; if (d < rr && d > 1e-4) { const k = (rr - d) / d; p.x += dx * k; p.z += dz * k; } });
+    // parked or moving cars block walkers (the car's own box, not a circle)
+    O.av.forEach(b => {
+      const d0 = b.drv; if (!d0 || (d0.k ? 'd' : 'o') !== w.f || Math.abs((d0.y || 0) - w.y) > 1.5) return;
+      const c = Math.cos(d0.h), s = -Math.sin(d0.h), dx = p.x - d0.x, dz = p.z - d0.z, la = dx * c + dz * s, lb = -dx * s + dz * c, A = (d0.hl || 1) + WR, B = (d0.hw || .5) + WR;
+      if (Math.abs(la) >= A || Math.abs(lb) >= B) return;
+      if (A - Math.abs(la) < B - Math.abs(lb)) { const k = (A - Math.abs(la)) * (Math.sign(la) || 1); p.x += c * k; p.z += s * k; }
+      else { const k = (B - Math.abs(lb)) * (Math.sign(lb) || 1); p.x += -s * k; p.z += c * k; }
+    });
     w.x = p.x; w.z = p.z;
   }
+  // fell off: back to the Sky Deck door (or the Sky Park elevator if it was the roof)
   respawn(a) {
-    const w = a.wk, O = this.O; this.fade.classList.add('on'); O.sfx('whoosh');
-    setTimeout(() => { if (a.wk !== w) return; w.f = 'd'; w.x = DOOR.x - 1.3; w.z = (DOOR.z0 + DOOR.z1) / 2; w.y = 0; w.vy = 0; w.air = 0; w.hint = -1; w.h = -Math.PI / 2; this.yaw = w.h; this.snap = 1; this.send(1); setTimeout(() => this.fade.classList.remove('on'), 140); O.ui.toast('You fell off the Sky Deck. Back at the door!'); }, 380);
+    const w = a.wk, O = this.O, roof = w && w.f === 'r'; if (!w || this._rsp) return; this._rsp = 1; this.fade.classList.add('on'); O.sfx('whoosh');
+    setTimeout(() => { this._rsp = 0; if (a.wk !== w) { this.fade.classList.remove('on'); return; }
+      if (roof) { this.exitElev(a, 'r'); } else { w.f = 'd'; w.x = DOOR.x - 1.3; w.z = (DOOR.z0 + DOOR.z1) / 2; w.y = 0; w.h = -Math.PI / 2; }
+      w.vx = w.vz = w.vy = 0; w.air = 0; w.hint = -1; this.yaw = w.h; this.snap = 1; this.send(1); setTimeout(() => this.fade.classList.remove('on'), 140);
+      O.ui.toast(roof ? 'You fell off the roof. Back at the elevator!' : 'You fell off the Sky Deck. Back at the door!'); }, 380);
   }
   send(force) {
     const a = this.me, w = a && a.wk; if (!w) return;
@@ -283,32 +292,6 @@ export class Walk {
     let dh = w.th - w.h; dh = Math.atan2(Math.sin(dh), Math.cos(dh)); w.h += dh * Math.min(1, dt * 10);
     const moved = Math.hypot(w.x - ox, w.z - oz); a.mv = moved / Math.max(dt, 1e-3) > .2 || w.ts > .3 ? 1 : 0; a.runK = damp(a.runK || 0, w.ts > 3.4 ? 1 : 0, 6, dt); a.walkPh += Math.max(moved, a.mv ? w.ts * dt * .7 : 0) * 5.4;
     a.root.position.set(w.x, w.y, w.z); a.root.rotation.y = w.h;
-  }
-  // ---------- knockdowns (a car hit someone)
-  knock(a, dx, dz, v) {
-    if (!a || a.knd) return;
-    const l = Math.hypot(dx, dz) || 1; a.knd = {t: 0, dx: dx / l, dz: dz / l, v: Math.min(9, 3 + v * .55), spin: (Math.random() < .5 ? -1 : 1)};
-    const O = this.O, p = a.root.position; O.sfx('thud'); O.sfx('pop'); O.shk = Math.max(O.shk || 0, .35); O.fx.sparkle(p.x, p.y + 1, p.z, 30, [1, .9, .4]);
-    if (a === this.me) { this.kn++; this.send(1); }
-    a.poseFx = (Z, dt, t) => this.knockPose(a, Z, dt, t);
-  }
-  knockPose(a, Z, dt, t) {
-    const k = a.knd; if (!k) { a.poseFx = null; return; }
-    k.t += dt;
-    const T1 = .8, T2 = 1.9, T3 = 2.5, ph = k.t;
-    // flail while flying, flat on the back, then get up
-    let fl = ph < T1 ? 1 : 0, down = ph < T1 ? 0 : ph < T2 ? 1 : 1 - (ph - T2) / (T3 - T2);
-    if (fl) { const s = Math.sin(ph * 26); Z.lsz = 2.2 + s * .5; Z.rsz = -2.2 - s * .5; Z.lsx = -.6 + s * .4; Z.rsx = -.6 - s * .4; Z.ltx = -.8 + s * .5; Z.rtx = -.8 - s * .5; Z.lkx = 1; Z.rkx = 1; Z.hx = -.3; }
-    else if (down > 0) { Z.lsz = 1.4; Z.rsz = -1.4; Z.lsx = -.2; Z.rsx = -.2; Z.lex = -.2; Z.rex = -.2; Z.ltx = -.15; Z.rtx = -.25; Z.lkx = .3; Z.rkx = .2; Z.hx = .25 * Math.sin(ph * 5); Z.hz = .25 * Math.cos(ph * 5); }
-    // body: arc up and tumble, then lie flat
-    const arc = ph < T1 ? Math.sin(ph / T1 * Math.PI) * 1.3 : 0;
-    a.rig.position.y = arc;
-    const tilt = ph < T1 ? ph / T1 * Math.PI * 1.5 * k.spin : down * -Math.PI / 2 * .96;
-    a.rig.rotation.x = ph < T1 ? tilt : tilt; a.rig.rotation.z = ph < T1 ? Math.sin(ph * 8) * .4 : 0;
-    if (down > 0 && ph < T2) { a.rig.position.y = .16; }
-    if (ph >= T3) { a.knd = null; a.poseFx = null; a.rig.position.y = 0; a.rig.rotation.x = 0; a.rig.rotation.z = 0; }
-    // dizzy stars over the head while down
-    if (ph > T1 && ph < T2 && Math.random() < dt * 8) { const p = a.root.position; this.O.fx.sparkle(p.x + (Math.random() - .5) * .4, p.y + .5, p.z + (Math.random() - .5) * .4, 2, [1, .9, .3]); }
   }
   // ---------- third-person camera behind me
   cam(P, T) {

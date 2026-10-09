@@ -114,6 +114,7 @@ export class World {
   build() {
     if (this.built) return; this.built = true;
     const G = this.group; skyLayout();   // the city keeps clear of the Sky Deck, so lay the track out first
+    try { this.envN = nightEnv(this.O.r); } catch (e) { this.envN = null; }   // ready before anyone steps outside
     // sky dome with a crimson horizon glow, stars and a moon
     const skyM = new THREE.ShaderMaterial({side: THREE.BackSide, depthWrite: false, fog: false,
       vertexShader: 'varying vec3 vD;void main(){vD=normalize(position);gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.);}',
@@ -246,17 +247,20 @@ export class World {
     const O = this.O, outside = z === 'd' || z === 'r';
     // reflections: the office keeps its studio environment, outside (and outdoor arenas) reflect the night city
     if (!this.envO) this.envO = {t: O.scene.environment, i: O.scene.environmentIntensity};
-    if (!this.envN) { try { this.envN = nightEnv(O.r); } catch (e) { this.envN = this.envO.t; } }
-    O.scene.environment = outside || (z === 'a' && this.arenaKey) ? this.envN : this.envO.t; O.scene.environmentIntensity = outside ? .85 : this.envO.i;
+    if (!this.envN) this.envN = this.envO.t;
+    const AK = z === 'a' ? this.arenaKey || {} : null;
+    O.scene.environment = outside || (AK && AK.env === 'night') ? this.envN : this.envO.t; O.scene.environmentIntensity = AK ? AK.ei ?? .6 : outside ? .85 : this.envO.i;
     this.keyRig(z);
     if (this.shell) this.shell.visible = outside;
     O.room.backdrop && (O.room.backdrop.visible = !outside && z !== 'g');
     // outdoors: moonlight and a violet sky light; the range downstairs gets an even work light
-    this.hemi.intensity = z === 'r' ? 1.0 : outside ? .62 : z === 'g' ? 1.1 : z === 'a' ? .7 : 0;
-    this.hemi.color.set(z === 'g' ? '#fff1e2' : z === 'r' ? '#d9ddff' : '#6a5cff'); this.hemi.groundColor.set(z === 'g' ? '#3a2a30' : z === 'r' ? '#2a1a22' : '#2a0912');
+    this.hemi.intensity = AK ? AK.hemi ?? .7 : z === 'r' ? 1.0 : outside ? .62 : z === 'g' ? 1.1 : 0;
+    this.hemi.color.set(AK ? AK.hc || '#c9d2ff' : z === 'g' ? '#fff1e2' : z === 'r' ? '#d9ddff' : '#6a5cff'); this.hemi.groundColor.set(AK ? AK.hg || '#2a2430' : z === 'g' ? '#3a2a30' : z === 'r' ? '#2a1a22' : '#2a0912');
     O.scene.fog.near = outside ? FOG.near : 1e5; O.scene.fog.far = outside ? FOG.far : 2e5;
     if (O.onZone) O.onZone(z);
   }
+  // the laser tag arena sets its own lighting (key light, reflections, sky light) before the camera goes in
+  arena(key) { this.arenaKey = key || null; if (this.zone === 'a') { this.zone = ''; } }
   update(dt, t) {
     this.uni.uT.value = t % 1000;
     const cam = this.O.cam, z = this.zoneAt(cam.position);

@@ -27,6 +27,9 @@ import {Fly} from './fly.js';
 import {buildBoard} from './board.js';
 import {Arcade} from './arcade.js';
 import {Crates} from './crate.js';
+import {GFX, initGfx, Particles, gfxFrame, gfxStepDown, setGfxPref} from './gfx.js';
+import {tickRagdolls} from './ragdoll.js';
+import {Arena} from './arena.js';
 
 const GRADE={uniforms:{tDiffuse:{value:null},uT:{value:0},uV:{value:.3}},
   vertexShader:'varying vec2 vUv;void main(){vUv=uv;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.);}',
@@ -60,6 +63,8 @@ function inPoly($, J, Q) {
     }
     return Z;
   }
+const gfxName=()=>(GFX.pref==='auto'?'Auto ('+GFX.level[0].toUpperCase()+GFX.level.slice(1)+')':GFX.pref[0].toUpperCase()+GFX.pref.slice(1));
+const gfxIcon=()=>'<svg viewBox="0 0 24 24"><rect x="2" y="5" width="20" height="14" rx="3" fill="none" stroke="currentColor" stroke-width="2"/><text x="12" y="15.2" text-anchor="middle" font-family="Verdana,sans-serif" font-weight="900" font-size="'+(GFX.pref==='auto'?5.4:GFX.pref==='medium'?6.2:7.5)+'" fill="currentColor">'+({auto:'AUTO',high:'HI',medium:'MED',low:'LO'}[GFX.pref]||'AUTO')+'</text></svg>';
 const RM=()=>{try{return !!(OF&&OF.api&&OF.api.reduced&&OF.api.reduced())}catch(e){return false}};
 function supported(){if(SUP!==null)return SUP;try{const c=document.createElement('canvas');const g=c.getContext('webgl2');SUP=!!g;if(g){const l=g.getExtension('WEBGL_lose_context');l&&l.loseContext()}}catch(e){SUP=false}return SUP}
 class Office {
@@ -68,16 +73,17 @@ class Office {
     }
   init3d() {
       let $ = this.r = new THREE.WebGLRenderer({ canvas: this.cv, antialias: false, alpha: false, powerPreference: "high-performance", stencil: false });
-      $.outputColorSpace = THREE.SRGBColorSpace, $.toneMapping = THREE.NeutralToneMapping, $.toneMappingExposure = 1, $.shadowMap.enabled = true, $.shadowMap.type = THREE.PCFSoftShadowMap, this.prMax = Math.min(2, globalThis.devicePixelRatio || 1), this.pr = Math.min(this.prMax, 1.25), $.setPixelRatio(this.pr);
+      $.outputColorSpace = THREE.SRGBColorSpace, $.toneMapping = THREE.NeutralToneMapping, $.toneMappingExposure = 1, $.shadowMap.enabled = true, $.shadowMap.type = THREE.PCFSoftShadowMap, this.prMax = Math.min(2, globalThis.devicePixelRatio || 1), this.pr = Math.min(this.prMax, 1.25), $.setPixelRatio(this.pr), initGfx($);
       let J = this.scene = new THREE.Scene;
       J.background = new THREE.Color(328458);
       let Q = new THREE.PMREMGenerator($);
-      J.environment = Q.fromScene(new RoomEnvironment, 0.04).texture, J.environmentIntensity = 0.3, Q.dispose(), this.cam = new THREE.PerspectiveCamera(34, 1.7777777777777777, 0.1, 4200), this.cam.layers.enable(1), this.cam.layers.enable(LAYER_OUT), this.cam.position.copy(this.dir.P), this.cam.lookAt(this.dir.T), this.room = buildRoom(J), this.tv = new TV(this.room.group), this.fx = new FX(this.room.group);
+      J.environment = Q.fromScene(new RoomEnvironment, 0.04).texture, J.environmentIntensity = 0.3, Q.dispose(), this.cam = new THREE.PerspectiveCamera(34, 1.7777777777777777, 0.1, 4200), this.cam.layers.enable(1), this.cam.layers.enable(LAYER_OUT), this.cam.position.copy(this.dir.P), this.cam.lookAt(this.dir.T), this.room = buildRoom(J), this.tv = new TV(this.room.group), this.fx = new FX(this.room.group), this.pfx = new Particles(J, 900);
       try {
         this.wld = new World(this);
         this.track = buildSky(this.wld.group), this.wld.out(this.track.group), buildDoorway(this.room.group);
         this.derby = new Derby(this, this.wld.group), this.wld.out(this.derby.group), this.sys.push(this.derby);
         this.range = new Range(this, this.room.group), this.sys.push(this.range);
+        this.arena = new Arena(this), this.sys.push(this.arena);
         this.fly = new Fly(this, this.wld.group), this.wld.out(this.fly.group), this.sys.push(this.fly);
       } catch (K) {
         console.warn('VO3 world', K), this.track = null;
@@ -98,7 +104,7 @@ uniform sampler2D tRefl;uniform float uRK;varying vec4 vRU;varying vec3 vRW;`).r
 #include <opaque_fragment>`);
       }, Z.needsUpdate = true;
       let q = new THREE.WebGLRenderTarget(4, 4, { type: THREE.HalfFloatType, samples: 4 });
-      this.comp = new EffectComposer($, q), this.comp.addPass(new RenderPass(J, this.cam)), this.bloom = new UnrealBloomPass(new THREE.Vector2(256, 256), 0.36, 0.5, 1.05), this.comp.addPass(this.bloom), this.grade = new ShaderPass(GRADE), this.comp.addPass(this.grade), this.comp.addPass(new OutputPass), this.cv.addEventListener("webglcontextlost", (K) => {
+      this.comp = new EffectComposer($, q), this.comp.addPass(new RenderPass(J, this.cam)), this.bloom = new UnrealBloomPass(new THREE.Vector2(256, 256), 0.36, 0.5, 1.05), this.comp.addPass(this.bloom), this.grade = new ShaderPass(GRADE), this.comp.addPass(this.grade), this.comp.addPass(new OutputPass), this.applyGfx(GFX.level), GFX.onLevel.push((K) => this.applyGfx(K)), this.cv.addEventListener("webglcontextlost", (K) => {
         K.preventDefault(), this.stop(), this.dead = 1;
         try {
           this.api && this.api.onFail && this.api.onFail();
@@ -138,6 +144,7 @@ uniform sampler2D tRefl;uniform float uRK;varying vec4 vRU;varying vec3 vRW;`).r
         this.drive.tick(J, $);
       if (this.walk)
         this.walk.tick(J, $);
+      tickRagdolls(this, J), this.pfx.update(J);
       this.steam(J);
       this.sys.forEach((Z) => Z.tick && Z.tick(J, $));
       if (this.track && (this._bT = (this._bT || 0) - J) <= 0)
@@ -150,7 +157,7 @@ uniform sampler2D tRefl;uniform float uRK;varying vec4 vRU;varying vec3 vRW;`).r
         return;
       if (this.brdOpen && !this.fast)
         return;
-      if (this.wld && (this.wld.update(J, $), this.zoneVis()), this.wld && this.wld.zone !== "o" ? this.reflU && (this.reflU.uRK.value = 0) : this.refl(), this.grade.uniforms.uT.value = $ % 97, this.comp.render(J), this.arc)
+      if (this.wld && (this.wld.update(J, $), this.zoneVis()), this.wld && this.wld.zone !== "o" ? this.reflU && (this.reflU.uRK.value = 0) : this.refl(), this.grade.uniforms.uT.value = $ % 97, gfxFrame($, this.cam, this.H * this.pr), this.comp.render(J), this.arc)
         this.arc.place();
       if (FCB)
         try {
@@ -388,7 +395,7 @@ uniform sampler2D tRefl;uniform float uRK;varying vec4 vRU;varying vec3 vRW;`).r
     x.strokeStyle='#ff1f4f';x.lineWidth=3;x.beginPath();for(let i=0;i<=60;i++){const px=24+i*20.6,py=640-Math.sin(i*.25+t*.6)*28-i*1.2;i?x.lineTo(px,py):x.moveTo(px,py)}x.stroke();x.fillStyle='#8a93a6';x.font='600 14px Verdana,sans-serif';x.fillText('Close rate trend',24,548);
     const cx2=(t*140)%W,cy2=300+Math.sin(t*1.3)*120;x.fillStyle='#fff';x.beginPath();x.moveTo(cx2,cy2);x.lineTo(cx2+14,cy2+34);x.lineTo(cx2+20,cy2+20);x.lineTo(cx2+34,cy2+16);x.closePath();x.fill()}
   // ---------- emotes ----------
-  busy(a,ctx){return !!(a&&(a.drv||a.toss||a.plank||a.yeet||a.yeetA||a.thanks||a.shakeA||a.shakeB||(ctx!=='drive'&&a.wk)||a.fly||a.bat||a.lane||a.knd))}
+  busy(a,ctx){return !!(a&&(a.drv||a.toss||a.plank||a.yeet||a.yeetA||a.thanks||a.shakeA||a.shakeB||(ctx!=='drive'&&a.wk)||a.fly||a.bat||a.lane||a.knd||a.ar))}
   emote(k){const me=this.meAv;if((k==='plank'||k==='thanks')&&!this.plankOk(me)){this.ui.toast(me?'Sit back down at your desk first.':'Walk onto the floor first.');return}try{const n=this.api.emote?this.api.emote(k):null;if(me&&n!=null)me.localEm=n}catch(e){}if(me)this.playEmote(me,k);else if(k==='bell')this.ringBell('','')}
   playEmote($, J, Q) {
       if (J === "nuke") {
@@ -925,9 +932,9 @@ uniform sampler2D tRefl;uniform float uRK;varying vec4 vRU;varying vec3 vRW;`).r
       let k = this.nk && !this.nk.done ? this.nk : null;
       if (k)
         X = k.shot(K, V, Y);
-      let z = this.drive && this.drive.cam(K, V);
+      let z = this.drive && this.drive.cam(K, V), zk = z ? this.drive.camK || 7 : 0;
       if (z)
-        X = clamp(Y * 1.25, 44, 72);
+        X = typeof z === "number" ? z : clamp(Y * 1.25, 44, 72);
       let wkc = !z && this.walk && this.walk.cam(K, V);
       if (wkc)
         X = clamp(Y * 1.2, 46, 70), z = true;
@@ -949,7 +956,7 @@ uniform sampler2D tRefl;uniform float uRK;varying vec4 vRU;varying vec3 vRW;`).r
       }
       if (!RM() && !z && !M && !this.dbgCam)
         K.x += Math.sin(J * 0.11) * 0.32, K.y += Math.sin(J * 0.07) * 0.1;
-      let v = M ? 6 : F ? 6 : k ? 5 : z ? 7 : 1.7;
+      let v = M ? 6 : F ? 6 : k ? 5 : zk ? zk : z ? 7 : 1.7;
       if (k && k.t >= NT.cut && !k.snap)
         k.snap = 1, Q.P.copy(K), Q.T.copy(V), Q.F = X;
       if (["x", "y", "z"].forEach((C) => {
@@ -981,22 +988,22 @@ uniform sampler2D tRefl;uniform float uRK;varying vec4 vRU;varying vec3 vRW;`).r
   // steam out of the ears of anyone yelling
   steam(dt){const v=this._stv||(this._stv=new THREE.Vector3());this.av.forEach(a=>{const y=a.md&&a.md.yell||0;if(y<.45||!a.root.visible||Math.random()>dt*9*y)return;a.headPos(v);const sd=Math.random()<.5?-1:1,c=Math.cos(a.root.rotation.y),s=Math.sin(a.root.rotation.y);this.fx.sparkle(v.x+c*.28*sd,v.y+.02,v.z-s*.28*sd,3,[.92,.92,.95])})}
   // which floor each person is on, and which floors the camera can see from where it is
-  floorOf(a){if(a.fly)return 'd';if(a.wk)return a.wk.f;if(a.drv)return a.drv.k?'d':'o';return a.flr||'o'}
-  zoneVis(){const z=this.wld.zone,see={o:{o:1,d:1},g:{g:1},r:{r:1,d:1},d:{d:1,r:1,o:1}}[z]||{o:1};
+  floorOf(a){if(a.ar)return 'a';if(a.fly)return 'd';if(a.wk)return a.wk.f;if(a.drv)return a.drv.k?'d':'o';return a.flr||'o'}
+  zoneVis(){const z=this.wld.zone,see={o:{o:1,d:1},g:{g:1},r:{r:1,d:1},d:{d:1,r:1,o:1},a:{a:1}}[z]||{o:1};
     this.av.forEach(a=>{const v=!!see[this.floorOf(a)];a._zv=v;if(!v&&a.root.visible){a.root.visible=false;a._zh=1}else if(v&&a._zh){a.root.visible=true;a._zh=0}if(a.drv&&a.drv.car)a.drv.car.visible=v});
-    const st=this.room.static;if(st&&this._stz!==z){this._stz=z;const show=z==='o'||z==='d';st.forEach(m=>m.visible=show)}
-    this.ui.place({o:'SALES FLOOR',d:'SKY DECK',r:'SKY PARK',g:'FIRING RANGE'}[z]);
+    const st=this.room.static;if(st&&this._stz!==z){this._stz=z;const show=z==='o'||z==='d';st.forEach(m=>m.visible=show);this.room.group.visible=z!=='a'}
+    this.ui.place({o:'SALES FLOOR',d:'SKY DECK',r:'SKY PARK',g:'FIRING RANGE',a:'LASER TAG ARENA'}[z]);
     this.sys.forEach(S0=>S0.zone&&S0.zone(z))}
   // other systems (Sky Park, range, planes) answer questions from walking
   hook(name,...args){for(const S0 of this.sys){if(S0[name]){const r=S0[name](...args);if(r)return r}}return null}
   // ---------- overlay ----------
   tags(){const v=this._tv||(this._tv=new THREE.Vector3()),w=this.W,h=this.H;
     this.av.forEach(a=>{const e=this.ui.tag(a);a.headPos(v);v.y+=.4;const dist=v.distanceTo(this.cam.position);v.project(this.cam);
-      const vis=a.root.visible&&!a.leaving&&a._zv!==false&&!(a.me&&(a.lane||a.bat))&&v.z<1&&Math.abs(v.x)<1.08&&v.y<1.1&&v.y>-1.1;const x=(v.x*.5+.5)*w,y=(-v.y*.5+.5)*h;a._sx=x;a._sy=y;a._vis=vis;
+      const vis=a.root.visible&&!a.leaving&&a._zv!==false&&!a.noTag&&!(a.me&&(a.lane||a.bat))&&v.z<1&&Math.abs(v.x)<1.08&&v.y<1.1&&v.y>-1.1;const x=(v.x*.5+.5)*w,y=(-v.y*.5+.5)*h;a._sx=x;a._sy=y;a._vis=vis;
       this.ui.setTag(e,a,x,y,vis,clamp(10/dist,.6,1.3));
       if(a.camOn){let vid=null;try{vid=this.api.camVideo?this.api.camVideo(a.id,a.me):null}catch(x){}if(vid&&vid.parentNode!==e._c){e._c.appendChild(vid);this.play(vid)}}})}
   hud() {
-      let $ = [{ k: "auto", i: IC.film, t: this.opts.auto ? "Auto camera: on" : "Auto camera: off", on: this.opts.auto }, { k: "sfx", i: this.opts.sfx ? IC.snd : IC.sndoff, t: this.opts.sfx ? "Sound effects: on" : "Sound effects: off", on: false }, { k: "demo", i: IC.crowd, t: this.demo ? "Hide the demo crowd" : "Fill the floor with a demo crowd", on: this.demo }, ...this.board && this.api.openBoard ? [{ k: "board", i: IC.board, t: "Brainstorm board", on: !!this.brdOpen }] : [], { k: "exp", i: this.api.expanded && this.api.expanded() ? IC.shrink : IC.exp, t: "Expand the floor", on: false }, { k: "list", i: IC.list, t: "Classic list view", on: false }];
+      let $ = [{ k: "auto", i: IC.film, t: this.opts.auto ? "Auto camera: on" : "Auto camera: off", on: this.opts.auto }, { k: "sfx", i: this.opts.sfx ? IC.snd : IC.sndoff, t: this.opts.sfx ? "Sound effects: on" : "Sound effects: off", on: false }, { k: "demo", i: IC.crowd, t: this.demo ? "Hide the demo crowd" : "Fill the floor with a demo crowd", on: this.demo }, ...this.board && this.api.openBoard ? [{ k: "board", i: IC.board, t: "Brainstorm board", on: !!this.brdOpen }] : [], { k: "gfx", i: gfxIcon(), t: "Graphics: " + gfxName() + " (click to change)", on: GFX.pref !== "auto" }, { k: "exp", i: this.api.expanded && this.api.expanded() ? IC.shrink : IC.exp, t: "Expand the floor", on: false }, { k: "list", i: IC.list, t: "Classic list view", on: false }];
       this.ui.toolbar($);
     }
   tool($) {
@@ -1011,6 +1018,10 @@ uniform sampler2D tRefl;uniform float uRK;varying vec4 vRU;varying vec3 vRW;`).r
         J.toggleExp && J.toggleExp();
       else if ($ === "board")
         this.boardGo();
+      else if ($ === "gfx") {
+        let Q = { auto: "high", high: "medium", medium: "low", low: "auto" }[GFX.pref] || "auto";
+        setGfxPref(Q), this.ui.toast("Graphics: " + gfxName() + (Q === "auto" ? ". Picks the best setting for this device." : Q === "high" ? ". Sharpest textures and shadows." : Q === "low" ? ". Fastest, for older laptops and phones." : "."));
+      }
       else if ($ === "list")
         J.toggleList && J.toggleList();
     }
@@ -1208,10 +1219,13 @@ uniform sampler2D tRefl;uniform float uRK;varying vec4 vRU;varying vec3 vRW;`).r
     else if(k==='thud'){tone(62,0,.32,.42,'sine');tone(118,0,.14,.2,'triangle');const n=(ac.sampleRate*.25)|0,b=ac.createBuffer(1,n,ac.sampleRate),d=b.getChannelData(0);for(let i=0;i<n;i++)d[i]=(Math.random()*2-1)*Math.pow(1-i/n,4);
       const s=ac.createBufferSource();s.buffer=b;const lp=ac.createBiquadFilter();lp.type='lowpass';lp.frequency.value=520;const g=ac.createGain();g.gain.value=.5;s.connect(lp);lp.connect(g);g.connect(ac.destination);s.start(t)}}
   // ---------- performance governor ----------
+  // graphics quality: sharpness cap, bloom and the outdoor shadow detail (textures are re-baked by gfx.js)
+  applyGfx(L){const dpr=globalThis.devicePixelRatio||1;this.prMax=Math.min(dpr,L==='high'?2:L==='medium'?1.5:1);this.prMin=L==='low'?.6:.7;if(this.pr>this.prMax)this.pr=this.prMax;
+    if(this.bloom)this.bloom.enabled=L!=='low';const M=this.wld&&this.wld.moon;if(M){const n=L==='high'?2048:1024;if(M.shadow.mapSize.x!==n){M.shadow.mapSize.set(n,n);if(M.shadow.map){M.shadow.map.dispose();M.shadow.map=null}}}}
   gov(dt){if(this.fast)return;const ms=dt*1000;this.ms=this.ms?this.ms*.93+ms*.07:16;this.gT=(this.gT||0)+dt;if(this.gT<1.5)return;this.gT=0;
-    if(this.ms>24){this.downT=this.t;if(this.pr>.7){this.pr=Math.max(.7,this.pr*.85)}else if(this.reflOn){this.reflOn=false}else if(this.r.shadowMap.enabled){this.r.shadowMap.enabled=false;this.room.lights.key.castShadow=false}}
+    if(this.ms>24){this.downT=this.t;if(this.pr>(this.prMin||.7)){this.pr=Math.max(this.prMin||.7,this.pr*.85)}else if(this.reflOn){this.reflOn=false}else if(gfxStepDown()){}else if(this.r.shadowMap.enabled){this.r.shadowMap.enabled=false;this.room.lights.key.castShadow=false}}
     else if(this.ms<17.8&&this.pr<this.prMax&&this.t-(this.downT||-99)>12){this.pr=Math.min(this.prMax,this.pr*1.1)}}
-  info(){return{pr:this.pr,ms:Math.round(this.ms||0),refl:this.reflOn,shadows:this.r.shadowMap.enabled,people:this.av.size,tv:this.tvOn,calls:this.r.info.render.calls,tris:this.r.info.render.triangles,ready:this.ready}}
+  info(){return{gfx:GFX.level,pref:GFX.pref,pr:this.pr,ms:Math.round(this.ms||0),refl:this.reflOn,shadows:this.r.shadowMap.enabled,people:this.av.size,tv:this.tvOn,calls:this.r.info.render.calls,tris:this.r.info.render.triangles,ready:this.ready}}
 }
 function mount(host,api){if(!host||!supported())return false;try{if(!OF)OF=new Office();OF.api=api;if(OF.dead)return false;if(OF.el.parentNode!==host)host.insertBefore(OF.el,host.firstChild);OF.applyOpts();OF.start();return true}catch(e){console.warn('VO3 mount failed',e);SUP=false;return false}}
 function unmount(){if(OF)OF.stop()}

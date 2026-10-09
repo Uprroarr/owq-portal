@@ -154,6 +154,6 @@ function finish(O, a) {
   const rd = a.rd; if (!rd) return;
   a.rd = null; a.knd = null; if (a.poseFx === rd.pf) a.poseFx = null;
   const yaw = rd.yawUp ?? rd.yaw; a.root.quaternion.identity(); a.root.rotation.set(0, yaw, 0);
-  if (a.wk) { a.wk.h = yaw; if (a.me) { a.wk.vx = 0; a.wk.vz = 0; a.wk.vy = 0; a.wk.air = 0; if (O.walk) { O.walk.yaw = yaw; O.walk.send && O.walk.send(1); } } }
+  if (a.wk) { a.wk.h = yaw; a.wk.x = a.root.position.x; a.wk.z = a.root.position.z; a.wk.y = Math.max(a.root.position.y, rd.gy ?? a.root.position.y); if (a.me) { a.wk.vx = 0; a.wk.vz = 0; a.wk.vy = 0; a.wk.air = 0; if (O.walk) { O.walk.yaw = yaw; O.walk.send && O.walk.send(1); } } }
 }
 export function endRagdoll(O, a) { finish(O, a); }

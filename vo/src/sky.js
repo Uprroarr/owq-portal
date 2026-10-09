@@ -97,8 +97,10 @@ export function skyAt(x, z, hint) {
 }
 
 /* walls near a circle of radius r at x,z: returns the deepest {nx, nz, d} (normal pushes back onto the deck) or null.
-   Barriers line both road edges except the plaza gap and over the jumps; the plaza has railings and the tower face. */
-export function skyWall(x, z, r, hint) {
+   Barriers line both road edges except the plaza gap and over the jumps; the plaza has railings and the tower face.
+   Next to the plaza a barrier has two sides: plazaSide says which one the body is on (cars pass it from their centre,
+   so a fast car can never tunnel through); left out, the circle's own position decides. */
+export function skyWall(x, z, r, hint, plazaSide) {
   const D = layout(), q = nearest(x, z, hint), c = q.c; let best = null;
   const take = (nx, nz, d) => { if (d > 0 && (!best || d > best.d)) best = {nx, nz, d}; };
   const pl = inPlaza(x, z, r);
@@ -113,7 +115,8 @@ export function skyWall(x, z, r, hint) {
   const al = Math.abs(q.lat), sg = Math.sign(q.lat) || 1;
   if (al + r > WALL && al < WALL + 1.6) {
     const gapHere = sg === D.side && z > PLAZA.o0 && z < PLAZA.o1 && x > PLAZA.x0 - 10;   // the way onto the plaza
-    if (!gapHere) take(-c.nx * sg, -c.nz * sg, al + r - WALL);
+    const back = plazaSide === undefined ? pl && al > WALL + .37 : plazaSide && pl;
+    if (!gapHere) { if (back) take(c.nx * sg, c.nz * sg, WALL + .74 + r - al); else take(-c.nx * sg, -c.nz * sg, al + r - WALL); }
   }
   return best;
 }
@@ -244,6 +247,9 @@ export function buildSky(parent) {
     if (start) {
       const L5 = []; for (let k = 0; k < 5; k++) { const o = (k - 2) * 1.2; L5.push([a.p.x + a.nx * o - a.t.x * .5, a.p.y + 10.6, a.p.z + a.nz * o - a.t.z * .5, .9, 0, 0, 0]); }
       const lights = glowPoints(G, L5); G.userData.startLights = lights;
+      // the start lights run the race sequence on a loop: five reds one by one, lights out with a green flash
+      const col = lights.geometry.getAttribute('color');
+      GFX.ticks.push(t => { const c = t % 8; for (let k = 0; k < 5; k++) { const red = c < 3.6 && c > k * .7 ? 1 : 0, grn = c >= 3.6 && c < 4.3 ? 1 : 0; col.setXYZ(k, red * 4 + grn * .2, red * .12 + grn * 3.2, red * .15 + grn * 1.1); } col.needsUpdate = true; });
       add(plain(new THREE.BoxGeometry(6.6, .9, .4)).rotateY(yaw).translate(a.p.x - a.t.x * .5, a.p.y + 10.6, a.p.z - a.t.z * .5), gantM);
     }
   };

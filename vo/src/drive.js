@@ -358,10 +358,11 @@ class Drive {
     if (d.air && d.k) return;
     const fx = Math.cos(d.h), fz = -Math.sin(d.h), rx = -fz, rz = fx, hl = d.hl, hw = d.hw;
     const probes = [[hl, hw], [hl, -hw], [-hl, hw], [-hl, -hw], [0, hw], [0, -hw], [hl, 0], [-hl, 0]];
-    let best = null;
+    let best = null, ps = false;
+    if (d.k && d.x < TOWER.x0) { const q = skyAt(d.x, d.z, d.hint); ps = !!q.plaza || (d.x > PLAZA.x0 && d.z > PLAZA.z0 && d.z < PLAZA.z1 && Math.abs(q.lat) > 7.32); }
     for (const [pa, pb] of probes) {
       const px = d.x + fx * pa + rx * pb, pz = d.z + fz * pa + rz * pb;
-      const c = d.k ? (px < TOWER.x0 ? skyWall(px, pz, .08, d.hint) : (px < XB[0] + .1 && !(pz > DOOR.z0 + .25 && pz < DOOR.z1 - .25)) ? {nx: 1, nz: 0, d: XB[0] + .1 - px} : null) : floorWall(px, pz, .08);
+      const c = d.k ? (px < TOWER.x0 ? skyWall(px, pz, .08, d.hint, ps) : (px < XB[0] + .1 && !(pz > DOOR.z0 + .25 && pz < DOOR.z1 - .25)) ? {nx: 1, nz: 0, d: XB[0] + .1 - px} : null) : floorWall(px, pz, .08);
       if (c && (!best || c.d > best.d)) best = {c, pa, pb, px, pz};
     }
     if (!best) { d.wallT = 0; return; }
@@ -432,7 +433,6 @@ class Drive {
         this.O.ui.toast((nb ? 'NEW BEST LAP ' : 'LAP ') + fmtLap(lt)); this.O.sfx(nb ? 'chaching' : 'ding'); if (nb) this.big('NEW BEST LAP');
       } else if (!L.t0) this.O.sfx('ding');
       L.t0 = t; L.cp = 0; L.sp = []; d.cpS = SKY.start;
-      const sl = this.O.track && this.O.track.group.userData.startLights; if (sl) this.lights = t;
     }
   }
   // speedo, gear, lap timer with sector splits, minimap
@@ -537,6 +537,7 @@ class Drive {
     const back = (d.k ? 6.4 : 4.6) + sp * (d.k ? .085 : .16);
     P.set(d.x - dirx / dl * back, d.y + (d.k ? 2.6 + sp * .015 : 2.6), d.z - dirz / dl * back); T.set(d.x + c.x * 3, d.y + .9, d.z + c.z * 3);
     if (!d.k) { P.x = clamp(P.x, -9.7, 9.7); P.z = clamp(P.z, -6.7, 11.4); P.y = Math.min(P.y, 4.9); }
+    this.camK = d.k ? 11 : 7;
     return d.k ? 56 + Math.min(22, sp * .45) + (d.boost > 0 ? 6 : 0) : true;
   }
 }
