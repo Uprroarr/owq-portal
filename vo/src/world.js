@@ -138,8 +138,9 @@ export class World {
     const boxes = [];
     const R = rnd(2026), B = 74, half = 13;
     const clearOf = (x, z, rad) => {
-      if (x > -70 && x < 55 && z > -85 && z < 45) return false;          // the tower, the Sky Park and its home-run field
-      if (x > 15 && x < 760 && Math.abs(z - RUNWAY_Z) < 34 + rad * .6) return false;   // a wide boulevard east: planes take off down it
+      if (x > -80 && x < 62 && z > -108 && z < 45) return false;         // the tower and the Sky Park ballpark
+      if (x > 15 && x < 1400 && Math.abs(z - RUNWAY_Z) < 40 + rad * .6) return false;  // the Skyport runway, its approach and a boulevard below it
+      if (x > 10 && x < 200 && z > -10 && z < 100 + rad * .3) return false;              // the Skyport apron, hangar and control tower
       for (const r of RINGS) if ((r[0] - x) * (r[0] - x) + (r[2] - z) * (r[2] - z) < (rad + 26) * (rad + 26)) return false;
       for (let i = 0; i < SKY.n; i += 3) { const p = SKY.S[i].p; if ((p.x - x) * (p.x - x) + (p.z - z) * (p.z - z) < rad * rad) return false; }
       for (const p of SKY.pylons) if ((p.x - x) * (p.x - x) + (p.z - z) * (p.z - z) < (rad * .7) * (rad * .7)) return false;
@@ -214,7 +215,7 @@ export class World {
     if (p.y < ARENAY + 60) return 'a';
     // the default Sales Floor camera sits just outside the open front wall: still the Sales Floor
     if (p.y > -.3 && p.y < 7 && p.x > T.x0 - .2 && p.x < T.x1 + .2 && p.z > T.z0 && p.z < T.z1 + 9) return 'o';
-    if (p.y > ROOFY - .5 && p.y < ROOFY + 40 && Math.abs(p.x) < 60 && p.z > -70 && p.z < 40) return 'r';
+    if (p.y > ROOFY - .5 && p.y < ROOFY + 45 && p.x > -46 && p.x < 52 && p.z > -96 && p.z < 16) return 'r';   // inside the ballpark
     return 'd';
   }
   // lighting rig per zone. Indoors the room's ceiling spotlight is the key light (on the range it hangs over the lanes).
@@ -229,7 +230,7 @@ export class World {
     const out = z === 'd' || z === 'r' || z === 'a';
     M.shadow.autoUpdate = out;
     if (!out) { M.intensity = z === 'g' ? .35 : 0; this.keyA = null; return; }
-    const A = z === 'a' && this.arenaKey ? this.arenaKey : z === 'r' ? {d: [.2, 1, .45], R: 50, i: 3.1, c: '#fff4e6', f: [-6, ROOFY, -8]} : {d: [-.42, .62, -.66], R: 58, i: 1.75, c: '#cdd6ff'};
+    const A = z === 'a' && this.arenaKey ? this.arenaKey : z === 'r' ? {d: [.24, 1, .42], R: 56, i: 2.7, c: '#fff4e6'} : {d: [-.42, .62, -.66], R: 58, i: 1.75, c: '#cdd6ff'};
     this.keyA = A; M.intensity = A.i; M.color.set(A.c);
     const C = M.shadow.camera; C.left = -A.R; C.right = A.R; C.top = A.R; C.bottom = -A.R; C.near = 1; C.far = 520; C.updateProjectionMatrix();
     M.shadow.bias = -.00035; M.shadow.normalBias = .045;
@@ -271,6 +272,6 @@ export class World {
     if (z === 'a') show = !!this.arenaSky;
     if (this.group.visible !== show) this.group.visible = show;
     // outside the key light follows what the camera looks at
-    if (z === 'd' && this.keyA && this.O.dir && this.O.dir.T) this.keyAim(this.O.dir.T);
+    if ((z === 'd' || z === 'r') && this.keyA && this.O.dir && this.O.dir.T) this.keyAim(this.O.dir.T);
   }
 }

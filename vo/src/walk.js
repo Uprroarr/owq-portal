@@ -41,6 +41,14 @@ WALKBOX.push([-4.3, -7, 2.4, -6.4], [-10, -7, -5.3, -6.45], [3.6, -7, 6.4, -6.45
 export const FLOORBOX = {o: WALKBOX, r: [], g: []};
 export const FLOORRECT = {r: {x0: -27.5, x1: 27.5, z0: -39.5, z1: 15.5}, g: {x0: -9.9, x1: 9.9, z0: -6.95, z1: 11.4}};
 
+// walkable areas made of rectangles {r:[x0,z0,x1,z1]} and polygons {poly:[[x,z],...]}
+export function inAreas(A, x, z) {
+  for (const q of A) {
+    if (q.r) { if (x >= q.r[0] && x <= q.r[2] && z >= q.r[1] && z <= q.r[3]) return true; continue; }
+    const P = q.poly; let c = false; for (let i = 0, j = P.length - 1; i < P.length; j = i++) { const a = P[i], b = P[j]; if ((a[1] > z) !== (b[1] > z) && x < (b[0] - a[0]) * (z - a[1]) / (b[1] - a[1]) + a[0]) c = !c; } if (c) return true;
+  }
+  return false;
+}
 function pushOut(p, boxes, r) {
   for (const b of boxes) {
     const cx = clamp(p.x, b[0], b[2]), cz = clamp(p.z, b[1], b[3]), dx = p.x - cx, dz = p.z - cz, d2 = dx * dx + dz * dz;
@@ -235,7 +243,8 @@ export class Walk {
     } else {
       const R = FLOORRECT[w.f];
       const inElev = p.x > ELEV.x0 + WR && p.x < ELEV.x1 - WR;
-      if (R) { p.x = clamp(p.x, R.x0 + WR, R.x1 - WR); p.z = Math.min(p.z, R.z1 - WR); if (!(inElev && p.z < ELEVP.z + .4)) p.z = Math.max(p.z, R.z0 + WR); }
+      if (R && R.areas) { if (!inAreas(R.areas, p.x, p.z)) { if (inAreas(R.areas, p.x, oz)) p.z = oz; else if (inAreas(R.areas, ox, p.z)) p.x = ox; else { p.x = ox; p.z = oz; } } }
+      else if (R) { p.x = clamp(p.x, R.x0 + WR, R.x1 - WR); p.z = Math.min(p.z, R.z1 - WR); if (!(inElev && p.z < ELEVP.z + .4)) p.z = Math.max(p.z, R.z0 + WR); }
       // inside the elevator cab (only right behind the doors: the Sky Park goes on far past the shaft)
       if (p.z < ELEVP.z && p.z > ELEV.z0 - 1 && p.x > ELEV.x0 - .6 && p.x < ELEV.x1 + .6) { p.x = clamp(p.x, ELEV.x0 + WR, ELEV.x1 - WR); p.z = Math.max(p.z, ELEV.z0 + WR); }
       pushOut(p, FLOORBOX[w.f] || [], WR);

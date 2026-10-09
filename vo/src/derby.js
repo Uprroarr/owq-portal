@@ -1,18 +1,34 @@
-// Sky Park: a floating ballpark on the roof of the OWQ tower. Home Run Derby: press START by home plate, take ten
-// pitches from the machine, click / SPACE to swing. One batter at a time; everyone else lines up in the queue and
-// watches the ball fly out over the city. Shared through presence 'hr' ({st:'q'|'b'|'d', t, p, n, l, e}).
+// Sky Park: the OWQ ballpark on the roof of the tower, out over the city to the north. A real park: mowed grass with
+// an infield diamond, chalk lines and a warning track, a padded outfield wall with the team's words on it, foul poles,
+// stands down both lines full of fans (they jump up on a home run), dugouts, a batter's eye, a jumbotron, bleachers
+// and six light towers. Home Run Derby: press START by the backstop, take ten pitches from the machine, click / SPACE
+// to swing. One batter at a time; everyone else lines up in the queue and watches the ball fly out over the city.
+// Shared through presence 'hr' ({st:'q'|'b'|'d', t, p, n, l, e}).
 import * as THREE from 'three';
 import {cv, tex} from './tex.js';
 import {clamp, damp, lerp} from './util.js';
-import {ROOFY, ELEVP} from './world.js';
-import {FLOORBOX, FLOORRECT} from './walk.js';
+import {ROOFY, ELEVP, GROUNDY} from './world.js';
+import {FLOORBOX, FLOORRECT, inAreas} from './walk.js';
+import {GFX, mat, patch, sweep, mbox, scatter, plain, glowPoints, lightPools, crowd, textCanvas, canvasTex, NEON, mergeGeometries} from './gfx.js';
+import {RD} from './ragdoll.js';
 
-export const PARK = {x0: -42, x1: 32, z0: -34, z1: 21};
-const PLATE = {x: -12, z: 15.2};
-const MOUND = {x: -12, z: 0.6};
-const FENCE = 44, FOUL = 38 * Math.PI / 180, FENCEH = 2.6;
-const BTN = {x: -15.6, z: 17.4};
-const PITCHES = 10, FT = 7.2, TURNMAX = 150;   // seconds: a turn that runs longer than this gives up the plate
+export const PLATE = {x: 2, z: -24};
+const MOUND = {x: 2, z: -38.6};
+const FOUL = Math.PI / 4, FENCEH = 2.8, BASE = 18;
+export const fenceR = a => 41 + 5 * Math.cos(clamp(a / FOUL, -1, 1) * Math.PI / 2);   // 46 m to centre, 41 m down the lines
+const FENCE = 46;
+const BTN = {x: -3, z: -15};
+const PITCHES = 10, FT = 7.2, TURNMAX = 150;
+// the deck (world x,z): over the tower roof to the south, out over the city to the north, clear of the Sky Deck plaza
+export const DECK = [[-10.4, 10], [16, 10], [16, -12], [46, -42], [46, -90], [-40, -90], [-40, -42], [-10.4, -14]];
+export const PARK = {x0: -40, x1: 46, z0: -90, z1: 10};
+const S2 = Math.SQRT1_2;
+const LINE = (s, a, o = 0) => [PLATE.x + s * S2 * a + s * S2 * o, PLATE.z - S2 * a + S2 * o];   // along the 1st (s=1) / 3rd (s=-1) base line, o metres outward
+const ARC = (a, r) => [PLATE.x + r * Math.sin(a), PLATE.z - r * Math.cos(a)];
+function inPoly(P, x, z) { let c = false; for (let i = 0, j = P.length - 1; i < P.length; j = i++) { const a = P[i], b = P[j]; if ((a[1] > z) !== (b[1] > z) && x < (b[0] - a[0]) * (z - a[1]) / (b[1] - a[1]) + a[0]) c = !c; } return c; }
+export const onDeck = (x, z) => inPoly(DECK, x, z);
+// where people can walk on the roof: the plaza behind the backstop, the field and foul ground up to the stands
+const WALK = (() => { const P = [[-10.2, 9.8], [15.8, 9.8], [15.8, -12.3], LINE(1, 10, 4.6), LINE(1, 41, 4.6)]; for (let d = 45; d >= -45; d -= 5) P.push(ARC(d * Math.PI / 180, fenceR(d * Math.PI / 180) - .45)); P.push(LINE(-1, 41, 4.6), LINE(-1, 10, 4.6), [-10.2, -14.2]); return P; })();
 const CSS = `.vo3hr{position:absolute;inset:0;pointer-events:none;z-index:5;display:none}.vo3hr.on{display:block}
 .vo3hrt{position:absolute;top:62px;left:50%;transform:translateX(-50%);padding:8px 16px;border-radius:999px;background:rgba(12,6,12,.78);border:1px solid rgba(255,209,102,.4);font:800 11px Verdana,sans-serif;letter-spacing:.12em;color:#ffd166;white-space:nowrap}
 .vo3hrb{position:absolute;top:150px;left:50%;transform:translateX(-50%);font:900 46px Verdana,sans-serif;letter-spacing:.08em;color:#fff;text-shadow:0 0 26px #ff1f4f,0 3px 12px #000;opacity:0;transition:opacity .25s,transform .25s;white-space:nowrap}.vo3hrb.on{opacity:1;transform:translateX(-50%) scale(1.06)}
@@ -21,19 +37,19 @@ const CSS = `.vo3hr{position:absolute;inset:0;pointer-events:none;z-index:5;disp
 .vo3hrs.on{background:#ffd166;color:#120a10}
 .vo3hrx{position:absolute;top:58px;right:14px;pointer-events:auto;padding:9px 14px;border-radius:12px;border:0;background:#ff1f4f;color:#fff;font:800 11px Verdana,sans-serif;letter-spacing:.1em;cursor:pointer}`;
 
-function sign(txt, w, h, col, glow, bg) {
-  const c = cv(1024, Math.round(1024 * h / w)), x = c.getContext('2d'); if (bg) { x.fillStyle = bg; x.fillRect(0, 0, c.width, c.height); }
-  x.font = `900 ${Math.round(c.height * .6)}px Verdana,sans-serif`; x.textAlign = 'center'; x.textBaseline = 'middle'; x.shadowColor = glow; x.shadowBlur = c.height * .2; x.fillStyle = col; x.fillText(txt, c.width / 2, c.height / 2); x.shadowBlur = 0; x.fillText(txt, c.width / 2, c.height / 2); return c;
-}
 const BM = o => new THREE.MeshBasicMaterial(o);
 const at = (o, p, r) => { if (p) o.position.copy(p); if (r) o.rotation.copy(r); return o; };
+// samples along a straight line from a to b (world x,z) for gfx.sweep; the profile's +lat side is to the left of a->b
+function lineS(a, b, step = 1) { const dx = b[0] - a[0], dz = b[1] - a[1], L = Math.hypot(dx, dz), n = Math.max(2, Math.round(L / step) + 1), t = {x: dx / L, z: dz / L}, out = []; for (let i = 0; i < n; i++) { const f = i / (n - 1); out.push({p: new THREE.Vector3(a[0] + dx * f, ROOFY, a[1] + dz * f), t, nx: -t.z, nz: t.x, s: f * L, bank: 0}); } return out; }
+function arcS(a0, a1, r0, step = 1) { const out = []; const n = Math.max(3, Math.round(Math.abs(a1 - a0) * 50 / step)); let s = 0, prev = null; for (let i = 0; i <= n; i++) { const a = a0 + (a1 - a0) * i / n, r = r0 === 'fence' ? fenceR(a) : r0, P = ARC(a, r), p = new THREE.Vector3(P[0], ROOFY, P[1]); if (prev) s += p.distanceTo(prev); prev = p; const sg = Math.sign(a1 - a0), tx = -Math.cos(a) * -sg, tz = -Math.sin(a) * -sg; out.push({p, t: {x: tx, z: tz}, nx: -tz, nz: tx, s, bank: 0}); } return out; }
 
 export class Derby {
   constructor(O, parent) {
-    this.O = O; this.on = false; this.me = null; this.turn = null; this.balls = []; this.seen = {}; this.queueT = 0;
+    this.O = O; this.on = false; this.me = null; this.turn = null; this.balls = []; this.seen = {}; this.queueT = 0; this.cheer = 0; this.fw = [];
     const G = this.group = new THREE.Group(); G.name = 'skypark'; parent.add(G);
     this.build(G);
-    FLOORRECT.r = {x0: PARK.x0 + .5, x1: PARK.x1 - .5, z0: PARK.z0 + .5, z1: PARK.z1 - .5};
+    FLOORRECT.r = {areas: [{poly: WALK}, {r: [7.3, -8.9, 8.7, -6.9]}]};
+    RD.roof = (x, z) => inAreas(FLOORRECT.r.areas, x, z) || onDeck(x, z);
     if (!document.getElementById('vo3hrcss')) { const s = document.createElement('style'); s.id = 'vo3hrcss'; s.textContent = CSS; document.head.appendChild(s); }
     const u = this.ui = document.createElement('div'); u.className = 'vo3hr';
     u.innerHTML = `<div class=vo3hrt></div><div class=vo3hrb></div><button class=vo3hrs>SWING</button><button class=vo3hrx>QUIT TURN</button>`;
@@ -50,60 +66,134 @@ export class Derby {
     }, true);
     O.cv.addEventListener('pointerdown', e => { if (this.turn && this.turn.ph !== 'end') { this.swing(); } });
   }
-  // ---------- the park
+  // ---------- the ballpark
   build(G) {
-    const Y = ROOFY, add = (g, m, x, y, z, rx = 0, ry = 0, rz = 0) => { const o = new THREE.Mesh(g, m); o.position.set(x, y, z); o.rotation.set(rx, ry, rz); G.add(o); return o; };
-    const W = PARK.x1 - PARK.x0, D = PARK.z1 - PARK.z0, cx = (PARK.x0 + PARK.x1) / 2, cz = (PARK.z0 + PARK.z1) / 2;
-    // deck slab with lit edges and underside light strips
-    const deckC = cv(512, 512), dx = deckC.getContext('2d'); dx.fillStyle = '#16151b'; dx.fillRect(0, 0, 512, 512); dx.strokeStyle = 'rgba(255,255,255,.05)'; dx.lineWidth = 2;
-    for (let i = 0; i < 512; i += 64) { dx.beginPath(); dx.moveTo(i, 0); dx.lineTo(i, 512); dx.stroke(); dx.beginPath(); dx.moveTo(0, i); dx.lineTo(512, i); dx.stroke(); }
-    const dT = tex(deckC, {mips: true}); dT.wrapS = dT.wrapT = THREE.RepeatWrapping; dT.repeat.set(W / 8, D / 8);
-    const slab = add(new THREE.BoxGeometry(W, .6, D), [new THREE.MeshStandardMaterial({color: '#121116', roughness: .6, metalness: .5}), new THREE.MeshStandardMaterial({color: '#121116', roughness: .6, metalness: .5}), new THREE.MeshStandardMaterial({map: dT, roughness: .75, metalness: .1}), new THREE.MeshBasicMaterial({color: '#0a090d'}), new THREE.MeshStandardMaterial({color: '#121116'}), new THREE.MeshStandardMaterial({color: '#121116'})], cx, Y - .3, cz);
-    slab.receiveShadow = true;
-    const neon = BM({color: new THREE.Color(3.2, .35, .85), toneMapped: false}), gold = BM({color: new THREE.Color(3.5, 2.6, .7), toneMapped: false});
-    [[cx, PARK.z0, W, 0], [cx, PARK.z1, W, 0], [PARK.x0, cz, D, 1], [PARK.x1, cz, D, 1]].forEach(([x, z, l, r]) => add(new THREE.BoxGeometry(r ? .14 : l, .1, r ? l : .14), neon, x, Y + .02, z));
-    for (let x = PARK.x0 + 4; x < PARK.x1; x += 8) add(new THREE.BoxGeometry(.5, .05, D - 2), BM({color: new THREE.Color(1.4, .25, .5), toneMapped: false}), x, Y - .62, cz);
-    // railing around the edge (glass with a glowing top)
-    const glass = new THREE.MeshBasicMaterial({color: '#7fb6ff', transparent: true, opacity: .12, depthWrite: false, side: THREE.DoubleSide});
-    [[cx, PARK.z1, W, 0], [PARK.x0, cz, D, Math.PI / 2], [PARK.x1, cz, D, Math.PI / 2]].forEach(([x, z, l, ry]) => { add(new THREE.PlaneGeometry(l, 1.1), glass, x, Y + .55, z, 0, ry, 0); add(new THREE.BoxGeometry(ry ? .08 : l, .06, ry ? l : .08), neon, x, Y + 1.1, z); });
-    // turf: dark grass with mowing stripes inside the fence, clay infield, white lines
-    const tc = cv(1024, 1024), tx = tc.getContext('2d');
-    tx.fillStyle = '#123a1f'; tx.fillRect(0, 0, 1024, 1024);
-    for (let i = 0; i < 16; i++) { tx.fillStyle = i % 2 ? 'rgba(255,255,255,.035)' : 'rgba(0,0,0,.08)'; tx.fillRect(i * 64, 0, 64, 1024); }
-    const turfT = tex(tc, {mips: true});
-    const fan = new THREE.CircleGeometry(FENCE, 48, Math.PI / 2 - FOUL, FOUL * 2); fan.rotateX(-Math.PI / 2);
-    add(fan, new THREE.MeshStandardMaterial({map: turfT, roughness: .95}), PLATE.x, Y + .01, PLATE.z).rotation.set(0, 0, 0);
-    const clay = new THREE.MeshStandardMaterial({color: '#5a3324', roughness: 1});
-    const inf = new THREE.CircleGeometry(15, 36, Math.PI / 2 - FOUL, FOUL * 2); inf.rotateX(-Math.PI / 2); add(inf, clay, PLATE.x, Y + .015, PLATE.z);
-    add(new THREE.CircleGeometry(2.4, 24).rotateX(-Math.PI / 2), clay, MOUND.x, Y + .02, MOUND.z);
-    add(new THREE.CircleGeometry(3, 24).rotateX(-Math.PI / 2), clay, PLATE.x, Y + .02, PLATE.z);
-    const white = BM({color: new THREE.Color(1.6, 1.6, 1.6)});
-    [-FOUL, FOUL].forEach(a => { const L = FENCE; const g = new THREE.BoxGeometry(.12, .02, L); const m = add(g, white, PLATE.x - Math.sin(a) * L / 2, Y + .03, PLATE.z - Math.cos(a) * L / 2, 0, a, 0); });
-    const plate = new THREE.Shape(); plate.moveTo(-.22, 0); plate.lineTo(.22, 0); plate.lineTo(.22, .22); plate.lineTo(0, .44); plate.lineTo(-.22, .22); plate.closePath();
-    add(new THREE.ShapeGeometry(plate).rotateX(-Math.PI / 2), white, PLATE.x, Y + .035, PLATE.z + .22);
-    // batter's boxes
-    [-1, 1].forEach(sd => { const m = new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.PlaneGeometry(1.2, 1.8).rotateX(-Math.PI / 2)), new THREE.LineBasicMaterial({color: '#e8e8ea'})); m.position.set(PLATE.x + sd * .9, Y + .04, PLATE.z); G.add(m); });
-    // the outfield wall: padded crimson with distance markers, a lit top rail
-    const wallC = cv(2048, 128), wx = wallC.getContext('2d'); wx.fillStyle = '#5a0b1f'; wx.fillRect(0, 0, 2048, 128); wx.fillStyle = '#ff1f4f'; wx.fillRect(0, 0, 2048, 8);
-    wx.font = '900 64px Verdana,sans-serif'; wx.textAlign = 'center'; wx.textBaseline = 'middle'; wx.fillStyle = '#fff';
-    [[.08, Math.round(FENCE * FT) + "'"], [.3, 'OWQ'], [.5, Math.round(FENCE * 1.04 * FT) + "'"], [.7, 'OWQ'], [.92, Math.round(FENCE * FT) + "'"]].forEach(([f, t]) => wx.fillText(t, 2048 * f, 70));
-    const wallG = new THREE.CylinderGeometry(FENCE, FENCE, FENCEH, 64, 1, true, Math.PI - FOUL, FOUL * 2);
-    const wallT = tex(wallC, {mips: true}); wallT.wrapS = THREE.RepeatWrapping; wallT.repeat.x = -1; wallT.offset.x = 1;   // read from inside the park
-    const wall = add(wallG, new THREE.MeshStandardMaterial({map: wallT, side: THREE.DoubleSide, roughness: .8}), PLATE.x, Y + FENCEH / 2, PLATE.z);
-    add(new THREE.TorusGeometry(FENCE, .06, 6, 80, FOUL * 2), gold, PLATE.x, Y + FENCEH, PLATE.z, -Math.PI / 2, 0, Math.PI / 2 - FOUL);
-    // foul poles
-    [-FOUL, FOUL].forEach(a => add(new THREE.CylinderGeometry(.12, .12, 14, 8), gold, PLATE.x - Math.sin(a) * FENCE, Y + 7, PLATE.z - Math.cos(a) * FENCE));
-    // light towers
-    [[-38, -24], [26, -24], [-38, 14], [26, 14]].forEach(([x, z]) => {
-      add(new THREE.CylinderGeometry(.35, .6, 22, 8), new THREE.MeshStandardMaterial({color: '#1d1c22', metalness: .8, roughness: .4}), x, Y + 11, z);
-      const panel = add(new THREE.BoxGeometry(4.5, 2.6, .4), BM({color: new THREE.Color(4.5, 4.3, 3.8), toneMapped: false}), x, Y + 22, z); panel.lookAt(PLATE.x, Y + 2, PLATE.z);
-      FLOORBOX.r.push([x - .7, z - .7, x + .7, z + .7]);
+    const Y = ROOFY, add = (geo, m, o = {}) => { const me = new THREE.Mesh(geo, m); me.castShadow = !!o.cast; me.receiveShadow = o.recv !== false; G.add(me); return me; };
+    const put = (g, m, x, y, z, rx = 0, ry = 0, rz = 0) => { const o = new THREE.Mesh(g, m); o.position.set(x, y, z); o.rotation.set(rx, ry, rz); G.add(o); return o; };
+    // ---- deck slab, with a crimson light line around the edge and the columns that hold it over the city
+    const sh = new THREE.Shape(DECK.map(([x, z]) => new THREE.Vector2(x, z)));
+    const slab = new THREE.ExtrudeGeometry(sh, {depth: 1.4, bevelEnabled: false}); slab.rotateX(Math.PI / 2); slab.translate(0, Y - .03, 0);
+    add(slab, mat('concrete', {key: 'parkslab', color: '#6f737d'}), {cast: true});
+    const edge = []; DECK.forEach((p, i) => { const q = DECK[(i + 1) % DECK.length], L = Math.hypot(q[0] - p[0], q[1] - p[1]), b = plain(new THREE.BoxGeometry(L, .12, .12)); b.rotateY(-Math.atan2(q[1] - p[1], q[0] - p[0])); b.translate((p[0] + q[0]) / 2, Y - .5, (p[1] + q[1]) / 2); edge.push(b); });
+    add(mergeGeometries(edge), NEON(3.2, .3, .8), {recv: false});
+    const cols = [[-34, -84], [40, -84], [-34, -48], [40, -48], [3, -86]].map(([x, z]) => plain(new THREE.CylinderGeometry(2.2, 2.8, Y - 1.4 - GROUNDY, 18).translate(x, (Y - 1.4 + GROUNDY) / 2, z)));
+    add(mergeGeometries(cols), mat('concrete', {key: 'parkcol', color: '#7c818c'}), {cast: false});
+    // ---- the field: one big surface whose shader paints the grass stripes, infield dirt, base paths, mound, warning track and chalk
+    const clayM = mat('clay', {key: 'parkclay'}), U = {uClay: {value: clayM.map}};
+    GFX.ticks.push(() => { U.uClay.value = clayM.map; });
+    const fieldM = patch(mat('grass', {key: 'parkgrass', bump: .8}), {key: 'parkfield', uniforms: U, fragHead: 'uniform sampler2D uClay;', frag: `{
+      vec2 q=vWP.xz-vec2(${PLATE.x.toFixed(1)},${PLATE.z.toFixed(1)});float u=-q.y,v=q.x,r=length(q),an=atan(v,max(u,1e-4));
+      float fair=step(abs(an),.7854)*step(0.,u);float fr=41.+5.*cos(clamp(an/.7854,-1.,1.)*1.5708);float inF=fair*step(r,fr);
+      float st=mod(floor((u+v)/5.)+floor((u-v)/5.),2.);vec3 g=diffuseColor.rgb*mix(.78,(st>.5?1.18:.9),inF);
+      float dia=abs(v)+abs(u-12.73),mr=length(vec2(v,u-14.6));
+      float dirt=step(mr,17.5)*step(-.6,u)*(1.-step(dia,10.3));dirt=max(dirt,step(r,4.4));dirt=max(dirt,step(abs(dia-12.73),.9)*step(u,26.)*step(-.5,u));
+      dirt=max(dirt,step(mr,2.9));dirt=max(dirt,step(fr-3.2,r)*step(r,fr+.2)*fair);
+      vec3 cl=texture2D(uClay,vWP.xz*.3).rgb*1.2;vec3 col=mix(g,cl,dirt);
+      float fl=step(abs(abs(v)-u),.11)*step(0.,u)*step(r,fr);vec2 e=abs(vec2(abs(v)-1.05,u))-vec2(.6,.9);float bx=step(abs(max(e.x,e.y)),.04);
+      vec2 e2=abs(vec2(v,u+1.9))-vec2(.55,.95);float cb=step(abs(max(e2.x,e2.y)),.04)*step(u,-.95);
+      col=mix(col,vec3(.92,.92,.9),clamp(fl+bx+cb,0.,1.));
+      float od=min(length(vec2(v-10.,u+3.)),length(vec2(v+10.,u+3.)));col=mix(col,cl*.75,step(od,1.)*(1.-step(od,.85))*.9+step(od,.85)*.4);
+      diffuseColor.rgb=col;rk=mix(1.,1.06,dirt);}`});
+    const fg = new THREE.PlaneGeometry(88, 72, 1, 1).rotateX(-Math.PI / 2); fg.translate(3, Y + .005, -55.5); const fuv = fg.getAttribute('uv'); for (let i = 0; i < fuv.count; i++) fuv.setXY(i, fuv.getX(i) * 88 / 2.5, fuv.getY(i) * 72 / 2.5);
+    add(fg, fieldM);
+    // OWQ mowed into centre field
+    const logo = put(new THREE.PlaneGeometry(12, 4.6).rotateX(-Math.PI / 2), new THREE.MeshBasicMaterial({map: canvasTex(textCanvas('OWQ', 1024, 392, {col: '#ffffff', size: 300})), transparent: true, opacity: .14, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -2}), PLATE.x, Y + .02, PLATE.z - 33);
+    logo.renderOrder = 1;
+    // bases and home plate
+    const white = new THREE.MeshStandardMaterial({color: '#f2f1ec', roughness: .55});
+    [[1, 12.73, 12.73], [0, 25.46, 0], [-1, 12.73, -12.73]].forEach(([s, u, v]) => put(new THREE.BoxGeometry(.42, .09, .42), white, PLATE.x + v, Y + .045, PLATE.z - u, 0, Math.PI / 4, 0).castShadow = true);
+    const pl = new THREE.Shape(); pl.moveTo(-.22, 0); pl.lineTo(.22, 0); pl.lineTo(.22, .22); pl.lineTo(0, .44); pl.lineTo(-.22, .22); pl.closePath();
+    put(new THREE.ShapeGeometry(pl).rotateX(-Math.PI / 2), white, PLATE.x, Y + .03, PLATE.z + .22);
+    // ---- outfield wall: padded, ad panels with the team's words and the distances, a yellow line on top
+    const wallS = arcS(FOUL, -FOUL, 'fence', 1), wlen = wallS[wallS.length - 1].s;
+    const wc = cv(4096, 256), wx = wc.getContext('2d'); wx.fillStyle = '#0d1426'; wx.fillRect(0, 0, 4096, 256);
+    const words = ['OWQ', 'ONLY WINNERS', '330', 'DISCIPLINE', 'OWNERSHIP', 'OWQ', '346', 'LEADERS BUILD LEADERS', '331', 'MEASURE WHAT MATTERS', 'OWQ', 'PROTECT FAMILIES', '330'];
+    words.forEach((w, i) => { const x0 = i * 4096 / words.length, w0 = 4096 / words.length; const num = /^\d+$/.test(w); wx.fillStyle = num ? '#0d1426' : i % 2 ? '#7a0f26' : '#121c34'; wx.fillRect(x0 + 6, 18, w0 - 12, 210); wx.fillStyle = num ? '#ffd166' : '#ffffff'; wx.font = `900 ${num ? 120 : w.length > 12 ? 40 : 64}px Verdana,sans-serif`; wx.textAlign = 'center'; wx.textBaseline = 'middle'; wx.fillText(w, x0 + w0 / 2, 124); });
+    const wallT = canvasTex(wc);
+    add(sweep(wallS, [[0, 0], [0, 2.55], [.12, 2.76], [.42, 2.8], [.62, 2.6], [.62, 0]], {closed: false, us: wlen, vs: 2.8}), new THREE.MeshStandardMaterial({map: wallT, roughness: .7}), {cast: true});
+    add(sweep(wallS, [[.05, 2.81], [.45, 2.825]], {closed: false}), NEON(3.4, 2.4, .4), {recv: false});
+    // foul poles with screens
+    const yel = NEON(3.6, 2.7, .5);
+    [FOUL, -FOUL].forEach(a => { const [x, z] = ARC(a, fenceR(a) + .3); put(new THREE.CylinderGeometry(.14, .16, 18, 10), yel, x, Y + 9, z); const sc = put(new THREE.BoxGeometry(.04, 9, 1.2), yel, x, Y + 11, z); sc.rotation.y = a; });
+    // batter's eye and the jumbotron
+    const [bex, bez] = ARC(0, 48.5); put(new THREE.BoxGeometry(16, 8, 1.2), new THREE.MeshStandardMaterial({color: '#0b1210', roughness: 1}), bex, Y + 4, bez).castShadow = true;
+    this.sbC = cv(1024, 576); this.sbT = tex(this.sbC, {mips: false});
+    const jz = PLATE.z - 56;
+    put(new THREE.BoxGeometry(22, 13, 1.2), mat('metal', {key: 'parkjumbo', color: '#16181e'}), PLATE.x, Y + 16, jz - .7).castShadow = true;
+    put(new THREE.PlaneGeometry(20.6, 11.6), BM({map: this.sbT, toneMapped: false, color: new THREE.Color(1.35, 1.35, 1.35)}), PLATE.x, Y + 16, jz - .08);
+    [-8, 8].forEach(o => put(new THREE.BoxGeometry(1, 10, 1), mat('metal', {key: 'parkjumbo', color: '#16181e'}), PLATE.x + o, Y + 5, jz - .7));
+    put(new THREE.PlaneGeometry(9, 2.6), BM({map: canvasTex(textCanvas('OWQ SKY PARK', 1024, 300, {col: '#fff0f6', glow: '#ff2d78'})), transparent: true, depthWrite: false, toneMapped: false, color: new THREE.Color(2.4, 2.4, 2.4)}), PLATE.x, Y + 24.2, jz - .05);
+    FLOORBOX.r.push([PLATE.x - 9, jz - 1.4, PLATE.x + 9, jz]);
+    // ---- stands down both lines: rows of seats rising away from the field, a crimson fascia, crowd, aisles
+    const standM = mat('concrete', {key: 'parkstand', color: '#9a9ea8'}), seats = [], fans = [], fascia = [];
+    const rows = 12, prof = [[4.6, 0], [4.6, 1.15]]; for (let r = 0; r < rows; r++) { const l = 4.9 + r * .85, y = 1.15 + r * .45; prof.push([l, y], [l + .85, y]); if (r < rows - 1) prof.push([l + .85, y + .45]); }
+    const back = 4.9 + rows * .85; prof.push([back, 1.15 + (rows - 1) * .45 + 1.2], [back + .3, 1.15 + (rows - 1) * .45 + 1.2], [back + .3, 0]);
+    [1, -1].forEach(s => {
+      const a = s > 0 ? LINE(1, 10) : LINE(-1, 41), b = s > 0 ? LINE(1, 41) : LINE(-1, 10), S = lineS(a, b, .6);
+      add(sweep(S, prof, {closed: false, us: 3, vs: 3}), standM, {cast: true});
+      fascia.push(sweep(S, [[4.58, .95], [4.58, 1.05]], {closed: false}));
+      S.forEach((c, k) => { if (k % 1) return; for (let r = 0; r < rows; r++) { if ((k % 14) === 7) continue; const l = 5.25 + r * .85, y = c.p.y + 1.15 + r * .45; const x = c.p.x + c.nx * l, z = c.p.z + c.nz * l, yaw = Math.atan2(-c.nx, -c.nz); seats.push([x, y, z, yaw]); if (Math.random() < .62) fans.push([x, y + .05, z, yaw]); } });
+      FLOORBOX.r.length;  // (stands are outside the walkable area)
     });
-    // backstop net behind the plate
-    const net = new THREE.MeshBasicMaterial({color: '#cfd6e2', transparent: true, opacity: .16, side: THREE.DoubleSide, depthWrite: false});
-    add(new THREE.CylinderGeometry(5.5, 5.5, 5, 24, 1, true, -Math.PI / 2.6, Math.PI / 1.3), net, PLATE.x, Y + 2.5, PLATE.z + .4);
-    add(new THREE.TorusGeometry(5.5, .05, 5, 30, Math.PI / 1.3), neon, PLATE.x, Y + 5, PLATE.z + .4, Math.PI / 2, 0, -Math.PI / 2.6 + Math.PI);
-    // pitching machine on the mound
+    add(mergeGeometries(fascia), NEON(3.2, .3, .8), {recv: false});
+    const seatG = mergeGeometries([plain(new THREE.BoxGeometry(.46, .07, .42).translate(0, .32, 0)), plain(new THREE.BoxGeometry(.46, .48, .06).rotateX(-.12).translate(0, .58, -.2)), plain(new THREE.BoxGeometry(.06, .3, .4).translate(-.24, .18, 0))]);
+    add(scatter(seatG, seats.map(q => [q[0], q[1], q[2], q[3]])), new THREE.MeshStandardMaterial({color: '#a3122e', roughness: .5, metalness: .1}));
+    if (GFX.level !== 'low') { this.crowd = crowd(G, GFX.level === 'high' ? fans : fans.filter((f, i) => i % 2 === 0), {colors: ['#ff1f4f', '#ffffff', '#1b1b22', '#ff1f4f', '#ffd166', '#4cc9f0', '#ff1f4f', '#2a2a33', '#3ddc97']}); }
+    // bleachers in left- and right-centre behind the wall
+    [[-.72, -.24], [.24, .72]].forEach(([a0, a1]) => {
+      const S = arcS(a1, a0, 50, .8), bp = [[0, 0], [0, 1.6]]; for (let r = 0; r < 9; r++) { const l = .3 + r * .9, y = 1.6 + r * .5; bp.push([l, y], [l + .9, y], [l + .9, y + .5]); } bp.push([8.4, 6.1], [8.4, 0]);
+      add(sweep(S, bp, {closed: false, us: 3, vs: 3}), standM, {cast: true});
+      const bf = []; S.forEach((c, k) => { for (let r = 0; r < 9; r++) if (Math.random() < .5 && k % 2 === 0) bf.push([c.p.x + c.nx * (.75 + r * .9), c.p.y + 1.62 + r * .5, c.p.z + c.nz * (.75 + r * .9), Math.atan2(-c.nx, -c.nz)]); });
+      if (GFX.level === 'high') crowd(G, bf);
+    });
+    // dugouts along each line (open front, roof, bench, rail)
+    const dg = [], dark = mat('metal', {key: 'parkdug', color: '#22252d'});
+    [1, -1].forEach(s => { const c = LINE(s, 16, 2.6);
+      const g = new THREE.Group(); g.position.set(c[0], Y, c[1]); g.rotation.y = s > 0 ? Math.PI / 4 : -Math.PI / 4; G.add(g);
+      const box = (w, h, d, x, y, z, m) => { const q = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), m); q.position.set(x, y, z); q.castShadow = true; q.receiveShadow = true; g.add(q); };
+      box(8, 2.4, .2, 0, 1.2, s > 0 ? 1.3 : 1.3, dark); box(8.4, .18, 2.9, 0, 2.5, 0, dark); box(.2, 2.4, 2.8, -4, 1.2, 0, dark); box(.2, 2.4, 2.8, 4, 1.2, 0, dark); box(7.4, .45, .5, 0, .23, .9, mat('wood', {key: 'parkbench', color: '#b07a4a'}));
+      box(8, .06, .06, 0, 1.05, -1.35, NEON(3.2, .3, .8));
+      FLOORBOX.r.push([c[0] - 2.2, c[1] - 2.2, c[0] + 2.2, c[1] + 2.2]);
+    });
+    // ---- light towers (LED banks aimed at the field) and the light they throw
+    const ledC = cv(256, 160), lx = ledC.getContext('2d'); lx.fillStyle = '#15161b'; lx.fillRect(0, 0, 256, 160); for (let i = 0; i < 6; i++) for (let j = 0; j < 4; j++) { const g = lx.createRadialGradient(22 + i * 42, 20 + j * 40, 0, 22 + i * 42, 20 + j * 40, 17); g.addColorStop(0, '#ffffff'); g.addColorStop(.6, '#fff4dc'); g.addColorStop(1, '#15161b'); lx.fillStyle = g; lx.fillRect(i * 42 + 2, j * 40, 40, 40); }
+    const ledM = BM({map: canvasTex(ledC), toneMapped: false, color: new THREE.Color(2.6, 2.5, 2.3)}), towM = mat('metal', {key: 'parktower', color: '#2a2d35'}), heads = [];
+    [[-36, -86, 34], [42, -86, 34], [-37, -46, 30], [43, -46, 30], [-9, 8, 22], [15, 8, 22]].forEach(([x, z, h]) => {
+      put(new THREE.CylinderGeometry(.45, .9, h, 10), towM, x, Y + h / 2, z).castShadow = true;
+      const hd = new THREE.Group(); hd.position.set(x, Y + h + 1.6, z); G.add(hd); hd.lookAt(PLATE.x, Y, PLATE.z - 30);
+      const fr = new THREE.Mesh(new THREE.BoxGeometry(7, 4.4, .5), towM); hd.add(fr); const pn = new THREE.Mesh(new THREE.PlaneGeometry(6.6, 4), ledM); pn.position.z = .26; hd.add(pn);
+      heads.push([x, Y + h + 1.6, z, 3.2, 2.6, 2.5, 2.3]);
+      FLOORBOX.r.push([x - 1, z - 1, x + 1, z + 1]);
+    });
+    glowPoints(G, heads);
+    const pools = []; for (let u = 6; u < 46; u += 12) for (let v = -24; v <= 24; v += 12) { const x = PLATE.x + v, z = PLATE.z - u; if (Math.hypot(v, u) < 44) pools.push([x, Y + .02, z, 11, .07, .07, .06]); } lightPools(G, pools);
+    // ---- the plaza behind home plate: polished floor, the backstop, the elevator, the START kiosk, the suite
+    const plaza = mbox(26.4, .2, 29.5, 4); plaza.translate(2.8, Y - .09, -4.75); add(plaza, mat('polished', {key: 'parkplaza', color: '#b9b6bf', bump: .5, env: 1.1}));
+    const netC = cv(256, 256), nx = netC.getContext('2d'); nx.strokeStyle = 'rgba(230,235,245,.9)'; nx.lineWidth = 3; for (let i = 0; i <= 256; i += 32) { nx.beginPath(); nx.moveTo(i, 0); nx.lineTo(i, 256); nx.stroke(); nx.beginPath(); nx.moveTo(0, i); nx.lineTo(256, i); nx.stroke(); }
+    const netT = canvasTex(netC, {rep: [24, 6]}), net = new THREE.MeshBasicMaterial({map: netT, transparent: true, opacity: .45, side: THREE.DoubleSide, depthWrite: false, color: '#c9d0dc'});
+    put(new THREE.CylinderGeometry(7.5, 7.5, 8, 40, 1, true, -1.15, 2.3), net, PLATE.x, Y + 4, PLATE.z + 1.6);
+    put(new THREE.CylinderGeometry(7.55, 7.55, 1.2, 40, 1, true, -1.15, 2.3), new THREE.MeshStandardMaterial({color: '#141a2c', roughness: .7, side: THREE.DoubleSide}), PLATE.x, Y + .6, PLATE.z + 1.6);
+    put(new THREE.TorusGeometry(7.5, .06, 6, 40, 2.3), NEON(3.2, .3, .8), PLATE.x, Y + 8, PLATE.z + 1.6, Math.PI / 2, 0, Math.PI / 2 - 1.15 - 2.3 + Math.PI);
+    // suite on columns over the plaza, lit windows
+    const suite = new THREE.Group(); suite.position.set(2, Y + 5.2, -1); G.add(suite);
+    const glassS = new THREE.MeshPhysicalMaterial({color: '#ffd9a8', emissive: new THREE.Color('#ffb36b'), emissiveIntensity: .9, roughness: .1, metalness: .2, transparent: true, opacity: .85});
+    const sbox = (w, h, d, x, y, z, m) => { const q = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), m); q.position.set(x, y, z); q.castShadow = true; suite.add(q); };
+    sbox(20, .5, 7, 0, 0, 0, towM); sbox(20, .5, 7, 0, 3.4, 0, towM); sbox(20, 2.9, .1, 0, 1.7, -3.45, glassS); sbox(.2, 2.9, 7, -10, 1.7, 0, towM); sbox(.2, 2.9, 7, 10, 1.7, 0, towM); sbox(20, 2.9, .2, 0, 1.7, 3.4, towM);
+    put(new THREE.PlaneGeometry(8, 1.2), BM({map: canvasTex(textCanvas('OWQ SUITE', 1024, 160, {col: '#fff0f6', glow: '#ff2d78'})), transparent: true, depthWrite: false, toneMapped: false, color: new THREE.Color(2, 2, 2)}), 2, Y + 9.4, -4.46, 0, Math.PI, 0);
+    [[-7.5, -4], [11.5, -4], [-7.5, 2], [11.5, 2]].forEach(([x, z]) => { put(new THREE.BoxGeometry(.6, 5.2, .6), towM, x, Y + 2.6, z).castShadow = true; FLOORBOX.r.push([x - .4, z - .4, x + .4, z + .4]); });
+    // planters and benches on the plaza
+    const plg = [], bng = []; [[-8, 6], [14, 6], [-8, -10], [14, -10]].forEach(([x, z]) => { plg.push(plain(mbox(2.2, .7, 1.4, 1.2)).translate(x, Y + .35, z)); FLOORBOX.r.push([x - 1.2, z - .8, x + 1.2, z + .8]); });
+    add(mergeGeometries(plg), mat('concrete', {key: 'parkplanter', color: '#45474f'}), {cast: true});
+    [[-8, 6], [14, 6], [-8, -10], [14, -10]].forEach(([x, z]) => { const t = put(new THREE.IcosahedronGeometry(.85, 1), new THREE.MeshStandardMaterial({color: '#1f4d28', roughness: .85}), x, Y + 1.7, z); t.castShadow = true; });
+    // elevator hut (same shaft as every floor), doors face the plaza
+    const hut = new THREE.MeshPhysicalMaterial({color: '#1a1920', metalness: .6, roughness: .3, clearcoat: .5});
+    put(new THREE.BoxGeometry(3.2, 3.4, 2.6), hut, ELEVP.x, Y + 1.7, ELEVP.z - 1.32).castShadow = true;
+    const brass = new THREE.MeshStandardMaterial({color: '#a88a3e', metalness: 1, roughness: .3});
+    this.dL = put(new THREE.BoxGeometry(.66, 2.5, .04), brass, ELEVP.x - .33, Y + 1.25, ELEVP.z + .01); this.dR = put(new THREE.BoxGeometry(.66, 2.5, .04), brass, ELEVP.x + .33, Y + 1.25, ELEVP.z + .01);
+    put(new THREE.PlaneGeometry(2.4, .5), BM({map: canvasTex(textCanvas('SKY PARK', 768, 160, {col: '#fff0f6', glow: '#ff2d78'})), transparent: true, depthWrite: false, color: new THREE.Color(2, 2, 2), toneMapped: false}), ELEVP.x, Y + 3.0, ELEVP.z + .02);
+    FLOORBOX.r.push([ELEVP.x - 1.6, ELEVP.z - 2.62, ELEVP.x + 1.6, ELEVP.z - .02]);
+    this.door = {o: 0, hold: 0};
+    // the pitching machine on the mound
     const pm = this.machine = new THREE.Group(); pm.position.set(MOUND.x, Y, MOUND.z); G.add(pm);
     const mm = new THREE.MeshStandardMaterial({color: '#202027', metalness: .7, roughness: .35}), mr = new THREE.MeshStandardMaterial({color: '#ff1f4f', metalness: .3, roughness: .4});
     pm.add(at(new THREE.Mesh(new THREE.CylinderGeometry(.08, .5, 1.1, 10), mm), new THREE.Vector3(0, .55, 0), null));
@@ -111,39 +201,26 @@ export class Derby {
     [-.32, .32].forEach(x => head.add(at(new THREE.Mesh(new THREE.CylinderGeometry(.3, .3, .14, 20), mr), new THREE.Vector3(x, 0, 0), new THREE.Euler(0, 0, Math.PI / 2))));
     head.add(at(new THREE.Mesh(new THREE.CylinderGeometry(.09, .09, .7, 10), mm), new THREE.Vector3(0, .05, .2), new THREE.Euler(Math.PI / 2, 0, 0)));
     this.mLight = at(new THREE.Mesh(new THREE.SphereGeometry(.09, 10, 8), BM({color: new THREE.Color(.4, 3, .9), toneMapped: false})), new THREE.Vector3(0, .42, -.1), null); head.add(this.mLight);
+    pm.traverse(o => { if (o.isMesh) o.castShadow = true; });
     FLOORBOX.r.push([MOUND.x - .6, MOUND.z - .6, MOUND.x + .6, MOUND.z + .6]);
-    // the START button on a pedestal
+    // the START button on a pedestal by the backstop
     const bp = this.btn = new THREE.Group(); bp.position.set(BTN.x, Y, BTN.z); G.add(bp);
     bp.add(at(new THREE.Mesh(new THREE.CylinderGeometry(.32, .42, 1.05, 18), mm), new THREE.Vector3(0, .52, 0), null));
     this.btnTop = at(new THREE.Mesh(new THREE.CylinderGeometry(.24, .26, .16, 22), BM({color: new THREE.Color(3.6, .3, .5), toneMapped: false})), new THREE.Vector3(0, 1.12, 0), null); bp.add(this.btnTop);
-    const bs = add(new THREE.PlaneGeometry(2.6, .7), BM({map: tex(sign('HOME RUN DERBY', 8, 2, '#fff', '#ff1f4f'), {mips: true}), transparent: true, depthWrite: false, color: new THREE.Color(2, 2, 2), toneMapped: false, side: THREE.DoubleSide}), BTN.x, Y + 2.05, BTN.z, 0, Math.PI, 0);
+    put(new THREE.PlaneGeometry(2.6, .7), BM({map: canvasTex(textCanvas('HOME RUN DERBY', 1024, 276, {col: '#fff', glow: '#ff1f4f'})), transparent: true, depthWrite: false, color: new THREE.Color(2, 2, 2), toneMapped: false, side: THREE.DoubleSide}), BTN.x, Y + 2.05, BTN.z);
     FLOORBOX.r.push([BTN.x - .45, BTN.z - .45, BTN.x + .45, BTN.z + .45]);
-    // scoreboard in centre field
-    this.sbC = cv(1024, 576); this.sbT = tex(this.sbC, {mips: false});
-    const sbz = PLATE.z - FENCE - 4;
-    add(new THREE.BoxGeometry(17, 10, .6), mm, PLATE.x, Y + 7.5, sbz - .35);
-    add(new THREE.PlaneGeometry(16, 9), BM({map: this.sbT}), PLATE.x, Y + 7.5, sbz);
-    [-6, 6].forEach(o => add(new THREE.BoxGeometry(.5, 3, .5), mm, PLATE.x + o, Y + 1.5, sbz - .35));
-    FLOORBOX.r.push([PLATE.x - 8.6, sbz - .8, PLATE.x + 8.6, sbz + .2]);
-    // elevator hut (same shaft as every floor), doors face the park
-    const hut = new THREE.MeshStandardMaterial({color: '#1a1920', metalness: .6, roughness: .35});
-    add(new THREE.BoxGeometry(3.2, 3.4, 2.6), hut, ELEVP.x, Y + 1.7, ELEVP.z - 1.32);
-    const brass = new THREE.MeshStandardMaterial({color: '#a88a3e', metalness: 1, roughness: .3});
-    this.dL = add(new THREE.BoxGeometry(.66, 2.5, .04), brass, ELEVP.x - .33, Y + 1.25, ELEVP.z + .01); this.dR = add(new THREE.BoxGeometry(.66, 2.5, .04), brass, ELEVP.x + .33, Y + 1.25, ELEVP.z + .01);
-    add(new THREE.PlaneGeometry(2.4, .5), BM({map: tex(sign('SKY PARK', 6, 1.25, '#fff0f6', '#ff2d78'), {mips: true}), transparent: true, depthWrite: false, color: new THREE.Color(2, 2, 2), toneMapped: false}), ELEVP.x, Y + 3.0, ELEVP.z + .02);
-    FLOORBOX.r.push([ELEVP.x - 1.6, ELEVP.z - 2.62, ELEVP.x + 1.6, ELEVP.z - .02]);
-    this.door = {o: 0, hold: 0};
-    // the tower's own roof under the park (so the gap between deck and office ceiling is closed)
+    // balls
     this.balls = [];
-    const ballM = new THREE.MeshStandardMaterial({color: '#f4f2ea', roughness: .5});
-    this.ballGeo = new THREE.SphereGeometry(.12, 12, 10); this.ballM = ballM;
+    this.ballGeo = new THREE.SphereGeometry(.12, 12, 10); this.ballM = new THREE.MeshStandardMaterial({color: '#f4f2ea', roughness: .5});
     this.trailM = BM({color: new THREE.Color(3, 2.4, 1), transparent: true, opacity: .6, depthWrite: false, toneMapped: false});
     this.board();
   }
-  // ---------- scoreboard
-  board(st) {
+  // ---------- jumbotron
+  board(st, flash) {
     const x = this.sbC.getContext('2d'), W = 1024, H = 576;
-    x.fillStyle = '#07050a'; x.fillRect(0, 0, W, H); x.fillStyle = '#ff1f4f'; x.fillRect(0, 0, W, 10);
+    const g = x.createLinearGradient(0, 0, 0, H); g.addColorStop(0, '#0b0710'); g.addColorStop(1, '#040306'); x.fillStyle = g; x.fillRect(0, 0, W, H);
+    x.fillStyle = '#ff1f4f'; x.fillRect(0, 0, W, 10); x.fillRect(0, H - 10, W, 10);
+    if (flash) { x.fillStyle = '#ff1f4f'; x.globalAlpha = .25; x.fillRect(0, 0, W, H); x.globalAlpha = 1; x.font = '900 150px Verdana,sans-serif'; x.textAlign = 'center'; x.textBaseline = 'middle'; x.fillStyle = '#fff'; x.shadowColor = '#ff1f4f'; x.shadowBlur = 40; x.fillText('HOME RUN!', W / 2, H / 2 - 30); x.shadowBlur = 0; x.font = '800 54px Verdana,sans-serif'; x.fillStyle = '#ffd166'; x.fillText(flash, W / 2, H / 2 + 90); this.sbT.needsUpdate = true; return; }
     x.font = '900 56px Verdana,sans-serif'; x.textAlign = 'center'; x.textBaseline = 'middle'; x.fillStyle = '#fff'; x.fillText('HOME RUN DERBY', W / 2, 62);
     const b = st && st.batter;
     if (b) {
@@ -151,7 +228,7 @@ export class Derby {
       x.font = '900 120px Verdana,sans-serif'; x.fillStyle = '#fff'; x.fillText(String(b.n || 0), W * .3, 238); x.fillText(String(Math.max(0, PITCHES - (b.p || 0))), W * .7, 238);
       x.font = '800 24px Verdana,sans-serif'; x.fillStyle = '#ffb3c2'; x.fillText('HOME RUNS', W * .3, 318); x.fillText('PITCHES LEFT', W * .7, 318);
       x.fillStyle = '#8ef0c2'; x.fillText(b.l ? 'LONGEST ' + b.l + ' FT' : '', W / 2, 366);
-    } else { x.font = '800 30px Verdana,sans-serif'; x.fillStyle = '#ffd166'; x.fillText('PRESS START BY HOME PLATE', W / 2, 150); }
+    } else { x.font = '800 30px Verdana,sans-serif'; x.fillStyle = '#ffd166'; x.fillText('PRESS START BY THE BACKSTOP', W / 2, 150); }
     const q = (st && st.queue) || [];
     x.textAlign = 'left'; x.font = '800 24px Verdana,sans-serif'; x.fillStyle = '#b9a3ad'; x.fillText('ON DECK', 60, 420);
     x.fillStyle = '#fff'; x.fillText(q.length ? q.slice(0, 3).map((p, i) => (i + 1) + '. ' + String(p.nm).split(' ')[0].toUpperCase()).join('    ') : 'Nobody waiting', 60, 460);
@@ -159,6 +236,16 @@ export class Derby {
     x.fillStyle = '#b9a3ad'; x.fillText('TEAM BEST', 60, 512); x.fillStyle = '#ffd166';
     x.fillText(top.length ? top.slice(0, 3).map(r => String(r[0]).split(' ')[0].toUpperCase() + ' ' + r[1]).join('    ') : 'No home runs yet', 60, 548);
     this.sbT.needsUpdate = true;
+  }
+  // fireworks over centre field and the crowd on its feet
+  celebrate(ft) {
+    const O = this.O; this.cheer = 4; this.flashT = 3; this.board(null, ft + ' FT'); O.sfx('crowd');
+    if (!O.pfx) return;
+    for (let k = 0; k < 5; k++) setTimeout(() => {
+      const [x, z] = ARC((Math.random() - .5) * 1.2, 40 + Math.random() * 20), y = ROOFY + 34 + Math.random() * 20, col = [[3.4, .4, .9], [3.4, 2.6, .7], [3, 3, 3], [.5, 2.4, 3.2]][k % 4];
+      for (let i = 0; i < 70; i++) { const a = Math.random() * 6.283, b = Math.acos(2 * Math.random() - 1), sp = 9 + Math.random() * 5; O.pfx.emit('spark', x, y, z, Math.sin(b) * Math.cos(a) * sp, Math.cos(b) * sp, Math.sin(b) * Math.sin(a) * sp, {col, life: 1.2 + Math.random() * .6, g: 4, drag: 1.2, s0: .12, s1: .05}); }
+      O.pfx.emit('glow', x, y, z, 0, 0, 0, {col, life: .35, s0: 9, s1: 3}); O.sfx('boom', .4);
+    }, k * 380);
   }
   // ---------- who's batting, who's waiting (from everyone's presence)
   state() {
@@ -271,12 +358,13 @@ export class Derby {
     b.p.addScaledVector(v, dt);
     const dx = b.p.x - PLATE.x, dz = b.p.z - PLATE.z, r = Math.hypot(dx, dz), ang = Math.atan2(-dx, -dz);
     if (!b.call) {
+      const fr = fenceR(ang);
       if (Math.abs(ang) > FOUL + .02 && r > 4) b.call = 'FOUL';
-      else if (r >= FENCE && b.p.y > ROOFY + FENCEH) b.call = 'HR';
-      else if (r >= FENCE - .3 && b.p.y <= ROOFY + FENCEH) { b.call = 'WALL'; v.x *= -.35; v.z *= -.35; }
-      else if (b.p.y <= ROOFY + .12 && r < FENCE) b.call = 'INPLAY';
+      else if (r >= fr && b.p.y > ROOFY + FENCEH) b.call = 'HR';
+      else if (r >= fr - .3 && b.p.y <= ROOFY + FENCEH) { b.call = 'WALL'; v.x *= -.35; v.z *= -.35; }
+      else if (b.p.y <= ROOFY + .12 && r < fr) b.call = 'INPLAY';
     }
-    if (b.p.y <= ROOFY + .12 && b.p.x > PARK.x0 && b.p.x < PARK.x1 && b.p.z > PARK.z0 && b.p.z < PARK.z1) { b.p.y = ROOFY + .12; v.y = Math.abs(v.y) * .35; v.x *= .6; v.z *= .6; if (Math.abs(v.y) < .5) b.rest = (b.rest || 0) + dt; }
+    if (b.p.y <= ROOFY + .12 && onDeck(b.p.x, b.p.z)) { b.p.y = ROOFY + .12; v.y = Math.abs(v.y) * .35; v.x *= .6; v.z *= .6; if (Math.abs(v.y) < .5) b.rest = (b.rest || 0) + dt; }
     return Math.hypot(dx, dz);
   }
   // ---------- per frame
@@ -303,7 +391,7 @@ export class Derby {
         } else if (b.call && !b.called) {
           b.called = 1;
           const ft = Math.round(Math.hypot(b.p.x - PLATE.x, b.p.z - PLATE.z) * FT);
-          if (b.call === 'HR') { const proj = Math.round(this.carry(b) * FT); T.n++; T.l = Math.max(T.l, proj); this.big('HOME RUN!', proj + ' FT'); O.sfx('crowd'); O.sfx('chaching'); O.fx.sparkle(b.p.x, b.p.y, b.p.z, 40, [1, .85, .3]); }
+          if (b.call === 'HR') { const proj = Math.round(this.carry(b) * FT); T.n++; T.l = Math.max(T.l, proj); this.big('HOME RUN!', proj + ' FT'); O.sfx('chaching'); O.fx.sparkle(b.p.x, b.p.y, b.p.z, 40, [1, .85, .3]); }
           else if (b.call === 'FOUL') this.big('FOUL BALL', '');
           else if (b.call === 'WALL') this.big('OFF THE WALL!', ft + ' FT');
           else this.big('IN PLAY', ft + ' FT');
@@ -321,7 +409,7 @@ export class Derby {
     O.av.forEach(a => { if (!a.me && a._bat && !(st.batter && st.batter.a === a)) this.watch(a, false); });
     // balls in flight
     this.balls = this.balls.filter(b => {
-      if (b.hit) { this.fly(b, dt); if (O.t - b.hit.t > 7 || b.p.y < ROOFY - 120 || b.rest > 1.5) { this.group.remove(b.m); return false; } return true; }
+      if (b.hit) { this.fly(b, dt); if (b.call === 'HR' && !b.cel) { b.cel = 1; this.celebrate(Math.round(this.carry(b) * FT)); } if (O.t - b.hit.t > 7 || b.p.y < ROOFY - 120 || b.rest > 1.5) { this.group.remove(b.m); return false; } return true; }
       if (b.done) { this.group.remove(b.m); return false; }
       // pitched ball: straight flight with gravity, then past the plate into the net
       b.vel.y -= 9.8 * dt; b.p.addScaledVector(b.vel, dt); if (b.p.z > PLATE.z + 4) { b.done = 1; }
@@ -332,7 +420,8 @@ export class Derby {
     this.dL.position.x = ELEVP.x - .33 - .62 * d.o; this.dR.position.x = ELEVP.x + .33 + .62 * d.o;
     if (O.meAv && O.meAv.wk && O.meAv.wk.f === 'r' && Math.abs(O.meAv.wk.x - ELEVP.x) < 1.3 && O.meAv.wk.z < ELEVP.z + 1.4) d.hold = Math.max(d.hold, .6);
     this.btnTop.position.y = 1.12 - (this.btnT && O.t - this.btnT < .25 ? .06 : 0);
-    if ((this._sbT = (this._sbT || 0) - dt) <= 0) { this._sbT = .5; this.board(st); }
+    if (this.flashT > 0) this.flashT -= dt; else if ((this._sbT = (this._sbT || 0) - dt) <= 0) { this._sbT = .5; this.board(st); }
+    this.cheer = Math.max(0, this.cheer - dt); if (this.crowd) this.crowd.userData.U.uCheer.value = damp(this.crowd.userData.U.uCheer.value, this.cheer > 0 ? 1 : .08, 3, dt);
   }
   // how far a home run would have carried (to deck height)
   carry(b) { const p = b.p.clone(), v = b.vel.clone(); for (let i = 0; i < 600 && p.y > ROOFY; i++) { const sp = v.length(), k = .0042, dt = 1 / 60; v.x -= v.x * sp * k * dt; v.z -= v.z * sp * k * dt; v.y -= (9.8 + v.y * sp * k) * dt; p.addScaledVector(v, dt); } return Math.hypot(p.x - PLATE.x, p.z - PLATE.z); }

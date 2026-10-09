@@ -301,6 +301,8 @@ function slide(M, B, dt) {
     if (y0 >= b.b[1] - .03) { P.y = b.b[1]; if (V.y < 0) V.y = 0; B.g = 1; }
     else if (y0 + hh <= b.a[1] + .03) { P.y = b.a[1] - hh; if (V.y > 0) V.y = 0; }
   }
+  // standing still exactly on a surface still counts as standing (a probe just under the feet)
+  if (!B.g && V.y <= 0) for (const b of M.C) if (b.b[1] <= P.y + .002 && b.b[1] >= P.y - .03 && overlaps(b, P.x, P.y - .03, P.z, hh)) { P.y = b.b[1]; V.y = 0; B.g = 1; break; }
   for (const ax of [0, 2]) {
     const k = ax === 0 ? 'x' : 'z', v0 = P[k]; P[k] += V[k] * dt;
     for (const b of M.C) if (overlaps(b, P.x, P.y, P.z, hh)) {
@@ -344,6 +346,8 @@ function rayZones(o, d, Z) {
   return best;
 }
 const dirOf = (yaw, pitch, v) => v.set(Math.sin(yaw) * Math.cos(pitch), Math.sin(pitch), Math.cos(yaw) * Math.cos(pitch));
+// for the unit tests (vo/test/arena_test.mjs)
+export const ARTEST = {warehouse, rooftop, office, rayMap, rayZones, zones, slide, freeAt, navGrid, navPath, dirOf};
 
 // ---------------------------------------------------------------- styling
 const CSS = `.vo3ar{position:absolute;inset:0;pointer-events:none;z-index:6;display:none;font-family:Verdana,sans-serif}.vo3ar.on{display:block}
@@ -728,7 +732,7 @@ export class Arena {
     me.kick = damp(me.kick, 0, 9, dt);
   }
   spread() {
-    const me = this.match.me, sp = Math.hypot(me.v.x, me.v.z);
+    const me = this.match.me, sp = Math.hypot(me.v.x, me.v.z); if (this.noSpread) return 0;
     let s = .0012 + clamp((sp - 1.4) / 5, 0, 1) * .03 + (me.g ? 0 : .05) + Math.min(me.burst, 12) * .0028;
     if (me.duck) s *= .7; return s;
   }
@@ -744,7 +748,7 @@ export class Arena {
     this.tracer(this.vmMuzzle(), end, [3.2, .35, .8]); this.zap(1); this.flash();
     if (hit) {
       const dmg = GUN[z.k], hd = z.k === 'head'; M.stats.hits++; if (hd) M.stats.heads++;
-      this.hitmark(hd || dmg >= o.hp); this.tick(hd);
+      this.hitmark(hd || dmg >= o.hp); this.tik(hd);
       if (M.bot) this.botHurt(M.bot, dmg, hd); else { me.hn++; me.hits.push([me.hn, dmg, hd ? 1 : 0]); if (me.hits.length > 6) me.hits.shift(); }
       if (this.O.pfx) for (let k = 0; k < 10; k++) this.O.pfx.emit('spark', end.x + M.M.def.o[0], end.y + M.M.def.o[1], end.z + M.M.def.o[2], (Math.random() - .5) * 4, Math.random() * 3, (Math.random() - .5) * 4, {col: [.5, 2.6, 3.2]});
     } else this.impact(end, wall.n, [3.2, .35, .8]);
@@ -1017,7 +1021,7 @@ export class Arena {
     o.connect(f); o2.connect(f); f.connect(g); g.connect(ac.destination); o.start(t); o2.start(t); o.stop(t + .12); o2.stop(t + .12);
   }
   tone(f, d, v, type = 'sine', f2) { const ac = this.ac(); if (!ac) return; const t = ac.currentTime, o = ac.createOscillator(), g = ac.createGain(); o.type = type; o.frequency.setValueAtTime(f, t); if (f2) o.frequency.exponentialRampToValueAtTime(f2, t + d); g.gain.setValueAtTime(.0001, t); g.gain.exponentialRampToValueAtTime(v, t + .005); g.gain.exponentialRampToValueAtTime(.0001, t + d); o.connect(g); g.connect(ac.destination); o.start(t); o.stop(t + d + .02); }
-  tick(hd) { this.tone(hd ? 3150 : 2100, hd ? .14 : .05, hd ? .07 : .045, hd ? 'triangle' : 'sine'); }
+  tik(hd) { this.tone(hd ? 3150 : 2100, hd ? .14 : .05, hd ? .07 : .045, hd ? 'triangle' : 'sine'); }
   ding(k) { this.tone(1320 * k, .35, .06, 'triangle'); setTimeout(() => this.tone(1980 * k, .3, .045, 'triangle'), 70); }
   buzz() { this.tone(160, .5, .09, 'sawtooth', 60); }
   thud(d) { this.tone(110, .12, .05 + d * .0008, 'triangle', 70); }

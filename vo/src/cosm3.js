@@ -450,7 +450,8 @@ function prop($, J, Q, Z, U = 2, q = 0, E = 0) {
   }
 function gear($, J, Q, Z) {
     J.forEach(([U, q, E]) => {
-      $.add(M(mesh(cyl(0.035, 0.035, Math.abs(q) - Q * 0.5, 6), Z || BLK()), U, q / 2, E)), $.add(M(mesh(cyl(Q, Q, Q * 0.6, 14), std("#141416", 0.8)), U, q - Q * 0.1, E, Math.PI / 2));
+      const st = M(mesh(cyl(0.035, 0.035, Math.abs(q) - Q * 0.5, 6), Z || BLK()), U, q / 2, E), wh = M(mesh(cyl(Q, Q, Q * 0.6, 14), std("#141416", 0.8)), U, q - Q * 0.1, E, Math.PI / 2);
+      st.userData.gear = wh.userData.gear = 1; $.add(st, wh);   // landing gear (planes can raise it)
     });
   }
 function canopy($, J, Q, Z, U, q, E) {
