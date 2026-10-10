@@ -16,6 +16,7 @@ const Y = RANGEY;
 const LANES = [-7.4, -2.6, 2.2, 6.8].map((x, i) => ({i, x, z: -3.6}));
 const LINE = -2.85;          // the counter
 const ROUND = 30;
+const VMP = [.19, -.18, -.6];  // where my blaster rests in first person (camera space, metres)
 // what each blaster fires: colour, speed (m/s, 0 = beam), spread, count, size
 const SHOT = {
   0: {n: 'Range Loaner', c: '#ff8a3d', v: 38, k: 'dart'}, 1: {n: 'Water Blaster', c: '#6ad1ff', v: 26, k: 'drop', cnt: 3}, 2: {n: 'Foam Dart Pistol', c: '#ff7a1a', v: 40, k: 'dart'},
@@ -132,18 +133,52 @@ export class Range {
     this.lane = {i, l, t: -3, score: 0, hits: 0, shots: 0, J, kind, next: 0, over: 0};
     this.ui.classList.add('on'); this.big('GET READY', kind.n.toUpperCase()); O.sfx('click');
     this.gun(a, true); this.mx = .5; this.my = .42; this.snap = 1; this.send();
+    // first person: my avatar steps out of the picture and my blaster comes up in front of the camera
+    a.root.visible = false; a._rgHide = 1; this.vmOn(J);
     this.clearTargets();
   }
   exit() {
     const O = this.O, L = this.lane; if (!L) return; this.lane = null; this.ui.classList.remove('on'); O.walk.lock = 0;
-    const a = O.meAv; if (a) { a.lane = 0; this.gun(a, false); if (a.wk) a.wk.z = l0(a.wk.z); }
-    this.clearTargets(); this.send(); function l0(z) { return Math.min(z, LINE - 1.2); }
+    const a = O.meAv; if (a) { a.lane = 0; this.gun(a, false); if (a.wk) a.wk.z = l0(a.wk.z); if (a._rgHide) { a._rgHide = 0; a.root.visible = true; } }
+    this.vmOff(); this.clearTargets(); this.send(); function l0(z) { return Math.min(z, LINE - 1.2); }
   }
+  // the blaster I own (or the range loaner), pointing down +z
+  model(J) {
+    let g = null; try { if (J && EXT.blaster) g = EXT.blaster(J); } catch (e) { g = null; }
+    if (!g) { g = new THREE.Group(); const m = new THREE.MeshStandardMaterial({color: '#ff7a1a', roughness: .45}); g.add(new THREE.Mesh(new THREE.BoxGeometry(.06, .08, .26), m)); g.add(at(new THREE.Mesh(new THREE.CylinderGeometry(.018, .018, .18, 10), new THREE.MeshStandardMaterial({color: '#2a64ff'})), new THREE.Vector3(0, .02, .18), new THREE.Euler(Math.PI / 2, 0, 0))); }
+    return g;
+  }
+  // ---------- first-person blaster: held low and right, turns to point at the crosshair, kicks when it fires
+  vmOn(J) {
+    const O = this.O; this.vmOff();
+    const g = this.model(J), H = new THREE.Group(), G = new THREE.Group(); H.add(g); G.add(H);
+    g.rotation.y = Math.PI;
+    let bb = new THREE.Box3().setFromObject(H); const len = Math.max(.05, bb.max.z - bb.min.z); g.scale.multiplyScalar(clamp(len, .2, .34) / len);
+    bb = new THREE.Box3().setFromObject(H); const c = bb.getCenter(new THREE.Vector3()); g.position.sub(c);
+    this.vmTip = new THREE.Vector3(0, (bb.max.y - c.y) * .35, bb.min.z - c.z - .01);
+    const mats = []; let first = true;
+    G.traverse(m => {
+      if (!m.isMesh && !m.isSprite) return;
+      m.material = Array.isArray(m.material) ? m.material.map(x => x.clone()) : m.material.clone();
+      (Array.isArray(m.material) ? m.material : [m.material]).forEach(x => { x.transparent = true; x.depthWrite = true; mats.push(x); });
+      m.renderOrder = first ? 1000 : 1001; m.frustumCulled = false; m.castShadow = false; m.receiveShadow = false;
+      if (first) { m.onBeforeRender = r => r.clearDepth(); first = false; }
+    });
+    G.position.set(VMP[0], VMP[1], VMP[2]); O.cam.add(G); if (!O.cam.parent) O.scene.add(O.cam);
+    this.vm = G; this.vmH = H; this.vmMats = mats; this.kick = 0; this.vmAim();
+  }
+  vmOff() { if (!this.vm) return; this.O.cam.remove(this.vm); (this.vmMats || []).forEach(m => m.dispose()); this.vm = this.vmH = null; this.vmMats = null; }
+  vmAim(dt = 0) {
+    const G = this.vm, cam = this.O.cam; if (!G) return;
+    this.kick = Math.max(0, (this.kick || 0) - dt * 7);
+    G.position.set(VMP[0], VMP[1] + this.kick * .01, VMP[2] + this.kick * .045);
+    const f = Math.tan(cam.fov * Math.PI / 360) * 10, d = new THREE.Vector3((this.mx * 2 - 1) * f * cam.aspect - G.position.x, -(this.my * 2 - 1) * f - G.position.y, -10 - G.position.z).normalize();
+    this.vmH.quaternion.setFromUnitVectors(new THREE.Vector3(0, 0, -1), d); this.vmH.rotateX(this.kick * .14);
+  }
+  vmMuzzle(out) { this.vm.updateMatrixWorld(true); return out.copy(this.vmTip).applyMatrix4(this.vmH.matrixWorld); }
   gun(a, on) {
     if (on) {
-      if (a._gun) return; let g = null; const J = a.look && a.look.J || 0;
-      try { if (J && EXT.blaster) g = EXT.blaster(J); } catch (e) { g = null; }
-      if (!g) { g = new THREE.Group(); const m = new THREE.MeshStandardMaterial({color: '#ff7a1a', roughness: .45}); g.add(new THREE.Mesh(new THREE.BoxGeometry(.06, .08, .26), m)); g.add(at(new THREE.Mesh(new THREE.CylinderGeometry(.018, .018, .18, 10), new THREE.MeshStandardMaterial({color: '#2a64ff'})), new THREE.Vector3(0, .02, .18), new THREE.Euler(Math.PI / 2, 0, 0))); }
+      if (a._gun) return; const g = this.model(a.look && a.look.J || 0);
       g.scale.setScalar(1.25); g.position.set(-.12, 1.28, .36); a.rig.add(g); a._gun = g; if (a.blaster) a.blaster.visible = false;
       a.poseFx = (Z) => { Z.rsx = -1.45; Z.rsz = -.05; Z.rex = -.15; Z.lsx = -1.3; Z.lsz = .35; Z.lex = -.6; Z.hx = .06; Z.ty = .08; };
     } else if (a._gun) { a.rig.remove(a._gun); a._gun = null; if (a.blaster) a.blaster.visible = true; a.poseFx = null; }
@@ -166,7 +201,8 @@ export class Range {
     if (O.t < L.next) return; L.next = O.t + (L.J === 4 || L.J === 8 ? .14 : .26);
     const ray = this.aim(), K = L.kind, a = O.meAv;
     L.shots++; this.n++;
-    const from = new THREE.Vector3(); if (a && a._gun) { a._gun.getWorldPosition(from); } else from.copy(ray.origin);
+    const from = new THREE.Vector3(); if (this.vm) { this.vmAim(0); this.vmMuzzle(from); } else if (a && a._gun) a._gun.getWorldPosition(from); else from.copy(ray.origin);
+    this.kick = 1;
     const cnt = K.cnt || 1;
     for (let k = 0; k < cnt; k++) {
       const d = ray.direction.clone(); if (K.spr || cnt > 1) { d.x += (Math.random() - .5) * (K.spr || .02); d.y += (Math.random() - .5) * (K.spr || .02); d.normalize(); }
@@ -237,6 +273,7 @@ export class Range {
       const left = L.t < 0 ? 'STARTS IN ' + Math.ceil(-L.t) : L.over ? 'ROUND OVER' : Math.max(0, ROUND - L.t).toFixed(1) + 's';
       this.tE.textContent = 'LANE ' + (L.i + 1) + '  ·  ' + L.kind.n.toUpperCase() + '  ·  ' + left + '  ·  SCORE ' + L.score + '  ·  BEST ' + this.best();
       this.cE.style.left = (this.mx * 100) + '%'; this.cE.style.top = (this.my * 100) + '%';
+      this.vmAim(dt);
     }
     // targets
     this.targets = this.targets.filter(x => {
@@ -279,8 +316,9 @@ export class Range {
   }
   best() { try { return +localStorage.getItem('owq_rangebest') || 0; } catch (e) { return 0; } }
   cam(P, T, F0) {
+    // first person at a grown-up's eye height, looking down the middle of the lane
     const L = this.lane; if (!L) return 0; const l = L.l;
-    P.set(l.x + .5, Y + 1.9, l.z - 1.55); T.set(l.x + .05, Y + 1.4, 8); return clamp(F0 * .95, 40, 62);
+    P.set(l.x, Y + 1.6, l.z - .1); T.set(l.x, Y + 1.95, 8); return 46;
   }
   grab() { return !!this.lane; }
   zone(z) { if (z === this._z) return; this._z = z; this.group.visible = z === 'g'; }

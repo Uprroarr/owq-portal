@@ -71,10 +71,12 @@ try:
         A.keyboard.press('e'); A.evaluate(step, 4); ok(A.evaluate("!!VO3.dbg().fly.me"), 'E climbs in')
         fp = "(()=>{const f=VO3.dbg().meAv.fly;return f?{x:+f.x.toFixed(1),y:+f.y.toFixed(2),z:+f.z.toFixed(1),v:+f.v.toFixed(1),p:+f.pitch.toFixed(3),vy:+f.vy.toFixed(2),gr:f.gr,gear:f.gear,done:f.done||0,cr:f.crashed||0}:null})()"
         f0 = A.evaluate(fp); ok(f0 and f0['gr'] == 1 and abs(f0['z'] + 14) < 1 and f0['x'] < 90, 'you start lined up on the west end of runway 09, wheels down', f0)
+        A.evaluate(step, 2); pl = A.evaluate("VO3.dbg().ui._pl"); ok(pl == 'SKYPORT', 'on the runway the place label still says SKYPORT', pl)
         ff = "n=>{const O=VO3.dbg(),F=O.fly,a=F.me;if(window.__ft==null)window.__ft=O.t;for(let i=0;i<n&&F.me&&a.fly&&!a.fly.crashed;i++){window.__ft+=1/30;F.mine(a,1/30,window.__ft)}return 1}"
         A.evaluate(ff, 75); f1 = A.evaluate(fp); ok(f1 and f1['gr'] == 1 and f1['v'] > 15, 'full throttle rolls you down the runway', f1)
         A.evaluate(ff, 300); f2 = A.evaluate(fp); ok(f2 and f2['gr'] == 0 and f2['y'] > RY + 15 and not f2['cr'], 'the assist rotates at take-off speed and climbs away', f2)
         ok(f2 and f2['gear'] == 0, 'the gear comes up on its own', f2)
+        A.evaluate(step, 2); pl = A.evaluate("VO3.dbg().ui._pl"); ok(pl == 'IN THE AIR', 'once airborne the place label says IN THE AIR', pl)
         if SHOTS: A.evaluate(step, 2); v7.shot(A, 'fly_climb', 300, floor=False)
         A.keyboard.down('w'); A.evaluate(ff, 20); A.keyboard.up('w'); f3 = A.evaluate(fp); ok(f3 and f3['p'] > f2['p'] + .2, 'W pulls the nose up', [f2, f3])
         fl = A.evaluate("(()=>{const x=VC.room.peers().find(p=>p.peer===vcMe());return x&&x.presence.fl})()"); ok(fl and 'x' in fl and fl.get('gr') == 0, 'your plane goes out to everyone (presence fl)', fl)
