@@ -36,3 +36,8 @@ The deployed builds on `main` hold the full compiled code. `index.html` is live 
 - `vo/src/range.js`: lanes are first person (my avatar steps out of the picture, my own blaster is held in front of the camera, turns toward the crosshair and kicks when it fires; shots leave from its muzzle).
 - Scores: `landing` (best landing out of 100) and `lasertag` (wins) join the team bests in the `arc` collection.
 - Tests: `web/test/t_arena.py`, `t_tag2.py` (two players), `t_park.py` (derby, skybridge, takeoff, assisted landing, belly-landing crash), `t_drive.py` (barriers, cars, ragdoll, blocking, lap), `t_range.py` (first-person lanes); pictures: `dbg_park.py`, `dbg_v107.py`, `dbg_arena*.py`, `dbg_final.py` (every place in play, stepped), `dbg_rcam.py`; unit checks `vo/test/arena_test.mjs`, `fly_test.mjs`, `drive_test.mjs` (run with bun).
+
+## v108 day counts (Clients book counts toward the day)
+- `agents/dayc/patch_dayc.py` (applied on top of v107 by `build.sh`, source `agents/dayc/dayc.js`): `dayCounts(day, who)` merges the Activity log with the Clients book. A contact is a person added by hand (imports, migrated and demo records do not count) or reached with a call, text, email or meeting that day; an appointment is one booked that day (cancelled ones drop out). Per person the higher of the two sources counts, so an Activity total that already includes the Clients work is never added twice.
+- Used by the Morning Recognition goals (`mrVal` for `con` and `app`), the Live Pulse (`pulseData`) and the check-in prefill (`ckAuto`). A change in the Clients book refreshes the pinned recognition cards. The Leaderboard, Battle Pass XP and credits still read the Activity log only.
+- Test: `web/test/t_dayc.py`.
