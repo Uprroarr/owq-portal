@@ -1,4 +1,4 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#0b0b10"><meta name="color-scheme" content="dark"><meta name="robots" content="noindex,nofollow"><link rel="manifest" href="manifest.webmanifest"><link rel="icon" href="icon-192.png"><link rel="apple-touch-icon" href="icon-192.png"><title>Only Winners &amp; Quitters | Command Station II</title><script>window.OWQ_FIREBASE={"apiKey": "AIzaSyCEUwZQsV04SgNzc-MzsiAO9cyMbLM1RuU", "authDomain": "owaq-946ee.firebaseapp.com", "databaseURL": "https://owaq-946ee-default-rtdb.firebaseio.com", "projectId": "owaq-946ee", "storageBucket": "owaq-946ee.firebasestorage.app", "messagingSenderId": "884987875546", "appId": "1:884987875546:web:102d9fc0ab0aceaa3315e3"};window.OWQ_WEB=1;window.OWQ_BUILD="2026-10-10 01:54 UTC";</script><script>
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#0b0b10"><meta name="color-scheme" content="dark"><meta name="robots" content="noindex,nofollow"><link rel="manifest" href="manifest.webmanifest"><link rel="icon" href="icon-192.png"><link rel="apple-touch-icon" href="icon-192.png"><title>Only Winners &amp; Quitters | Command Station II</title><script>window.OWQ_FIREBASE={"apiKey": "AIzaSyCEUwZQsV04SgNzc-MzsiAO9cyMbLM1RuU", "authDomain": "owaq-946ee.firebaseapp.com", "databaseURL": "https://owaq-946ee-default-rtdb.firebaseio.com", "projectId": "owaq-946ee", "storageBucket": "owaq-946ee.firebasestorage.app", "messagingSenderId": "884987875546", "appId": "1:884987875546:web:102d9fc0ab0aceaa3315e3"};window.OWQ_WEB=1;window.OWQ_BUILD="2026-10-10 15:08 UTC";</script><script>
 /*OWQCLOUDstart*/
 /* OWQ Cloud: runs the portal as its own website. It provides the same `claude.use()` surface the portal was written for
    (db, room, user, downloads), backed by Firebase: Firestore = shared documents, Realtime Database = live room (presence,
@@ -6897,7 +6897,7 @@ const ckAdmin=()=>!D.agents.some(a=>a.name===WHO),ckAll=()=>D.checkins=D.checkin
 const ordn=n=>n+(n%100>=11&&n%100<=13?'th':['th','st','nd','rd'][n%10]||'th');
 function longDate(k){const d=new Date(k+'T12:00:00');return d.toLocaleDateString([],{weekday:'long'})+' '+d.toLocaleDateString([],{month:'long'})+' '+ordn(d.getDate())+', '+d.getFullYear()}
 const ckOf=(ag,d)=>ckAll().find(c=>c.ag===ag&&c.d===d);
-function ckAuto(){const a=D.activity.filter(x=>x.ag===WHO&&x.d===today),ps=D.policies.filter(p=>p.ag===WHO&&p.d===today&&live(p));return{dial:sum(a,x=>x.con)||'',leads:sum(a,x=>x.app)||'',closed:ps.length||'',comm:ps.length?Math.round(sum(ps,com)):''}}
+function ckAuto(){const a=D.activity.filter(x=>x.ag===WHO&&x.d===today),ps=D.policies.filter(p=>p.ag===WHO&&p.d===today&&live(p));return{dial:dayCounts(today,WHO).con||'',leads:dayCounts(today,WHO).app||'',closed:ps.length||'',comm:ps.length?Math.round(sum(ps,com)):''}}
 const ckTxt=c=>`${c.ag} - ${longDate(c.d)}\n`+CKF.map(f=>f[1]+': '+(c[f[0]]||'N/A')).join('\n')+'\n'+CKN.map(f=>f[1]+': '+(c[f[0]]===''||c[f[0]]==null?'N/A':(f[0]==='comm'&&!isNaN(+c[f[0]])?'$'+c[f[0]]:c[f[0]]))).join('\n');
 function ckSave(pre,ag,d,byAdmin){const g=k=>{const e=document.getElementById(pre+k);return e?String(e.value).trim().slice(0,600):''};const o={};CKF.forEach(f=>o[f[0]]=g(f[0]));CKN.forEach(f=>o[f[0]]=g(f[0]));
 if(!o.goal){toast('Add the Daily Goal before submitting.');return false}if(!ag||!d||d>today){toast('Choose an agent and a date that is not in the future.');return false}
@@ -7198,8 +7198,8 @@ async function mrPick(files,where){const f=files&&files[0];if(!f)return;if(!MR.c
   const inp=mrE(where==='f'?'mrff':'mrfile');if(inp)inp.value=''}
 /* ---- Morning Recognition: the tracked metrics a day can be set against, and the motivational quote bank ---- */
 const MRMET=[
- {k:'con',n:'Contacts',s:'contacts',ic:'&#128222;',u:'n',st:5,fb:40,about:'Calls and conversations logged in Activity'},
- {k:'app',n:'Appointments',s:'appointments',ic:'&#128197;',u:'n',st:1,fb:5,about:'Appointments held, from Activity'},
+ {k:'con',n:'Contacts',s:'contacts',ic:'&#128222;',u:'n',st:5,fb:40,about:'People added or reached (call, text, email, meeting) in Clients, or logged in Activity'},
+ {k:'app',n:'Appointments',s:'appointments',ic:'&#128197;',u:'n',st:1,fb:5,about:'Appointments booked in Clients, or logged in Activity'},
  {k:'sub',n:'Applications',s:'applications',ic:'&#128221;',u:'n',st:1,fb:3,about:'Policies written that day, any status'},
  {k:'ap',n:'Premium submitted',s:'in submitted premium',ic:'&#128176;',u:'$',st:500,fb:12000,about:'Annual premium on policies written that day'},
  {k:'iss',n:'Premium issued',s:'in issued premium',ic:'&#127942;',u:'$',st:500,fb:0,about:'Issued or paid premium dated that day (same as the Live Pulse)'},
@@ -7214,8 +7214,8 @@ const mrFb=m=>m.k==='iss'||m.k==='ap'?mrDAP():m.k==='comm'?Math.max(50,Math.roun
 /* what the team (who = '') or one person actually logged on a day */
 function mrVal(k,day,who){
   const act=(D.activity||[]).filter(x=>x.d===day&&(!who||x.ag===who)),pol=(D.policies||[]).filter(p=>p.d===day&&(!who||p.ag===who));
-  if(k==='con')return sum(act,x=>+x.con||0);
-  if(k==='app')return sum(act,x=>+x.app||0);
+  if(k==='con')return dayCounts(day,who).con;
+  if(k==='app')return dayCounts(day,who).app;
   if(k==='sub')return pol.length;
   if(k==='ap')return Math.round(sum(pol,p=>+p.ap||0));
   if(k==='iss')return Math.round(sum(pol.filter(live),p=>+p.ap||0));
@@ -7825,7 +7825,7 @@ hf=nw.getHours()+nw.getMinutes()/60+nw.getSeconds()/3600,fr=Math.max(0,Math.min(
 dim=new Date(nw.getFullYear(),nw.getMonth()+1,0).getDate(),mk=nw.getFullYear()+'-'+pad(nw.getMonth()+1),m=sum(L.filter(x=>x.d.slice(0,7)===mk),x=>x.ap),pace=goal*nw.getDate()/dim;
 const ag=D.agents.map(a=>{const mine=sh.filter(x=>x.ag===a.name),h=sum(mine.filter(x=>x.start>=d0),x=>((x.end||Date.now())-x.start)/36e5);return{nm:a.name,h,on:mine.some(x=>!x.end),pct:Math.min(100,h/8*100)}}).sort((x,y)=>y.h-x.h);
 const cols=[...Array(14)].map((_,i)=>{const d=new Date(d0);d.setDate(d.getDate()-(13-i));const k=dkey(d);return{v:sum(L.filter(x=>x.d===k),x=>x.ap),l:'SMTWTFS'[d.getDay()],t:i===13}});
-return{fr,ap:sum(tp,x=>x.ap),dAP,pol:tp.length,con:sum(ta,x=>x.con||0),app:sum(ta,x=>x.app||0),hrs:sum(ag,x=>x.h),ag,cols,m,goal,pace,dim}}
+return{fr,ap:sum(tp,x=>x.ap),dAP,pol:tp.length,con:dayCounts(tk,'').con,app:dayCounts(tk,'').app,hrs:sum(ag,x=>x.h),ag,cols,m,goal,pace,dim}}
 function pulseHtml(){const P=pulseData(),w=k=>PVW[k]==null?0:PVW[k],hd=h=>{const t=Math.floor(h*3600);return t<3600?pad(Math.floor(t/60))+'m '+pad(t%60)+'s':Math.floor(t/3600)+'h '+pad(Math.floor(t%3600/60))+'m'};
 const met=(k,lab,tgt)=>`<div class=mtr data-m=${k}><small>${lab}</small><b data-c=${k}>0<em>/ ${tgt}</em></b><div class=bar><i data-k=${k} style="width:${w(k)}%"></i></div></div>`;
 return`<div class="c pls" id=pls><div class=ph><h4>Live Pulse: Today</h4><span class=live>LIVE &middot; UPDATES AS YOU LOG</span></div>
@@ -8355,6 +8355,37 @@ ${isA||isCb?'':`<label for=crmsct>Type</label><select id=crmsct>${['call','appt'
 function crmSchGo(ts){const S=CRM.ui.sch;if(!S)return;const n=(document.getElementById('crmscn')||{}).value||'',ty=S.kind==='appt'?'appt':S.kind==='cb'?'call':((document.getElementById('crmsct')||{}).value||'fu');closeM();
  const c=crmGet(S.id),tx=crmTx(()=>{if(S.kind==='appt'||S.kind==='cb')crmOutcome(S.id,S.kind,{when:ts});else crmTask({c:S.id,ty,t:n||CRM_TY[ty],due:ts,ow:c?c.owner:WHO});if(n&&(S.kind==='appt'||S.kind==='cb')){const t=crmOpenTasks(S.id).find(x=>x.due===ts);if(t)crmTaskPatch(t.id,{t:(S.kind==='appt'?'Appointment':'Call back')+': '+n})}});
  CRM.ui.calling=null;go();if(S.kind==='appt')crmConfetti();crmToast((S.kind==='appt'?'Appointment booked ':S.kind==='cb'?'Call back set ':'Scheduled ')+crmWhen(ts)+'.',tx.undo,S.kind==='appt'&&c&&crmSms(c)?['Text confirmation',()=>{const cc=crmGet(S.id);const t=crmOpenTasks(S.id).find(x=>x.ty==='appt');location.href=crmSms(cc,t)}]:null)}
+/*DCstart*/
+/* ===== DAY COUNTS (dc): contacts and appointments for a day, from the Activity log and the Clients book =====
+   For each person and day the number is the higher of the two sources, so an end-of-day Activity total that already
+   includes the Clients work never counts twice. In the Clients book a contact is a person you added by hand (imports,
+   migrated and demo records do not count) or reached with a call, text, email or meeting; an appointment is one you
+   booked that day (cancelled ones drop out). Used by the Morning Recognition goals, the Live Pulse and the check-in.
+   The Clients part is worked out once per change of the Clients book (CRM.ver) for every day at once. */
+var DCX={v:-1,m:null,t:0};
+function dcName(n){n=String(n||'');return n==='Agency Owner'&&(D.agents||[]).some(a=>a.name==='Cole Leckey')?'Cole Leckey':n}
+function dcCrm(){
+  if(typeof CRM==='undefined'||typeof crmOn!=='function'||!crmOn())return null;
+  if(DCX.m&&DCX.v===CRM.ver)return DCX.m;
+  const m={},box=(day,n)=>{n=dcName(n);if(!n)return null;const d=m[day]||(m[day]={});return d[n]||(d[n]={con:new Set(),app:0})};
+  try{
+    const imp=new Set();CRM.e.forEach(e=>{if(e&&!e.del&&e.ty==='import')imp.add(+e.c)});
+    CRM.c.forEach(c=>{if(!c||c.del||!c.at||c.lg||(c.cad&&c.cad.k==='legacy')||imp.has(+c.id))return;const b=box(crmDay(c.at),c.by||c.owner);if(b)b.con.add(+c.id)});
+    CRM.e.forEach(e=>{if(!e||e.del||e.mig||!e.at||!CRM_EVL[e.ty]||e.ty==='note'||!crmGet(e.c))return;const b=box(crmDay(e.at),e.by);if(b)b.con.add(+e.c)});
+    CRM.t.forEach(t=>{if(!t||t.del||t.ty!=='appt'||t.s==='x'||!t.at||!crmGet(t.c))return;const b=box(crmDay(t.at),t.by||t.ow);if(b)b.app++});
+  }catch(e){}
+  DCX.v=CRM.ver;DCX.m=m;return m}
+/* {con, app} for one person (who) or the whole team (who = ''), plus what the Clients book alone shows */
+function dayCounts(day,who){
+  const w=who?dcName(who):'',act={};
+  (D.activity||[]).forEach(a=>{if(a.d!==day)return;const n=dcName(a.ag)||'Unassigned';if(w&&n!==w)return;const o=act[n]||(act[n]={con:0,app:0});o.con+=+a.con||0;o.app+=+a.app||0});
+  const cm=dcCrm(),cd=(cm&&cm[day])||{},names=new Set(Object.keys(act));Object.keys(cd).forEach(n=>{if(!w||n===w)names.add(n)});
+  let con=0,app=0,cc=0,ca=0;
+  names.forEach(n=>{const a=act[n]||{con:0,app:0},c=cd[n],k=c?c.con.size:0,p=c?c.app:0;con+=Math.max(a.con,k);app+=Math.max(a.app,p);cc+=k;ca+=p});
+  return{con,app,crmCon:cc,crmApp:ca}}
+/* a change in the Clients book (mine or a teammate's) refreshes the pinned Morning Recognition and its goal bars */
+(function(){if(typeof crmRefresh!=='function')return;const _r=crmRefresh;crmRefresh=function(){const v=_r.apply(this,arguments);clearTimeout(DCX.t);DCX.t=setTimeout(()=>{try{if(typeof MR!=='undefined'&&MR.ready)mrRefresh()}catch(e){}},400);return v}})();
+/*DCend*/
 function crmCallNext(){const q=crmQueue(crmScope());if(!q.length)return toast('Nobody is waiting for a call right now.',1);const c=q[0].c;cid=null;CRM.ui.tf='all';CRM.ui.tsel=c.id;CRM.ui.calling=c.id;openTab('Clients','Today');
  try{if(matchMedia('(pointer:coarse)').matches&&crmTel(c))location.href=crmTel(c)}catch(e){}toast('Next up: '+c.name+(c.phone?' '+c.phone:''),1)}
 /* ---------- detail pane (desktop Today) ---------- */
