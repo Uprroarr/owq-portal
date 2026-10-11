@@ -14,7 +14,7 @@ export const ELEVP = {x: 8, z: -7.05};   // elevator doors (same shaft on every 
 export const FLOORS = {
   o: {y: 0, name: 'SALES FLOOR', sub: 'Desks, TV, arcade, Sky Deck door'},
   r: {y: ROOFY, name: 'SKY PARK', sub: 'Home Run Derby, skybridge to the Skyport'},
-  g: {y: RANGEY, name: 'FIRING RANGE', sub: 'Target lanes and Laser Tag 1v1'},
+  g: {y: RANGEY, name: 'FIRING RANGE', sub: 'Target lanes and the 1v1 Showdown'},
 };
 export const LAYER_OUT = 2;   // outdoor things: not drawn in the floor reflection
 // Ring Run course for planes (the city keeps clear of every ring), and the runway heading east off the Sky Park
@@ -272,7 +272,7 @@ export class World {
     O.scene.fog.near = outside ? FOG.near : 1e5; O.scene.fog.far = outside ? FOG.far : 2e5;
     if (O.onZone) O.onZone(z);
   }
-  // the laser tag arena sets its own lighting (key light, reflections, sky light) before the camera goes in
+  // the 1v1 arena sets its own lighting (key light, reflections, sky light) before the camera goes in
   arena(key) { this.arenaKey = key || null; if (this.zone === 'a') { this.zone = ''; } }
   update(dt, t) {
     this.uni.uT.value = t % 1000;

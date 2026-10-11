@@ -40,7 +40,7 @@ for (const [name, make] of [['warehouse', T.warehouse], ['rooftop', T.rooftop], 
 { const AR = await import('/home/claude/owq-src/vo/src/arena.js'); globalThis.addEventListener = globalThis.addEventListener || (() => {});
   const M = T.warehouse(); M.C = M.boxes.filter(b => !b.nc && b.k !== 'ceil' && b.k !== 'oceil'); M.R = M.boxes.filter(b => !b.nb && !b.inv); M.nav = T.navGrid(M); M.def = {o: [0, -420, 0], id: 'warehouse'}; M.G = new THREE.Group();
   const R = Object.create(AR.Arena.prototype), hits = []; R.O = {t: 0, sfx() {}}; R.v = V(0, 0, 0); R.v2 = V(0, 0, 0); R.v3 = V(0, 0, 0);
-  R.tracer = () => {}; R.zap = () => {}; R.impact = () => {}; R.place = () => {}; R.muzzleOf = () => V(0, 0, 0); R.hurt = (d, hd) => hits.push([d, hd]);
+  R.tracer = () => {}; R.gunshot = () => {}; R.wflash = () => {}; R.impact = () => {}; R.place = () => {}; R.muzzleOf = () => V(0, 0, 0); R.hurt = (d, hd) => hits.push([d, hd]);
   const me = {p: V(-15.6, 0, 0), v: V(0, 0, 0), c: 0, al: 1, hp: 100};
   const mk = cfg => ({av: {root: new THREE.Object3D()}, nm: 'bot', P: {p: V(-7.6, 0, 0), v: V(0, 0, 0), g: 1, hh: 1.8}, yaw: -Math.PI / 2 + .6, pitch: 0, c: 0, hp: 100, al: 1, d: 0, deadT: 0, prot: 0, path: null, pi: 0, see: 0, seenT: -9, last: null, react: 0, aimE: 0, burst: 0, next: 0, strafe: 1, strafeT: 0, roamT: 0, cfg});
   const run = (b, sec) => { R.match = {M, me, ph: 'play', bot: b}; let t = 10; hits.length = 0; let first = -1; for (let i = 0; i < sec * 60; i++) { t += 1 / 60; R.botTick(b, 1 / 60, t); if (first < 0 && hits.length) first = t - 10; } return {n: hits.length, first}; };
@@ -53,4 +53,28 @@ for (const [name, make] of [['warehouse', T.warehouse], ['rooftop', T.rooftop], 
   ok(q.n === 0 && r.n > 0, 'sneaking up behind the bot it stays unaware; running footsteps give you away', {quiet: q, running: r});
   me.al = 0; const z = run(mk({react: .05, turn: 9, err: 0, fire: 0, burst: 5, head: .1, strafe: 1}), 2); me.al = 1;
   ok(z.n === 0, 'the bot holds fire while you are down', z); }
+// the rifle: spray pattern, spread, magazine and reserve, an empty gun
+{ const AR = await import('/home/claude/owq-src/vo/src/arena.js'), {patAt, GUN, PAT} = T;
+  ok(patAt(0)[0] === 0 && patAt(0)[1] === 0, 'the first shot of a spray goes exactly where you aim');
+  let climb = true; for (let i = 1; i < 10; i++) if (!(PAT[i][1] > PAT[i - 1][1])) climb = false;
+  ok(climb && PAT[9][1] > 5, 'the spray climbs for the first ten shots', PAT.slice(0, 10).map(p => p[1]));
+  ok(Math.abs(patAt(2.5)[1] - (PAT[2][1] + PAT[3][1]) / 2) < 1e-9, 'between shots the pattern blends smoothly (recovery)');
+  ok(PAT.length === GUN.mag && GUN.mag === 30 && GUN.res === 90, 'a 30-round magazine with 90 in reserve, one pattern step per round', {n: PAT.length, mag: GUN.mag, res: GUN.res});
+  const M = T.warehouse(); M.C = M.boxes.filter(b => !b.nc && b.k !== 'ceil'); M.R = M.boxes.filter(b => !b.nb && !b.inv); M.def = {o: [0, 0, 0], id: 'warehouse'}; M.G = new THREE.Group();
+  const R = Object.create(AR.Arena.prototype); R.O = {t: 0, sfx() {}, H: 800}; R.v = V(0, 0, 0); R.v2 = V(0, 0, 0); R.v3 = V(0, 0, 0); R.fov = 74;
+  ['tracer', 'gunshot', 'flash', 'shell', 'impact', 'blood', 'hitmark', 'hitSnd', 'send', 'dry', 'reloadSfx', 'wflash', 'puff', 'foot'].forEach(k => R[k] = () => {});
+  let dry = 0; R.dry = () => dry++; R.vmMuzzle = () => V(0, 1.5, 0);
+  const me = {p: V(-15, 0, 0), v: V(0, 0, 0), g: 1, hh: 1.8, c: 0, duck: 0, yaw: Math.PI / 2, pitch: 0, hp: 100, al: 1, ammo: GUN.mag, res: GUN.res, rl: 0, next: 0, burst: 0, prot: 0, sh: 0, hits: [], hn: 0, kick: 0, adsK: 0, lastShot: -9, bob: 0, step: 0, draw: 1};
+  R.match = {M, me, opp: {p: V(30, 0, 0), al: 0, c: 0}, ph: 'play', stats: {shots: 0, hits: 0, heads: 0}, bot: null}; R.keys = {};
+  const s0 = R.spread(); me.v.set(6.3, 0, 0); const sRun = R.spread(); me.v.set(0, 0, 0); me.g = 0; const sAir = R.spread(); me.g = 1; me.duck = 1; const sDuck = R.spread(); me.duck = 0; me.adsK = 1; const sAds = R.spread(); me.adsK = 0;
+  ok(s0 < .0015 && sRun > s0 * 15 && sAir > sRun && sDuck < s0 && sAds < s0, 'standing still is accurate; running and jumping throw shots off; crouching and aiming down the sight tighten it', {s0, sRun, sAir, sDuck, sAds});
+  let t = 1; for (let i = 0; i < 12; i++) { R.fire(t); t += GUN.rate; }
+  ok(me.ammo === GUN.mag - 12 && me.burst === 12 && R.match.stats.shots === 12, 'holding the trigger fires ten rounds a second and walks up the pattern', {ammo: me.ammo, burst: me.burst});
+  const b12 = me.burst; for (let i = 0; i < 30; i++) R.mine(1 / 60, t + .2 + i / 60);
+  ok(me.burst < b12 - 5, 'letting go of the trigger, the recoil settles back', {before: b12, after: me.burst});
+  R.reload(); ok(me.rl === GUN.reload, 'R starts a reload');
+  for (let i = 0; i < Math.ceil(GUN.reload * 60) + 2; i++) R.mine(1 / 60, t + 1 + i / 60);
+  ok(me.rl <= 0 && me.ammo === GUN.mag && me.res === GUN.res - 12, 'the reload fills the magazine from the reserve', {ammo: me.ammo, res: me.res});
+  me.ammo = 0; me.res = 0; const n0 = R.match.stats.shots; R.fire(t + 9); R.reload();
+  ok(R.match.stats.shots === n0 && dry === 1 && me.rl <= 0, 'with no ammo left the trigger only clicks', {shots: R.match.stats.shots, dry, rl: me.rl}); }
 console.log(`RESULT pass ${pass} fail ${fail}`);

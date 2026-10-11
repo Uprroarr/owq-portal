@@ -993,7 +993,7 @@ uniform sampler2D tRefl;uniform float uRK;varying vec4 vRU;varying vec3 vRW;`).r
     this.av.forEach(a=>{const v=!!see[this.floorOf(a)];a._zv=v;if(!v&&a.root.visible){a.root.visible=false;a._zh=1}else if(v&&a._zh){a.root.visible=true;a._zh=0}if(a.drv&&a.drv.car)a.drv.car.visible=v});
     const st=this.room.static;if(st&&this._stz!==z){this._stz=z;const show=z==='o'||z==='d';st.forEach(m=>m.visible=show);this.room.group.visible=z!=='a'}
     const fm=this.fly&&this.fly.me&&this.fly.me.fly;
-    this.ui.place(fm&&!fm.gr&&z!=='o'?'IN THE AIR':z==='r'&&this.cam.position.x>15?'SKYPORT':{o:'SALES FLOOR',d:'SKY DECK',r:'SKY PARK',g:'FIRING RANGE',a:'LASER TAG ARENA'}[z]);
+    this.ui.place(fm&&!fm.gr&&z!=='o'?'IN THE AIR':z==='r'&&this.cam.position.x>15?'SKYPORT':{o:'SALES FLOOR',d:'SKY DECK',r:'SKY PARK',g:'FIRING RANGE',a:'1V1 SHOWDOWN'}[z]);
     this.sys.forEach(S0=>S0.zone&&S0.zone(z))}
   // other systems (Sky Park, range, planes) answer questions from walking
   hook(name,...args){for(const S0 of this.sys){if(S0[name]){const r=S0[name](...args);if(r)return r}}return null}

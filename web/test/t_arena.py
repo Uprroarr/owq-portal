@@ -1,4 +1,4 @@
-"""Laser Tag 1v1: the terminal on the range, the menu, a practice match against the bot on each map, aim, hits, tags."""
+"""1v1 Showdown: the terminal on the range, the menu, a practice match against the bot on each map, aim, hits, tags."""
 import sys, os, math
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import v7
@@ -23,11 +23,11 @@ try:
         ok(A.evaluate("VO3.dbg().meAv.wk&&VO3.dbg().meAv.wk.f")=='g', 'the elevator takes you to the Firing Range')
         A.evaluate("(()=>{const w=VO3.dbg().meAv.wk;w.x=-8.1;w.z=-5.7})()"); step(4)
         pr = A.evaluate("(()=>{const p=VO3.dbg().walk.prompt();return p&&p.t})()")
-        ok(pr == 'LASER TAG 1V1', 'standing at the terminal offers LASER TAG 1V1', pr)
+        ok(pr == '1V1 SHOWDOWN', 'standing at the terminal offers the 1V1 SHOWDOWN', pr)
         A.evaluate("VO3.dbg().walk.use()"); step(2)
-        ok(A.evaluate("document.querySelector('.vo3arov').classList.contains('on')"), 'E opens the laser tag menu')
+        ok(A.evaluate("document.querySelector('.vo3arov').classList.contains('on')"), 'E opens the 1v1 menu')
         txt = A.evaluate("document.querySelector('.vo3arp').innerText")
-        ok('NEON WAREHOUSE' in txt and 'ROOFTOP' in txt and 'OFFICE BLITZ' in txt and 'PRACTICE VS BOT' in txt and 'SENSITIVITY' in txt, 'the menu has three maps, bot practice and aim settings', txt[:300])
+        ok('WAREHOUSE' in txt and 'ROOFTOP' in txt and 'OFFICE BLITZ' in txt and 'PRACTICE VS BOT' in txt and 'SENSITIVITY' in txt, 'the menu has three maps, bot practice and aim settings', txt[:300])
         if SHOTS: v7.shot(A, 'arena_menu', 800)
         # sensitivity on the CS:GO scale
         A.evaluate("(()=>{const r=document.querySelector('[data-n=sens]');r.value='2.5';r.dispatchEvent(new Event('change'))})()")

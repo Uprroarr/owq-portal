@@ -1,6 +1,6 @@
 /*WRLDstart: walking, the Sky Deck circuit, the Sky Park ballpark (Home Run Derby), the Skyport (runway, hangar, landings),
-  the Firing Range and its Laser Tag 1v1 arena.
-  Everything rides on Sales Floor presence: wk = walking, fl = flying, hr = derby turn / queue, rg = range lane; laser tag
+  the Firing Range and its 1v1 Showdown arena.
+  Everything rides on Sales Floor presence: wk = walking, fl = flying, hr = derby turn / queue, rg = range lane; 1v1
   matchmaking uses the arcade queue (aq) and each match runs in its own small room (arcNet).
   Team bests live in the shared 'arc' collection next to the desk arcade scores (games 'derby', 'longball', 'range', 'rings',
   'landing', 'lasertag'). */

@@ -1,4 +1,4 @@
-"""Laser Tag 1v1 between two people: Cole challenges John, John accepts from the popup, both land in the same arena,
+"""1v1 Showdown between two people: Cole challenges John, John accepts from the popup, both land in the same arena,
 Cole's headshot tags John on John's screen and scores for Cole on both, and John leaving gives Cole the win."""
 import sys, os, time, json
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -72,7 +72,7 @@ try:
         ok(abs(wp['dx']) + abs(wp['dy']) + abs(wp['dz']) < .3, "and he is drawn where he really is", wp)
         # Cole takes the headshot
         A.evaluate("""(()=>{const R=VO3.dbg().arena,M=R.match,me=M.me,o=M.opp;R.noSpread=1;o.prot=0;const e=R.eye(new me.p.constructor());const dx=o.p.x-e.x,dz=o.p.z-e.z,dy=o.p.y+1.5-e.y;me.yaw=Math.atan2(dx,dz);me.pitch=Math.atan2(dy,Math.hypot(dx,dz));me.next=0;R.fire(VO3.dbg().t)})()""")
-        ok(A.evaluate("VO3.dbg().arena.match.stats.heads") == 1, "Cole's laser hits John's head")
+        ok(A.evaluate("VO3.dbg().arena.match.stats.heads") == 1, "Cole's shot hits John's head")
         A.wait_for_timeout(600)
         B.bring_to_front(); tagged = until(B, "VO3.dbg().arena.match.me.d===1", 10)
         ok(tagged, 'John is tagged on his own screen', B.evaluate("(()=>{const m=VO3.dbg().arena.match.me;return [m.hp,m.d,m.al]})()"))
