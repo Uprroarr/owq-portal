@@ -47,3 +47,8 @@ The deployed builds on `main` hold the full compiled code. `index.html` is live 
 - Agency Performance > Time Report (`trkPage`, `trkReport`): one agent's week (owner: anyone; agents: themselves), sessions cut at midnight, hours as the union of sessions (two devices counted once), long sessions, sessions with no clock-out counted to their last heartbeat, hours logged by hand, and the Leaderboard's figure side by side.
 - `shEnd(s)`: a shift with no clock-out counts to now only while it is live, otherwise to its last heartbeat (Time Clock, Live Pulse). The Agents scorecard column reads "Hours (all time)".
 - Test: `web/test/t_trk.py`.
+
+## v110 portfolio money counts toward revenue
+- `agents/pfrev/patch_pfrev.py` (on top of v109 in `build.sh`): `pfInv()` is the owner's money invested (the Portfolio's cost basis: what was paid for what is held, fees included). `S()` adds it to `rev` (Total Income) and so to `net`, on the owner's screen only (`pfOwnerNow()`; the portfolio is the owner's private document), as `s.pv`.
+- Business Performance: Summary (Total Income names the invested part; Income vs. Expenses includes it), Income (a Portfolio Invested card and donut slice), Statement (a Portfolio Invested column; `pfInvMonths()` gives each month's change with the portfolio's average-cost book keeping, so the months add up to the cost basis). Months with only portfolio buys or sells show in the money views (`pfMs`), not in the agency charts. The Command Deck, ticker and assistant use the same totals. Lead ROI (health score, brief) stays on the agency's own income.
+- Test: `web/test/t_pfrev.py`.
