@@ -1,0 +1,389 @@
+{
+ "src": "https://john-montini-sales-guide.swiftdove5.chatgpt.site/",
+ "groups": [
+  [
+   "opening",
+   "Opening & rapport"
+  ],
+  [
+   "needs",
+   "Coverage needs"
+  ],
+  [
+   "health",
+   "Health & Social Security questions"
+  ],
+  [
+   "options",
+   "Budget & options"
+  ],
+  [
+   "finish",
+   "Application & follow-up"
+  ]
+ ],
+ "items": [
+  [
+   "opening",
+   "Introduce yourself",
+   "Hi, [CLIENT NAME], my name is John Montini. I’m an independent broker following up on the final expense information request you filled out not too long ago.",
+   "Use the information-request wording only when supported by the lead record."
+  ],
+  [
+   "opening",
+   "Confirm the information on your lead",
+   "",
+   "",
+   "initial"
+  ],
+  [
+   "opening",
+   "Explain your role",
+   "It may have been a while ago. Sometimes there’s a delay between an information request and our follow-up. If you don’t remember requesting it, I understand.\n\nThe good news, [CLIENT NAME], is that I work with 30 A+ rated insurance providers, so I can compare their options to find the lowest available rate for the coverage you need.\n\nMy job here today is to walk you through some options or, if you already have coverage, see whether I can beat your current rate for comparable coverage, and close out your inquiry from there. Would you be open to a quick comparison?",
+   "Use the provider count and rating claim only if accurate."
+  ],
+  [
+   "opening",
+   "Confirm the remaining information",
+   "",
+   "",
+   "remaining"
+  ],
+  [
+   "opening",
+   "Ask about military service",
+   "Which branch did you serve in? Thank you for your service."
+  ],
+  [
+   "opening",
+   "Confirm city and state",
+   "And you’re currently living in [CITY], [STATE]. Is that correct?"
+  ],
+  [
+   "opening",
+   "Build rapport",
+   "What do you enjoy doing these days? Any favorite activities or hobbies?"
+  ],
+  [
+   "opening",
+   "Provide your contact information",
+   "Please grab a pen and paper. I’ll send my business card so you have my information.\n\nMy name is John Montini, my phone number is [PHONE], and my National Producer Number is [VERIFIED NPN]. Keep that information so you know who you’re speaking with and how to reach me."
+  ],
+  [
+   "needs",
+   "Confirm who needs coverage",
+   "Are we looking at coverage for just you, or for you and your spouse?"
+  ],
+  [
+   "needs",
+   "Find the reason for the inquiry",
+   "What would you most like the coverage to accomplish — take care of final expenses, leave money behind for your family, or both?"
+  ],
+  [
+   "needs",
+   "Discuss final expenses",
+   "Are you considering burial or cremation? Have you made any arrangements or set money aside?"
+  ],
+  [
+   "needs",
+   "Review existing coverage",
+   "Do you currently have any life insurance — private, employer, or veteran-related coverage?\n\n>> **If they have coverage**\nAre you hoping to increase your coverage, review the cost, or make sure what you have meets your needs?\n\n>> **If they have no coverage**\nOkay, let’s work through the available options together."
+  ],
+  [
+   "health",
+   "Introduce the health review",
+   "Before we review your options, I’ll ask a few health questions to help identify which coverage may be available to you. Have you ever had any of the following?"
+  ],
+  [
+   "health",
+   "Ask about heart attack",
+   "Heart attack?"
+  ],
+  [
+   "health",
+   "Ask about stroke",
+   "Stroke?"
+  ],
+  [
+   "health",
+   "Ask about cancer",
+   "Cancer?"
+  ],
+  [
+   "health",
+   "Ask about oxygen use",
+   "Oxygen use?"
+  ],
+  [
+   "health",
+   "Ask about kidney dialysis",
+   "Kidney dialysis?"
+  ],
+  [
+   "health",
+   "Follow up on health answers",
+   "When was that diagnosed, what treatment did you receive, and what medications do you currently take?",
+   "Ask when applicable."
+  ],
+  [
+   "health",
+   "Complete carrier health questions",
+   "",
+   "Review the appropriate carrier application, follow its current requirements, and complete required questions before presenting options."
+  ],
+  [
+   "health",
+   "Social Security verification and objections",
+   "I understand, [CLIENT NAME]. Your Social Security number is sensitive information. What concerns you most about providing it?",
+   "",
+   "ssn"
+  ],
+  [
+   "options",
+   "Discuss needs and budget",
+   "Do you own or rent your home?\n\nIf you’re comfortable sharing, what is your monthly income, and roughly how much remains after your regular bills?\n\nWhat monthly payment would feel comfortable over the long term?\n\nI’ll use your coverage goal and budget to prepare three options. We can adjust the amounts if none feels right."
+  ],
+  [
+   "options",
+   "Present the Maxout option",
+   "This option provides the largest benefit among these choices. It would help with final expenses and leave additional money for your family.",
+   "Explain the benefit, premium, waiting period and limitations."
+  ],
+  [
+   "options",
+   "Present the Full Coverage option",
+   "This option is built around the expenses and family goals we discussed, while keeping your budget in mind.",
+   "Explain the benefit, premium, waiting period and limitations."
+  ],
+  [
+   "options",
+   "Present the Partial Coverage option",
+   "This option provides a smaller benefit with a lower monthly payment. Let’s review what it would cover and what expenses your family might still need to handle another way.",
+   "Explain the benefit, premium, waiting period and limitations."
+  ],
+  [
+   "options",
+   "Give your recommendation",
+   "May I give you my recommendation?\n\nBased on the goals and budget you shared, I recommend [OPTION] because [SPECIFIC REASON]."
+  ],
+  [
+   "options",
+   "Ask for their decision",
+   "Which option feels like the best fit, or would you like to adjust the coverage amount?"
+  ],
+  [
+   "finish",
+   "Complete the application",
+   "Let’s complete the application and name the people who should receive the benefit."
+  ],
+  [
+   "finish",
+   "Confirm beneficiaries",
+   "Who would you like as your primary beneficiary? Who should receive the benefit if your primary beneficiary cannot?",
+   "Confirm beneficiary information and allocations in the application."
+  ],
+  [
+   "finish",
+   "Banking and payment authorization",
+   "The next part covers how you’d pay the premium. I’ll explain the carrier’s payment options, the amount and timing, and what you’re authorizing before you provide any payment information. What questions would you like to go over?",
+   "Use the carrier’s approved payment process; don’t collect banking details in this guide."
+  ],
+  [
+   "finish",
+   "Complete required signatures",
+   "",
+   "Review the application with the client and complete required signatures."
+  ],
+  [
+   "finish",
+   "Review coverage and payment",
+   "Please write down your coverage amount, monthly premium, draft date, and my contact information.\n\nDoes this payment fit comfortably within your budget? Does the draft date work with when your income arrives?"
+  ],
+  [
+   "finish",
+   "Address remaining questions",
+   "What questions or concerns should we address before submitting the application?"
+  ],
+  [
+   "finish",
+   "Confirm authorization and submit",
+   "Are you comfortable proceeding with this application?",
+   "After authorization, submit for the carrier’s review and final approval."
+  ],
+  [
+   "finish",
+   "Have the client save your contact",
+   "Please save my contact information so you can reach me with questions or if your needs change."
+  ],
+  [
+   "finish",
+   "Arrange follow-up",
+   "When would you like me to check in?"
+  ],
+  [
+   "finish",
+   "Discuss beneficiary follow-up",
+   "Please let your beneficiaries know about the policy. With your permission, we can arrange a conversation to explain how it works and share my contact information."
+  ]
+ ],
+ "objections": {
+  "opening": [
+   [
+    "never",
+    "I never requested this",
+    "I understand, [CLIENT NAME]. You may not remember a request, and I don’t want to assume the information is correct. Would you like a brief explanation of what I can help with, or would you prefer I end the call?",
+    "If they decline, end the conversation."
+   ],
+   [
+    "interest",
+    "Not interested",
+    "I hear you. If you’re open to answering, is that because you already have coverage, or because you’re not looking into insurance right now?",
+    "If they don’t want to discuss it, respect that and end the call."
+   ],
+   [
+    "busy",
+    "I’m busy",
+    "Of course, I don’t want to interrupt your day. Would you prefer to arrange a better time, or leave it here?",
+    "Only arrange a callback if they want one."
+   ],
+   [
+    "stop",
+    "Stop calling / remove me",
+    "I understand. I’ll record your request not to be contacted. Thank you for your time.",
+    "End the call and follow your normal do-not-call process."
+   ]
+  ],
+  "coverage": [
+   [
+    "existing",
+    "I already have insurance",
+    "That makes sense. Are you satisfied with the coverage and payment you have, or would you like to compare it with other options?",
+    "If comparing, review the actual policy terms before recommending a change."
+   ],
+   [
+    "va",
+    "The VA covers me",
+    "I hear you. What coverage or benefits do you currently have through the VA? If you’d like, we can review the details together before deciding whether any additional coverage would be useful.",
+    "Use their actual benefit or policy documents; don’t assume a gap in coverage."
+   ]
+  ],
+  "health": [
+   [
+    "medical",
+    "Why do you need my medical information?",
+    "That’s a fair question. The carrier’s application includes health questions to evaluate which coverage and pricing it may offer. I can explain the questions and privacy notice before we continue. What part would you like me to clarify?",
+    "Use the carrier’s required questions and authorization process."
+   ]
+  ],
+  "ssn": [
+   [
+    "ssn0",
+    "Why do you need my Social Security number?",
+    "That’s a reasonable question. This carrier requests it to verify identity and match the application to the correct person. I can show you its requirements and privacy notice before we continue.\n\n**If an MIB check applies:** With your authorization, the carrier may use it to help match your MIB record as part of underwriting. The carrier considers that information along with the rest of your application.",
+    "Use this explanation only where it matches the carrier’s process. Do not claim an SSN is always needed for an initial quote."
+   ],
+   [
+    "ssn1",
+    "I won’t give my Social Security number over the phone",
+    "I understand, [CLIENT NAME]. Let’s check whether this carrier lets you enter it directly through its secure application.\n\n**Another approach:** You can verify my license and call the carrier using an independently verified number before continuing. Would you prefer to do that first?",
+    "Only offer submission methods the carrier supports. Never request an SSN by ordinary text or email."
+   ],
+   [
+    "ssn2",
+    "I’m worried about identity theft",
+    "That’s understandable. We can review who receives the information and the carrier’s privacy notice, and you can independently verify the company before sharing anything.\n\n**Follow-up:** Is your concern about verifying me, the insurance company, or the way the information is being submitted?",
+    "Don’t promise that any system is risk-free. Address the specific concern using verified carrier information."
+   ],
+   [
+    "ssn3",
+    "Why does it matter for a future claim?",
+    "It helps identify the correct insured person and policy. When a claim is made, the carrier also verifies the death using its required claim documentation, such as a death certificate.\n\n**Follow-up:** Would you like me to explain the claims process and what your beneficiaries would need?",
+    "An SSN alone does not establish death or guarantee a claim payment."
+   ],
+   [
+    "ssn4",
+    "I still don’t want to provide it",
+    "I respect that. Let’s confirm what we can review without it and what this carrier requires to complete an application.\n\n**Follow-up:** Would you like to continue discussing general options, or pause here?",
+    "Respect their decision. Do not invent a requirement or submit without required consent."
+   ]
+  ],
+  "budget": [
+   [
+    "cost",
+    "It costs too much",
+    "I understand. Does the payment exceed what you’re comfortable spending, or would you like to better understand what the coverage provides? We can look at a smaller benefit if that would help.",
+    "Explain what reduced coverage would and would not cover."
+   ],
+   [
+    "afford",
+    "I can’t afford it",
+    "Thank you for telling me. I don’t want you taking on a payment that strains your budget. Would you like to see whether a lower-cost option fits, or pause here?",
+    "If no option is affordable, pause the application."
+   ]
+  ],
+  "decision": [
+   [
+    "think",
+    "I need to think about it",
+    "I hear you, [CLIENT NAME]. Let’s pinpoint what’s holding you back. Is it the monthly payment, the coverage amount, or a question about how the policy works?",
+    "Give them room to decide."
+   ],
+   [
+    "spouse",
+    "I need to talk to my spouse",
+    "Absolutely. What questions do you think your spouse would want answered? If you both want, we can arrange a conversation together.",
+    "Don’t proceed without the client’s decision and required authorizations."
+   ],
+   [
+    "send",
+    "Send me information",
+    "Certainly. What would you like included — the benefit amount, premium, policy terms, or all of those? What’s the best way to send the available materials?",
+    "Send approved materials through your normal process."
+   ]
+  ],
+  "banking": [
+   [
+    "bankphone",
+    "I won’t give banking details over the phone",
+    "I understand, [CLIENT NAME]. Would you prefer to enter the information yourself through the carrier’s secure application, if it offers that option?\n\n**Another approach:** We can check whether the carrier supports a verified payment line or another approved payment method. Which would you be most comfortable with?",
+    "Confirm available options with this carrier before promising a link, payment line, card payment or mailed payment."
+   ],
+   [
+    "bankwhy",
+    "Why do you need my account and routing numbers?",
+    "That’s a fair question. If you choose bank draft, the carrier uses the account and routing numbers to set up the premium payment you authorize. Let’s review the amount, timing and authorization together.\n\n**Follow-up:** Would you like to review other payment options the carrier accepts?",
+    "Explain exactly what the authorization permits. Don’t describe the details as required for every payment method."
+   ],
+   [
+    "banktrust",
+    "How do I know this is legitimate?",
+    "You should feel comfortable verifying it. You can look up my producer license and contact the insurance company using a number you find independently on its official website.\n\n**Another approach:** Let’s pause the payment step while you verify the company and application process. What would help you feel comfortable?",
+    "Don’t use pressure or claim that verification is unnecessary."
+   ],
+   [
+    "bankcharge",
+    "Will money come out today? / I’m worried about the draft",
+    "Let’s check this application’s payment authorization before you agree. I’ll show you the amount, when the first payment may be taken, and how recurring payments work.\n\n**Follow-up:** Does that timing work for you, or should we review the carrier’s available scheduling options?",
+    "Do not promise that no charge will occur today unless the actual carrier terms confirm it."
+   ],
+   [
+    "bankdecline",
+    "I’m still not comfortable sharing it",
+    "I respect that. We can pause here and confirm whether another approved payment method would work for you. Would you like to explore that, or stop the application for now?",
+    "Do not proceed with a draft without the required authorization."
+   ]
+  ]
+ },
+ "thinkEarly": [
+  "thinkEarly",
+  "I need to think about it",
+  "[CLIENT NAME], I’d recommend going through a few basic questions first so I can give you some preliminary numbers to think about. That way, you’ll have a clearer idea of the coverage and cost. Let’s start with [NEXT RELEVANT QUESTION].",
+  "Before the application and quotes. Preliminary numbers are not a final offer."
+ ],
+ "thinkLate": [
+  "thinkLate",
+  "I need to think about it",
+  "I hear you, [CLIENT NAME]. Let’s pinpoint what’s holding you back. Is it the monthly payment, the coverage amount, or a question about how the policy works?",
+  "After quotes and application submission."
+ ]
+}
