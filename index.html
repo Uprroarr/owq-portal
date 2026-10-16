@@ -1,4 +1,4 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#0b0b10"><meta name="color-scheme" content="dark"><meta name="robots" content="noindex,nofollow"><link rel="manifest" href="manifest.webmanifest"><link rel="icon" href="icon-192.png"><link rel="apple-touch-icon" href="icon-192.png"><title>Only Winners &amp; Quitters | Command Station II</title><script>window.OWQ_FIREBASE={"apiKey": "AIzaSyCEUwZQsV04SgNzc-MzsiAO9cyMbLM1RuU", "authDomain": "owaq-946ee.firebaseapp.com", "databaseURL": "https://owaq-946ee-default-rtdb.firebaseio.com", "projectId": "owaq-946ee", "storageBucket": "owaq-946ee.firebasestorage.app", "messagingSenderId": "884987875546", "appId": "1:884987875546:web:102d9fc0ab0aceaa3315e3"};window.OWQ_WEB=1;window.OWQ_BUILD="2026-10-15 18:56 UTC";</script><script>
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#0b0b10"><meta name="color-scheme" content="dark"><meta name="robots" content="noindex,nofollow"><link rel="manifest" href="manifest.webmanifest"><link rel="icon" href="icon-192.png"><link rel="apple-touch-icon" href="icon-192.png"><title>Only Winners &amp; Quitters | Command Station II</title><script>window.OWQ_FIREBASE={"apiKey": "AIzaSyCEUwZQsV04SgNzc-MzsiAO9cyMbLM1RuU", "authDomain": "owaq-946ee.firebaseapp.com", "databaseURL": "https://owaq-946ee-default-rtdb.firebaseio.com", "projectId": "owaq-946ee", "storageBucket": "owaq-946ee.firebasestorage.app", "messagingSenderId": "884987875546", "appId": "1:884987875546:web:102d9fc0ab0aceaa3315e3"};window.OWQ_WEB=1;window.OWQ_BUILD="2026-10-16 16:45 UTC";</script><script>
 /*OWQCLOUDstart*/
 /* OWQ Cloud: runs the portal as its own website. It provides the same `claude.use()` surface the portal was written for
    (db, room, user, downloads), backed by Firebase: Firestore = shared documents, Realtime Database = live room (presence,
@@ -12718,7 +12718,7 @@ var ETIERS=[{id:'std',n:'Standard',p:400,o:{common:55,uncommon:28,rare:12,epic:4
  {id:'leg',n:'Legendary',p:6000,o:{legendary:88,mythic:12},tc:'#ffb020',g:'Legendary or better, guaranteed'}];
 /* Battle Pass bonus track: planes and blasters you unlock with XP (they are in crates too) */
 var BPX=[[5,'J',2],[10,'F',1],[15,'J',1],[22,'F',3],[28,'J',7],[35,'F',4],[42,'J',6],[50,'F',6],[60,'J',9],[70,'F',8],[85,'J',10],[95,'F',10]];
-var EDUP=.35,ESTART=500;
+var EDUP=.35,ESTART=500,EOWN=10000;
 /* ---------- catalog ---------- */
 function ecoCos(){try{return VO3&&VO3.COS?VO3.COS:{}}catch(e){return{}}}
 function ecoCrem(){try{return VO3&&VO3.CREM?VO3.CREM:[]}catch(e){return[]}}
@@ -12743,7 +12743,7 @@ function ecoOwned(k,v){if(ecoHas(k,v))return true;try{const A=ecoBPA();return k=
 function ecoEarn(n0){const n=bpName(n0),P=[],add=(k,l,rate,cnt,cr)=>P.push({k,l,rate,n:cnt,cr:Math.max(0,Math.round(cr))});
  const day={};(D.activity||[]).forEach(a=>{if(a.ag!==n)return;const o=day[a.d]||(day[a.d]={h:0,c:0,a:0});o.h+=+a.h||0;o.c+=+a.con||0;o.a+=+a.app||0});
  let hrs=0,con=0,app=0;Object.values(day).forEach(o=>{hrs+=Math.min(12,o.h);con+=Math.min(300,o.c);app+=Math.min(30,o.a)});
- add('s','Welcome bonus','one time',1,ESTART);add('h','Hours on the clock','8 per hour',Math.round(hrs*10)/10,hrs*8);add('c','Contacts','1 each',con,con);add('a','Appointments','8 each',app,app*8);
+ add('s','Welcome bonus','one time',1,ESTART);if(n==='Cole Leckey'||n==='Agency Owner')add('o','Owner starting credits','one time',1,EOWN);add('h','Hours on the clock','8 per hour',Math.round(hrs*10)/10,hrs*8);add('c','Contacts','1 each',con,con);add('a','Appointments','8 each',app,app*8);
  const ps=(D.policies||[]).filter(p=>p.ag===n),iss=ps.filter(p=>p.st==='Issued'||p.st==='Paid');
  add('p','Policies written','40 each',ps.length,ps.length*40);add('i','Issued or paid','60 each + 1 per $50 AP',iss.length,iss.length*60+iss.reduce((s,p)=>s+(+p.ap||0),0)/50);
  let ck=0;try{const dd={};(typeof ckAll==='function'?ckAll():D.checkins||[]).forEach(c=>{if(c.ag===n)dd[c.d]=1});ck=Object.keys(dd).length}catch(e){}add('k','Daily check-ins','25 each',ck,ck*25);
