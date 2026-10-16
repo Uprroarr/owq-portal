@@ -59,3 +59,7 @@ The deployed builds on `main` hold the full compiled code. `index.html` is live 
 - Note it (per step): branch, who needs coverage, goal, final expense plans, current coverage, health answers, home and comfortable payment, the three options (benefit and monthly), recommendation (fills [OPTION]) and choice, beneficiary, draft date. Save notes / outcomes write to the record (DOB, email, city, state, info.goal, info.house, info.budget, info.health, info.bname/brel, `ap` = chosen monthly x 12, product Final Expense when empty, Veteran and Spouse tags) and log through the CRM: Application submitted (call event + Log policy), Appointment set / Call back (note + Schedule), Interested, Not interested, Do not contact. Undo is offered.
 - A Social Security number, bank details and income are never typed into the portal (the secure steps say so and have no inputs). The call in progress stays in the browser tab (`sessionStorage owq_gs`) until New client / Reset. Print / Save as PDF prints the whole script for the client with the objection answers used and the call notes.
 - Tests: `web/test/t_gs.py`; pictures: `web/test/dbg_gs.py`.
+
+## v112 owner starting credits
+- `agents/ecost/patch_ecost.py` (on top of v111 in `build.sh`): `EOWN=10000` "Owner starting credits" (one time) in `ecoEarn` for the owner's wallet. Agency Owner and Cole Leckey share that wallet (`bpName`), so it counts once. Credits only: Battle Pass XP (`bpXP`), tiers and unlocks are unchanged.
+- Test: `web/test/t_ecost.py`.
