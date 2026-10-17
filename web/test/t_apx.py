@@ -73,6 +73,15 @@ try:
         ok(A.evaluate("D.activity.length") == n0 - 1, 'Delete from the edit form removes the entry (after confirming)')
         A.wait_for_timeout(1500)
         ok(A.evaluate("Object.values(SYN.sent.policies||{}).some(x=>String(x).includes('Edited Name'))"), 'edits go out to the team like any change')
+        # ---- submitted but not issued, per agent
+        exp = A.evaluate("(()=>{const n='Nate Johnson';return sum(D.policies.filter(p=>p.ag===n&&p.st==='Submitted'),x=>x.ap)})()")
+        tab(A, 'Agents')
+        row = A.evaluate("(()=>{const h=[...document.querySelectorAll('#main table')][0];const hd=[...h.querySelectorAll('tr:first-child th')].map(x=>x.innerText.toUpperCase());const r=[...h.querySelectorAll('tr')].find(x=>x.innerText.startsWith('Nate Johnson'));return {hd,cells:r?[...r.children].map(c=>c.innerText):[]}})()")
+        ix = row['hd'].index('SUBMITTED, NOT ISSUED') if 'SUBMITTED, NOT ISSUED' in row['hd'] else -1
+        ok(ix > 0 and row['cells'][ix].startswith(A.evaluate("v=>$(v)", exp)), 'the Agents scorecard shows each agent\'s submitted premium that is not issued', [row, exp])
+        A.evaluate("(()=>{AGD='Nate Johnson';go()})()"); A.wait_for_timeout(1600)
+        ok('SUBMITTED, NOT ISSUED' in A.evaluate(MAIN).upper() and A.evaluate("v=>$(v)", exp) in A.evaluate(MAIN), "and Nate's own report has it as a card", exp)
+        A.evaluate("AGD=null")
         # ---- the Command Deck
         A.evaluate("openTab('Command Deck')"); A.wait_for_timeout(800)
         pk = A.evaluate("[...document.querySelectorAll('.apx-peeks .apx-pkh h4')].map(h=>h.innerText.toUpperCase())")

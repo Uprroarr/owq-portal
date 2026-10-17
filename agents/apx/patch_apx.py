@@ -49,5 +49,11 @@ rep("<td><button class=x title=\"Delete entry\" onclick=\"del('expenses',${i})\"
     "<td class=apx-ra>${apxEB('expenses',i)}<button class=x title=\"Delete entry\" onclick=\"ask('Delete this expense?',()=>del('expenses',${i}))\">&times;</button></td></tr>")
 rep("<td><button class=x title=\"Delete entry\" onclick=\"del('${k}',${i})\">&times;</button></tr>",
     "<td class=apx-ra>${typeof APX_EF!=='undefined'&&APX_EF[k]?apxEB(k,i):''}<button class=x title=\"Delete entry\" onclick=\"del('${k}',${i})\">&times;</button></tr>")
+# each agent's submitted premium that is not issued yet: scorecard column, agent report card, Overview top producers
+rep("goal:g?g.goal:0}}).sort((a,b)=>b.iap-a.iap)}", "goal:g?g.goal:0,pnd:sum(ps.filter(x=>x.st==='Submitted'),x=>x.ap),pn:ps.filter(x=>x.st==='Submitted').length}}).sort((a,b)=>b.iap-a.iap)}")
+rep("<th class=n>Issued<th class=n>Policies<th class=n>Placement", "<th class=n>Issued<th class=n>Submitted, not issued<th class=n>Policies<th class=n>Placement")
+rep("<td class=n>${$(r.iap)}<td class=n>${r.ni}/${r.n}", "<td class=n>${$(r.iap)}<td class=n>${r.pnd?$(r.pnd)+' <small class=mut>('+r.pn+')</small>':'-'}<td class=n>${r.ni}/${r.n}")
+rep("<div class=g>${kpi('Issued Premium',cu(iap,'$'),is.length+' policies')}${kpi('Commission Earned'",
+    "<div class=g>${kpi('Issued Premium',cu(iap,'$'),is.length+' policies')}${kpi('Submitted, Not Issued',cu(sum(ps.filter(p=>p.st==='Submitted'),x=>x.ap),'$'),ps.filter(p=>p.st==='Submitted').length+' waiting &middot; '+$(pend)+' commission')}${kpi('Commission Earned'")
 open(OUT, 'w', encoding='utf8').write(s)
 print('wrote', OUT, len(s))
