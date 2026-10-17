@@ -63,3 +63,9 @@ The deployed builds on `main` hold the full compiled code. `index.html` is live 
 ## v112 owner starting credits
 - `agents/ecost/patch_ecost.py` (on top of v111 in `build.sh`): `EOWN=10000` "Owner starting credits" (one time) in `ecoEarn` for the owner's wallet. Agency Owner and Cole Leckey share that wallet (`bpName`), so it counts once. Credits only: Battle Pass XP (`bpXP`), tiers and unlocks are unchanged.
 - Test: `web/test/t_ecost.py`.
+
+## v113 guest passes (website)
+- `web/src/guests.json` lists passes (`id -> {n: name, exp: end date}`); `build_web.py` puts them in the page as `OWQ_GUESTS` and appends `web/src/guest.js` after the app (like `vfix.js`).
+- `owqcloud.js`: a `?guest=<id>` link never starts Firebase (every `claude.use()` is "not available here", so the portal runs in local mode and no shared data can load), gives the page its own storage space (`localStorage`/`sessionStorage` keys prefixed `owqguest:`, so it never mixes with a member's saved data on the same browser) and shows a GUEST PASS gate. An ended pass says so and clears that space; an unknown id says the link is not valid. The normal link is unchanged.
+- `guest.js`: first visit loads the built-in sample data (`demo()`: the guest plus two sample teammates, 9 sample clients owned by the guest, 3 months of policies, activity, income and expenses); Enter plays the normal cinematic login and signs in as the guest (no code; whatever profile is picked, it is the guest); the sidebar status line reads GUEST PREVIEW · SAMPLE DATA; when the pass ends the open page returns to the gate.
+- Test: `web/test/t_guest.py`.

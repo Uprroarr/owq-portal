@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Build the stand-alone website version of the portal (GitHub Pages + Firebase).
+"""Build the stand-alone website version of the portal (GitHub Pages + Firebase). Guest passes come from src/guests.json.
 env: OWQ_BASE  portal build to convert (default $SP/v80-final.html)
      OWQ_SITE  output folder (default $SP/web/site)
      OWQ_CFG   Firebase web config JSON file (default $SP/web/firebase-config.json; missing -> the page shows 'setup pending')
@@ -39,7 +39,7 @@ if POPOUT: rep('D.sim=0;lockView();chInit();mrInit();synInit();vcInit();','D.sim
 if POPOUT: rep('function lobbyStart(){if(ONLINE||LB.off)return;','function lobbyStart(){if(ONLINE||LB.off||window.OWQ_FLOOR)return;')
 
 # 2b. website-only portal fixes, appended after the app scripts (they wrap app functions)
-for fx in ('vfix.js',)+(('popout.js',) if POPOUT else ()):
+for fx in ('vfix.js','guest.js')+(('popout.js',) if POPOUT else ()):
     code=open(W+'/src/'+fx,encoding='utf-8').read(); assert all(ord(c)<128 for c in code),fx+' must be ASCII'
     s=s+'\n<script>\n'+code+'\n</script>'
 
@@ -50,6 +50,10 @@ if TEST: cfg={'apiKey':'test-key','authDomain':'test.local','projectId':'owq-tes
 elif os.path.exists(CFGF): cfg=json.load(open(CFGF))
 else: cfg=None
 cloud=open(W+'/src/owqcloud.js',encoding='utf-8').read()
+# guest passes (?guest=<id>): name and end date only; the page runs them on sample data, never on the shared database
+GF=W+'/src/guests.json'
+guests={k:{'n':str(v['n']),'exp':str(v['exp'])} for k,v in (json.load(open(GF)) if os.path.exists(GF) else {}).items()}
+assert all(re.fullmatch(r'[A-Za-z0-9_-]{6,48}',k) for k in guests),'guest ids'
 pocss=open(W+'/src/popout.css',encoding='utf-8').read() if POPOUT else ''; assert all(ord(c)<128 for c in pocss),'popout.css must be ASCII'
 floorjs='' if not POPOUT else 'window.OWQ_FLOOR=/[?&]floor=1(&|$)/.test(location.search)?1:0;if(window.OWQ_FLOOR){document.documentElement.classList.add("owqfl");document.title="Sales Floor | Only Winners & Quitters"}'
 assert all(ord(c)<128 for c in cloud),'adapter must be ASCII'
@@ -59,7 +63,7 @@ head=('<!doctype html><html lang="en"><head><meta charset="utf-8">'
       '<meta name="robots" content="noindex,nofollow">'
       '<link rel="manifest" href="manifest.webmanifest"><link rel="icon" href="icon-192.png"><link rel="apple-touch-icon" href="icon-192.png">'
       +title+
-      '<script>window.OWQ_FIREBASE='+json.dumps(cfg)+';window.OWQ_WEB=1;window.OWQ_BUILD='+json.dumps(STAMP)+';'+floorjs+'</script>'+('<style>'+pocss+'</style>' if pocss else '')
+      '<script>window.OWQ_FIREBASE='+json.dumps(cfg)+';window.OWQ_GUESTS='+json.dumps(guests)+';window.OWQ_WEB=1;window.OWQ_BUILD='+json.dumps(STAMP)+';'+floorjs+'</script>'+('<style>'+pocss+'</style>' if pocss else '')
       +('<script src="fakefb-client.js"></script>' if TEST else '')+
       '<script>\n'+cloud+'\n</script></head><body>')
 s=head+s+'\n</body></html>\n'

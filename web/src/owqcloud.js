@@ -9,6 +9,26 @@
 var W=window,CFG=W.OWQ_FIREBASE||null,VER='10.12.2',CDN='https://www.gstatic.com/firebasejs/'+VER+'/';
 var ST={phase:'boot',user:null,uid:null,email:'',member:null,role:'',err:'',F:null,app:null,auth:null,fs:null,rdb:null,ready:false,waiters:[],peer:'',codes:null};
 W.OWQC=ST;
+/* ---------------- guest pass ----------------
+   ?guest=<id> with an id from window.OWQ_GUESTS ({id:{n:name,exp:ISO date}}) opens the portal for that person without signing in:
+   no Firebase at all (so no shared data can load), the portal runs on its own sample data in this browser, and everything it
+   saves goes to its own storage space (keys prefixed owqguest:) so it can never mix with a member's saved data on the same
+   browser. After the end date the link shows that the pass ended and clears that storage. */
+var GU=W.OWQ_GUESTS&&typeof W.OWQ_GUESTS==='object'?W.OWQ_GUESTS:{},GQ=(location.search.match(/[?&]guest=([A-Za-z0-9_-]{6,48})(?:[&#]|$)/)||[])[1]||'',
+ GP=GQ&&Object.prototype.hasOwnProperty.call(GU,GQ)?GU[GQ]:null,GE=GP?Date.parse(GP.exp||''):NaN,GPRE='owqguest:';
+function gStore(real){var keys=function(){var o=[];try{for(var i=0;i<real.length;i++){var k=real.key(i);if(k&&k.indexOf(GPRE)===0)o.push(k.slice(GPRE.length))}}catch(e){}return o};
+ var api={getItem:function(k){return real.getItem(GPRE+k)},setItem:function(k,v){real.setItem(GPRE+k,String(v))},removeItem:function(k){real.removeItem(GPRE+k)},
+  clear:function(){keys().forEach(function(k){real.removeItem(GPRE+k)})},key:function(i){var a=keys();return i>=0&&i<a.length?a[i]:null}};
+ Object.defineProperty(api,'length',{get:function(){return keys().length}});
+ return new Proxy(api,{get:function(t,p){if(p in t)return t[p];if(typeof p!=='string')return undefined;var v=real.getItem(GPRE+p);return v===null?undefined:v},
+  set:function(t,p,v){if(p in t)return true;real.setItem(GPRE+String(p),String(v));return true},deleteProperty:function(t,p){real.removeItem(GPRE+String(p));return true},
+  has:function(t,p){return(p in t)||real.getItem(GPRE+String(p))!==null},ownKeys:function(){return keys()},
+  getOwnPropertyDescriptor:function(t,p){if(p in t)return undefined;var v=real.getItem(GPRE+String(p));return v===null?undefined:{value:v,writable:true,enumerable:true,configurable:true}}})}
+if(GQ){try{var GLS=gStore(W.localStorage),GSS=gStore(W.sessionStorage);Object.defineProperty(W,'localStorage',{configurable:true,get:function(){return GLS}});Object.defineProperty(W,'sessionStorage',{configurable:true,get:function(){return GSS}})}catch(e){}
+ ST.guest=GP&&GE>Date.now()?{id:GQ,n:String(GP.n||'Guest').slice(0,40),exp:GE}:null;ST.gexp=!!GP&&!ST.guest;W.OWQ_GUEST=ST.guest}
+function gDay(t){try{return new Date(t).toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'})}catch(e){return''}}
+ST.guestGo=function(){if(!ST.guest)return;ST.phase='gin';if(G){G.classList.add('out');setTimeout(function(){if(G&&ST.phase==='gin')G.style.display='none'},700)}try{if(typeof W.OWQ_GUEST_GO==='function')W.OWQ_GUEST_GO()}catch(e){}};
+ST.team0=function(){location.href=location.href.split('?')[0].split('#')[0]};
 function rid(n){var a='abcdefghijklmnopqrstuvwxyz0123456789',s='';var c=W.crypto&&W.crypto.getRandomValues?W.crypto.getRandomValues(new Uint8Array(n)):null;for(var i=0;i<n;i++)s+=a[(c?c[i]:Math.floor(Math.random()*256))%36];return s}
 ST.peer=rid(16);
 function ekey(e){return String(e||'').toLowerCase().replace(/\./g,',')}
@@ -156,7 +176,7 @@ var DL=Object.freeze({save:function(o){o=o||{};var d=o.data,b=d instanceof Blob?
 
 /* ---------------- the claude.use() surface ---------------- */
 var NS={};
-function whenReady(){return ST.ready?Promise.resolve(true):new Promise(function(ok){ST.waiters.push(ok)})}
+function whenReady(){if(GQ)return Promise.resolve(false);return ST.ready?Promise.resolve(true):new Promise(function(ok){ST.waiters.push(ok)})}
 W.claude={use:function(name){name=String(name||'');return whenReady().then(function(ok){if(!ok)return null;
  if(name==='db')return NS.db||(NS.db=mkDb());
  if(name==='room')return NS.room||(NS.room=(NS.rf||(NS.rf=mkRoomFactory()))());
@@ -189,8 +209,11 @@ function paint(){var g=gate(),h='<div class=owqgc><div class=owqgb><i></i>ONLY W
  else if(ST.phase==='out')h+='<h1>SECURE SIGN-IN</h1><p>Sign in with the account your agency owner approved.</p><button class=owqgbtn id=owqgi onclick="OWQC.signIn()">'+GSVG+'SIGN IN WITH GOOGLE</button>'+'<div class=owqgor><span>OR</span></div>'+(ST.mailSent?'<p>Check <b>'+esc(ST.mailSent)+'</b> for a sign-in link (it can take a minute; look in Junk too). Open it on this device.</p><button class="owqgbtn o" onclick="OWQC.mailReset()">USE A DIFFERENT EMAIL</button>':'<form class=owqgm onsubmit="event.preventDefault();OWQC.mailLink()"><input id=owqgme type=email required autocomplete=email placeholder="your email (iCloud, Outlook, any)" aria-label="Email for a sign-in link"><button class="owqgbtn o" type=submit>EMAIL ME A SIGN-IN LINK</button></form>')+(ST.err?'<p class=owqge role=alert>'+esc(ST.err)+'</p>':'');
  else if(ST.phase==='mailask')h+='<h1>CONFIRM YOUR EMAIL</h1><p>Type the email address the sign-in link was sent to.</p><form class=owqgm onsubmit="event.preventDefault();OWQC.mailFinish(document.getElementById(\'owqgme\').value)"><input id=owqgme type=email required autocomplete=email aria-label=Email><button class=owqgbtn type=submit>SIGN IN</button></form>'+(ST.err?'<p class=owqge role=alert>'+esc(ST.err)+'</p>':'');
  else if(ST.phase==='pending')h+='<h1>ACCESS PENDING</h1><p>You are signed in as <b>'+esc(ST.email)+'</b>, but this account has not been approved yet.</p><p>'+(ST.reqd?'Request sent. The owner will see it in Team Access.':'Ask the agency owner to add you, or send a request:')+'</p>'+(ST.reqd?'':'<button class=owqgbtn id=owqgr onclick="OWQC.request()">REQUEST ACCESS</button>')+'<button class="owqgbtn o" onclick="OWQC.signOut()">USE ANOTHER ACCOUNT</button>'+(ST.err?'<p class=owqge role=alert>'+esc(ST.err)+'</p>':'');
+ else if(ST.phase==='guest')h+='<h1>GUEST PASS</h1><p>Welcome, <b>'+esc(ST.guest.n)+'</b>. This pass lets you explore the Only Winners &amp; Quitters command station: the Sales Floor, Clients, training, the leaderboards and the rest.</p><p>It runs on sample data in this browser, so nothing you do here reaches the team.</p><button class=owqgbtn id=owqgg onclick="OWQC.guestGo()">ENTER THE STATION</button>';
+ else if(ST.phase==='gexp')h+='<h1>GUEST PASS ENDED</h1><p>This guest pass for <b>'+esc(String(GP&&GP.n||''))+'</b> ended '+esc(gDay(GE))+'. Ask the agency owner for a new one.</p><button class="owqgbtn o" onclick="OWQC.team0()">TEAM SIGN-IN</button>';
+ else if(ST.phase==='gbad')h+='<h1>LINK NOT VALID</h1><p>This guest link is not valid. Check that the whole link was copied, or ask the agency owner for a new one.</p><button class="owqgbtn o" onclick="OWQC.team0()">TEAM SIGN-IN</button>';
  else if(ST.phase==='error')h+='<h1>CONNECTION PROBLEM</h1><p class=owqge role=alert>'+esc(ST.err||'Something went wrong.')+'</p><button class=owqgbtn onclick="location.reload()">TRY AGAIN</button>';
- h+='<div class=owqgs>'+(ST.phase==='out'?'ENCRYPTED &middot; APPROVED MEMBERS ONLY':'')+'</div></div>';g.innerHTML=h;
+ h+='<div class=owqgs>'+(ST.phase==='out'?'ENCRYPTED &middot; APPROVED MEMBERS ONLY':ST.phase==='guest'?'GUEST PASS &middot; GOOD THROUGH '+esc(gDay(ST.guest.exp).toUpperCase()):'')+'</div></div>';g.innerHTML=h;
  var b=g.querySelector('.owqgbtn');if(b&&b.focus)try{b.focus({preventScroll:true})}catch(e){}}
 function syncMembers(){if(!(ST.role==='owner'||ST.role==='admin'))return Promise.resolve();var F=ST.F.fs,D=ST.F.db;
  return F.getDocs(F.collection(ST.fs,'members')).then(function(s){return Promise.all(s.docs.map(function(d){var x=d.data()||{},r=x.role==='owner'?'owner':x.role==='admin'?'admin':'member';return D.set(D.ref(ST.rdb,'members/'+ekey(d.id)),r).catch(function(e){rtBlocked(e)})}))}).catch(function(){})}
@@ -226,6 +249,7 @@ function loadRtc(){try{if(typeof VCFG==='object'&&VCFG&&Array.isArray(VCFG.iceSe
   ST.rtc=b;try{if(Array.isArray(b.iceServers)&&b.iceServers.length&&typeof VCFG==='object'){VCFG.iceServers.length=0;b.iceServers.forEach(function(x){VCFG.iceServers.push(x)})}}catch(e){}},function(){})}
 
 function start(){
+ if(GQ){ST.phase=ST.guest?'guest':ST.gexp?'gexp':'gbad';if(ST.gexp){try{W.localStorage.clear();W.sessionStorage.clear()}catch(e){}}paint();deny();return}
  if(!CFG||!CFG.apiKey||!CFG.projectId){ST.phase='nocfg';paint();deny();return}
  paint();
  loadSDK().then(function(F){ST.F=F;ST.app=F.app.initializeApp(CFG);ST.auth=F.auth.getAuth(ST.app);ST.fs=F.fs.getFirestore(ST.app);ST.rdb=CFG.databaseURL?F.db.getDatabase(ST.app,CFG.databaseURL):F.db.getDatabase(ST.app);
