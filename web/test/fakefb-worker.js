@@ -14,6 +14,7 @@ function fsAllow(op,path,a){var s=path.split('/'),top=s[0];if(!a||!a.uid)return 
  if(!isMember(a))return false;
  if(top==='members'||top==='cfg'){if(op==='read')return true;return role(a)==='owner'||(top==='members'&&role(a)==='admin')}
  if(top==='data'&&s[1]==='users')return s[2]===a.uid;
+ if(top==='pfshare'){if(op==='read')return true;return role(a)==='owner'}
  return true}
 function rtAllow(op,path,a){if(!a||!a.uid)return false;var s=path.split('/').filter(Boolean);var mk=String(a.email||'').toLowerCase().replace(/\./g,',');
  if(s[0]==='members'){if(op==='read')return true;return a.email&&a.email.toLowerCase()===OWNER||RT.members&&(RT.members[mk]==='owner'||RT.members[mk]==='admin')}

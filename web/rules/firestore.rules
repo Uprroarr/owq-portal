@@ -28,9 +28,14 @@ service cloud.firestore {
     match /data/users/{uid}/{rest=**} {
       allow read, write: if isMember() && request.auth.uid == uid;
     }
+    // the owner's portfolio, shared with the team as view only
+    match /pfshare/{d} {
+      allow read: if isMember();
+      allow write: if isOwner();
+    }
     // everything else the portal shares with the team
     match /{coll}/{rest=**} {
-      allow read, write: if isMember() && !(coll in ['members', 'requests', 'cfg', 'data']);
+      allow read, write: if isMember() && !(coll in ['members', 'requests', 'cfg', 'data', 'pfshare']);
     }
   }
 }

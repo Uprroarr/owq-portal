@@ -129,16 +129,15 @@ try:
   A.wait_for_timeout(800);A.reload();A.wait_for_function("OWQC.phase==='in'",timeout=30000);lgx.login(A,2);A.wait_for_timeout(600)
   A.evaluate("openTab('Business Performance');SUB['Business Performance']='Portfolio';go()");A.wait_for_function("PF.ready&&PF.data.tx.length>=5",timeout=15000)
   ok(A.evaluate("PF.data.tx.length")==5 and A.evaluate("PF.data.fk")==KEY,'transactions and the key are still there after a reload')
-  # 9. other people never see it
+  # 9. teammates see it view only (v116); the owner's private doc stays private
   B=page('B',{'uid':'uJohn','email':'john@example.com','displayName':'John Montini'})
   B.goto(URL);B.wait_for_function("OWQC.phase==='out'",timeout=30000);B.click('#owqgi');B.wait_for_function("OWQC.phase==='pending'",timeout=30000)
   B.click('#owqgr');B.wait_for_function("OWQC.reqd===true",timeout=10000)
   A.evaluate("OWQC.team()");A.wait_for_timeout(1200);A.select_option('#owqrn0','John Montini');A.click("#md button:has-text('Approve')");A.wait_for_timeout(1200);A.evaluate("OWQC.teamClose()")
   B.reload();B.wait_for_function("OWQC.phase==='in'",timeout=30000);lgx.login(B,3);B.wait_for_timeout(800)
-  B.evaluate("openTab('Business Performance')");B.wait_for_timeout(1500)
-  ok(B.locator(".seg button:has-text('Portfolio')").count()==0,'a teammate does not get a Portfolio tab')
-  B.evaluate("SUB['Business Performance']='Portfolio';go()");B.wait_for_timeout(500)
-  ok(B.evaluate("!document.getElementById('pfw')"),'even forcing it, a teammate gets the normal Business Performance page')
+  B.wait_for_function("PF.view===1&&PF.ready",timeout=15000);B.evaluate("openTab('Agency Performance','Portfolio')");B.wait_for_timeout(1500)
+  ok(B.evaluate("!!document.getElementById('pfw')&&document.getElementById('pfw').classList.contains('pf-ro')"),'a teammate gets the Portfolio as view only')
+  ok(B.evaluate("PF.data.fk")=='' and B.evaluate("PF.data.tx.length")==5,"a teammate sees the owner's transactions but never the key")
   got=B.evaluate("(async()=>{try{const db=await claude.use('db');const s=await db.doc('data/users/uOwner/portfolio').get();return s.exists?'READ':'none'}catch(e){return 'denied'}})()")
   ok(got!='READ',"a teammate cannot read the owner's portfolio",got)
   # 10. phone layout
