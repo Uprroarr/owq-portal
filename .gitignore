@@ -5,3 +5,4 @@ dist/
 web/private/
 *.png
 *.log
+__pycache__/
