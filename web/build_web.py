@@ -39,7 +39,7 @@ if POPOUT: rep('D.sim=0;lockView();chInit();mrInit();synInit();vcInit();','D.sim
 if POPOUT: rep('function lobbyStart(){if(ONLINE||LB.off)return;','function lobbyStart(){if(ONLINE||LB.off||window.OWQ_FLOOR)return;')
 
 # 2b. website-only portal fixes, appended after the app scripts (they wrap app functions)
-for fx in ('vfix.js','guest.js')+(('popout.js',) if POPOUT else ()):
+for fx in ('vfix.js','guest.js','install.js')+(('popout.js',) if POPOUT else ()):
     code=open(W+'/src/'+fx,encoding='utf-8').read(); assert all(ord(c)<128 for c in code),fx+' must be ASCII'
     s=s+'\n<script>\n'+code+'\n</script>'
 
@@ -63,7 +63,7 @@ head=('<!doctype html><html lang="en"><head><meta charset="utf-8">'
       '<meta name="robots" content="noindex,nofollow">'
       '<link rel="manifest" href="manifest.webmanifest"><link rel="icon" href="icon-192.png"><link rel="apple-touch-icon" href="icon-192.png">'
       +title+
-      '<script>window.OWQ_FIREBASE='+json.dumps(cfg)+';window.OWQ_GUESTS='+json.dumps(guests)+';window.OWQ_WEB=1;window.OWQ_BUILD='+json.dumps(STAMP)+';'+floorjs+'</script>'+('<style>'+pocss+'</style>' if pocss else '')
+      '<script>window.OWQ_FIREBASE='+json.dumps(cfg)+';window.OWQ_GUESTS='+json.dumps(guests)+';window.OWQ_WEB=1;window.OWQ_BUILD='+json.dumps(STAMP)+';addEventListener("beforeinstallprompt",function(e){e.preventDefault();window.OWQ_BIP=e});'+floorjs+'</script>'+('<style>'+pocss+'</style>' if pocss else '')
       +('<script src="fakefb-client.js"></script>' if TEST else '')+
       '<script>\n'+cloud+'\n</script></head><body>')
 s=head+s+'\n</body></html>\n'
@@ -71,9 +71,11 @@ os.makedirs(SITE,exist_ok=True)
 open(SITE+'/index.html','w',encoding='utf-8').write(s)
 open(SITE+'/.nojekyll','w').write('')
 open(SITE+'/version.txt','w').write(STAMP+'\n')
-man={'name':'Only Winners & Quitters','short_name':'OWQ Station','start_url':'./','scope':'./','display':'standalone','background_color':'#0b0b10','theme_color':'#0b0b10',
+man={'id':'./','name':'Only Winners & Quitters','short_name':'OWQ Station','description':'The Only Winners & Quitters command station.','start_url':'./','scope':'./','display':'standalone','display_override':['standalone'],'launch_handler':{'client_mode':'focus-existing'},'background_color':'#0b0b10','theme_color':'#0b0b10',
      'icons':[{'src':'icon-192.png','sizes':'192x192','type':'image/png'},{'src':'icon-512.png','sizes':'512x512','type':'image/png','purpose':'any maskable'}]}
 json.dump(man,open(SITE+'/manifest.webmanifest','w'),indent=1)
+# install as an app: install page and offline-capable service worker
+for f in ('install.html','sw.js'): shutil.copy(W+'/src/'+f,SITE+'/'+f)
 # icons: crimson ring + core on black (brand mark)
 try:
     from PIL import Image, ImageDraw
