@@ -1,9 +1,17 @@
 {
+ "id": "./",
  "name": "Only Winners & Quitters",
  "short_name": "OWQ Station",
+ "description": "The Only Winners & Quitters command station.",
  "start_url": "./",
  "scope": "./",
  "display": "standalone",
+ "display_override": [
+  "standalone"
+ ],
+ "launch_handler": {
+  "client_mode": "focus-existing"
+ },
  "background_color": "#0b0b10",
  "theme_color": "#0b0b10",
  "icons": [

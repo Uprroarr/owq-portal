@@ -1,0 +1,55 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0b0b10"><meta name="color-scheme" content="dark"><meta name="robots" content="noindex,nofollow">
+<link rel="manifest" href="manifest.webmanifest"><link rel="icon" href="icon-192.png"><link rel="apple-touch-icon" href="icon-192.png">
+<title>Install OWQ Station</title>
+<script>addEventListener('beforeinstallprompt',function(e){e.preventDefault();window.OWQ_BIP=e;var b=document.getElementById('go');if(b){b.disabled=false;b.textContent='Install OWQ Station'}});</script>
+<style>
+:root{--red:#ff1f4f;--tx:#f4f4f6;--mut:#a3a3b0;--ln:#2b2b36}
+*{box-sizing:border-box}html,body{margin:0;background:#0b0b10;color:var(--tx);font-family:Verdana,"DejaVu Sans",sans-serif}
+body{min-height:100vh;background:radial-gradient(ellipse 70% 50% at 80% 0%,#3a0614 0%,transparent 60%),radial-gradient(ellipse 60% 50% at 0% 100%,#2a0510 0%,transparent 60%),#0b0b10}
+.w{max-width:880px;margin:0 auto;padding:56px 16px 40px}
+.k{font-weight:700;font-size:13px;letter-spacing:6px;color:var(--red);text-transform:uppercase}
+h1{margin:12px 0 8px;font-size:clamp(34px,7vw,58px);line-height:1.02;letter-spacing:1px;text-transform:uppercase}h1 em{font-style:normal;color:var(--red);text-shadow:0 0 24px #ff1f4f88}
+.sub{color:#cfcfd8;font-size:17px;max-width:620px;line-height:1.5}
+.cta{margin:28px 0 8px;display:flex;gap:12px;flex-wrap:wrap;align-items:center}
+.btn{background:var(--red);color:#fff;border:0;padding:16px 26px;font:700 14px Verdana,sans-serif;letter-spacing:2px;text-transform:uppercase;cursor:pointer;box-shadow:0 0 22px #ff1f4f77;clip-path:polygon(0 0,calc(100% - 12px) 0,100% 12px,100% 100%,12px 100%,0 calc(100% - 12px))}
+.btn:disabled{background:#2a2a36;box-shadow:none;color:#bdbdc8;cursor:default}
+.btn.o{background:transparent;border:1.5px solid var(--red);box-shadow:none}
+.note{color:var(--mut);font-size:13px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px;margin-top:34px}
+.c{border:1px solid #ff1f4f40;background:#12121aee;padding:18px 18px 14px;clip-path:polygon(0 0,calc(100% - 14px) 0,100% 14px,100% 100%,14px 100%,0 calc(100% - 14px))}
+.c.on{border-color:var(--red);box-shadow:0 0 22px #ff1f4f44}
+.c h3{margin:0 0 4px;font-size:15px;letter-spacing:2px;text-transform:uppercase}.c small{color:var(--red);font-weight:700;letter-spacing:2px;font-size:10px;text-transform:uppercase}
+.c ol{margin:10px 0 0;padding-left:20px;line-height:1.6;font-size:14px;color:#d8d8e0}.c b{color:#fff}
+.why{margin-top:30px;display:flex;gap:22px;flex-wrap:wrap;color:#cfcfd8;font-size:14px}.why span:before{content:"";display:inline-block;width:8px;height:8px;background:var(--red);margin-right:8px;box-shadow:0 0 8px var(--red)}
+.done{display:none;margin-top:18px;border-left:3px solid #3ddc97;padding:10px 14px;background:#0f1a15;color:#d8f5e8}
+</style></head><body><div class=w>
+<div class=k>Only Winners &amp; Quitters</div>
+<h1>Install <em>OWQ Station</em></h1>
+<p class=sub>Put the command station on your computer or phone like normal software: its own window, an icon on your desktop, Start menu, Dock or home screen, and it opens straight to the portal. Sign in once with your Google account, same as the website.</p>
+<div class=cta><button class=btn id=go disabled onclick="inst()">Checking your browser&hellip;</button><a class="btn o" href="./" style="text-decoration:none">Open in the browser</a></div>
+<p class=note id=hint>Works in Chrome and Edge (Windows, Mac, Chromebook, Android) and Safari (Mac, iPhone, iPad). Free, nothing to download from outside your browser, updates itself.</p>
+<div class=done id=done>Installed. Open <b>OWQ Station</b> from your desktop, Start menu, Dock or home screen.</div>
+<div class=grid id=g>
+<div class=c data-k=win><small>Windows</small><h3>Chrome or Edge</h3><ol><li>Click <b>Install OWQ Station</b> above,</li><li>or use the <b>install icon</b> at the right end of the address bar,</li><li>or Edge: <b>...</b> &rarr; <b>Apps</b> &rarr; <b>Install this site as an app</b>.</li></ol></div>
+<div class=c data-k=mac><small>Mac</small><h3>Safari, Chrome or Edge</h3><ol><li>Safari: <b>File</b> &rarr; <b>Add to Dock</b> &rarr; <b>Add</b>.</li><li>Chrome / Edge: click <b>Install OWQ Station</b> above.</li></ol></div>
+<div class=c data-k=ios><small>iPhone &amp; iPad</small><h3>Safari</h3><ol><li>Tap <b>Share</b> (square with the arrow).</li><li>Tap <b>Add to Home Screen</b> &rarr; <b>Add</b>.</li></ol></div>
+<div class=c data-k=and><small>Android</small><h3>Chrome</h3><ol><li>Tap <b>Install OWQ Station</b> above,</li><li>or <b>&#8942;</b> &rarr; <b>Install app</b>.</li></ol></div>
+</div>
+<div class=why><span>Own window, no browser tabs</span><span>Desktop &amp; taskbar icon</span><span>Always the latest version</span><span>Same sign-in and data</span></div>
+</div>
+<script>
+(function(){var u=navigator.userAgent||'',p=(navigator.userAgentData&&navigator.userAgentData.platform)||navigator.platform||'',
+ ios=/iPhone|iPad|iPod/.test(u)||(p==='MacIntel'&&navigator.maxTouchPoints>1),k=ios?'ios':/Android/.test(u)?'and':/Mac/.test(p+u)?'mac':'win',
+ safari=/Safari\//.test(u)&&!/Chrome\/|CriOS|Edg|FxiOS|Firefox/.test(u),ff=/Firefox|FxiOS/.test(u),b=document.getElementById('go'),h=document.getElementById('hint');
+ var c=document.querySelector('.c[data-k='+k+']');if(c){c.classList.add('on');c.parentNode.insertBefore(c,c.parentNode.firstChild)}
+ var sa=false;try{sa=matchMedia('(display-mode: standalone)').matches||navigator.standalone===true}catch(e){}
+ if(sa){b.textContent='Already installed';h.textContent='You are in the installed app.';return}
+ setTimeout(function(){if(window.OWQ_BIP)return;if(safari||ios){b.textContent=ios?'Use Share → Add to Home Screen':'Use File → Add to Dock';h.textContent='Safari installs from its own menu: follow the highlighted steps below.'}
+  else if(ff){b.textContent='Open this page in Chrome or Edge';h.textContent='Firefox cannot install apps. Copy this link into Chrome or Edge.'}
+  else{b.textContent='Use the browser menu to install';h.textContent='If the button stays grey the app may already be installed, or use the steps below.'}},2500);
+ window.inst=function(){var e=window.OWQ_BIP;if(!e)return;e.prompt();(e.userChoice||Promise.resolve({})).then(function(r){if(r&&r.outcome==='accepted'){document.getElementById('done').style.display='block';b.disabled=true;b.textContent='Installed'}window.OWQ_BIP=null})};
+ addEventListener('appinstalled',function(){document.getElementById('done').style.display='block';b.disabled=true;b.textContent='Installed'});
+ if('serviceWorker' in navigator&&location.protocol==='https:')navigator.serviceWorker.register('sw.js').catch(function(){});
+})();
+</script></body></html>
