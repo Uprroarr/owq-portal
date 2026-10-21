@@ -53,8 +53,9 @@ try:
         A.evaluate("(()=>{SUB['Agency Performance']='Agents';AGD=null;go()})()"); A.wait_for_timeout(500)
         ok('HOURS (ALL TIME)' in A.evaluate("document.getElementById('main').innerText").upper(), 'the Agents scorecard says its hours are all time')
         # ---- live tracking: the heartbeat records each minute on my own open shift
+        A.evaluate("VC.on=1;acIn();VC.on=0")
         sh0 = A.evaluate("(()=>{const s=openShift(acWho());return s?{auto:s.auto,tk:s.tk||null}:null})()")
-        ok(sh0 and sh0['auto'], 'signing in clocked me in automatically', sh0)
+        ok(sh0 and sh0['auto'], 'joining the Sales Floor clocked me in (v120: floor-only time)', sh0)
         A.evaluate("(()=>{document.body.dispatchEvent(new MouseEvent('mousedown',{bubbles:true}));document.body.dispatchEvent(new KeyboardEvent('keydown',{key:'Shift',bubbles:true}));acBeat()})()")
         t1 = A.evaluate("(()=>{const T=openShift(acWho()).tk;return JSON.parse(JSON.stringify(T))})()")
         ok(t1['n'] == 1 and t1['w'] == 1 and t1['i'] >= 2, 'a minute with clicks and keys counts as working, with its interactions', t1)
