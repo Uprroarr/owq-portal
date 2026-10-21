@@ -1,0 +1,17 @@
+#latepop{position:fixed;inset:0;z-index:2147482000;display:flex;align-items:center;justify-content:center;background:rgba(5,5,10,.78);padding:16px;animation:lpi .25s ease-out}
+#latepop .lp-c{max-width:520px;width:100%;text-align:center;border:2px solid #ff1f4f;background:linear-gradient(180deg,#1a0a10,#0d0d14);box-shadow:0 0 60px rgba(255,31,79,.45);padding:28px 22px 22px}
+#latepop small{display:block;color:#ff1f4f;font-weight:700;letter-spacing:.35em;font-size:11px}
+#latepop b{display:block;margin:14px 0 20px;font-size:clamp(20px,4.6vw,28px);line-height:1.25;text-transform:uppercase;color:#fff;text-shadow:0 0 18px rgba(255,31,79,.6)}
+@keyframes lpi{from{opacity:0;transform:scale(.97)}}
+/* inline access code under the picked name */
+#login.gxinl .gxmenu{opacity:1!important;pointer-events:auto!important;visibility:visible!important}
+#login.gxinl .gxa,#login.gxinl .gxloc,#login.gxinl .gxpin{display:none!important}
+#login .gxin{overflow:hidden;max-height:0;opacity:0;margin:0 0 4px 3px;border-left:3px solid #ff1f4f;background:linear-gradient(90deg,rgba(255,31,79,.14),rgba(10,3,12,.55));transition:max-height .28s cubic-bezier(.2,.8,.2,1),opacity .22s ease-out}
+#login .gxin.on{max-height:150px;opacity:1}
+#login .gxin form{display:flex;gap:8px;align-items:center;padding:10px 12px 6px}
+#login .gxin input{flex:1;min-width:0;background:rgba(6,2,9,.85);border:1px solid rgba(255,31,79,.55);color:#fff;padding:10px 12px;font:600 13px/1 Verdana,sans-serif;letter-spacing:.18em;outline:none}
+#login .gxin input:focus{border-color:#ff1f4f;box-shadow:0 0 14px rgba(255,31,79,.45)}
+#login .gxin input.shake{animation:gxsh .4s}
+#login .gxin button{flex:none;background:#ff1f4f;border:0;color:#fff;padding:10px 14px;font:700 11px Verdana,sans-serif;letter-spacing:.16em;cursor:pointer}
+#login .gxin p{margin:0;padding:0 12px 10px;color:rgba(244,244,246,.55);font-size:11px}
+@keyframes gxsh{20%,60%{transform:translateX(-6px)}40%,80%{transform:translateX(6px)}}

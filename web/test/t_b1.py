@@ -1,0 +1,72 @@
+"""v117 batch 1: inline access code, quick plain transition, quiet alerts, in-place refresh, AP labels, late popup, app icon."""
+import sys,os,time,json,subprocess
+SP='/tmp/claude-0/-home-claude/6e37954b-9c9e-57d7-b212-24d756de5469/scratchpad';sys.path.insert(0,SP)
+import lgx
+from playwright.sync_api import sync_playwright
+PORT=8855;SITE=os.environ.get('SITE',SP+'/web/test/site_b1');URL='http://127.0.0.1:%d/index.html'%PORT
+res=[]
+def ok(c,m,info=''):res.append(bool(c));print(('PASS ' if c else 'FAIL ')+m+('' if c else '  '+str(info)[:500]),flush=True)
+srv=subprocess.Popen(['python3','-m','http.server',str(PORT),'--bind','127.0.0.1'],cwd=SITE,stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL);time.sleep(1)
+try:
+ with sync_playwright() as p:
+  b=p.chromium.launch(executable_path='/opt/pw-browsers/chromium',args=['--no-sandbox','--disable-webgl','--no-proxy-server'])
+  ctx=b.new_context(viewport={'width':1280,'height':900});ctx.add_init_script("try{localStorage.setItem('owq_gq','auto')}catch(e){};window.__SAY=0;try{const s=window.speechSynthesis;if(s){s.speak=function(){window.__SAY++}}}catch(e){}")
+  errs=[]
+  K=ctx.new_page();K.goto('http://127.0.0.1:%d/keep.html'%PORT);K.wait_for_function('window.__FAKE')
+  A=ctx.new_page();A.on('pageerror',lambda e:errs.append(str(e)[:200]))
+  A.add_init_script("window.__FAKE_SIGNIN=%s;"%json.dumps({'uid':'uOwner','email':'owner@example.com','displayName':'Cole Leckey'}))
+  A.goto(URL);A.wait_for_function("window.__FAKE",timeout=20000);A.evaluate("__FAKE.call('reset',{owner:'owner@example.com'})");A.evaluate("sessionStorage.clear()");A.reload()
+  A.wait_for_function("OWQC.phase==='out'",timeout=30000);A.click('#owqgi');A.wait_for_function("OWQC.phase==='in'",timeout=30000)
+  lgx.to_menu(A)
+  IX=2;A.evaluate("PWD[GXU.U.names[2]]=PWD[GXU.U.names[2]]||'testcode'")
+  A.click('#gxlist .gxo[data-i="%d"]'%IX);A.wait_for_timeout(450)
+  ok(A.evaluate("GXU.state()")=='land' and A.locator('#gxlist .gxin.on #lgi').count()==1,'clicking a name opens the code box right under it')
+  bx=A.evaluate("(()=>{const b=document.querySelector('#gxlist .gxin').previousElementSibling.getBoundingClientRect(),i=document.querySelector('.gxin').getBoundingClientRect();return [b.bottom,i.top,i.height]})()")
+  ok(abs(bx[0]-bx[1])<6 and bx[2]>40,'the box sits directly under the name',bx)
+  ok(A.evaluate("document.activeElement&&document.activeElement.id")=='lgi','the code field has focus')
+  ok(A.evaluate("getComputedStyle(document.querySelector('.gxmenu')).opacity")=='1','the operator list stays on screen (no flight away)')
+  A.screenshot(path=SP+'/web/test/shots/b1_code.png')
+  A.fill('#lgi','definitely-wrong');A.keyboard.press('Enter');A.wait_for_timeout(500)
+  ok(A.evaluate("ONLINE")==0 and A.evaluate("document.getElementById('lgi').placeholder").startswith('Wrong'),'a wrong code shakes and stays')
+  A.keyboard.press('Escape');A.wait_for_timeout(300)
+  ok(A.evaluate("GXU.state()")=='menu' and A.locator('.gxin').count()==0,'Esc closes the box and goes back to the list')
+  A.evaluate("pickProfile(GXU.U.names[%d])"%IX);A.wait_for_function("GXU.state()==='land'")
+  t0=time.time();A.evaluate("document.getElementById('lgi').value=(PWD[LG]||'x');doLogin()");A.wait_for_function("ONLINE===1",timeout=10000);dt=time.time()-t0
+  ok(dt<2.0,'plain quick transition into the portal (no black hole)',dt)
+  A.wait_for_timeout(5000)
+  n=A.evaluate("document.querySelectorAll('#pop .pp').length");ok(n<=1,'no popup spam at login (at most one summary)',A.evaluate("[...document.querySelectorAll('#pop .pp')].map(e=>e.innerText)"))
+  ok(A.evaluate("window.__SAY")==0,'no voice at login',A.evaluate("window.__SAY"))
+  A.wait_for_timeout(16000)
+  A.evaluate("ALP.t0=Date.now()-60000;ALP.popT=0;ALP.sayT=0;POPS=[];popRender()");S0=A.evaluate("window.__SAY")
+  A.evaluate("for(let i=0;i<5;i++)pushAlert({sev:'info',t:'Same thing',m:'x'+i})");A.wait_for_timeout(300)
+  n=A.evaluate("[...document.querySelectorAll('#pop .pp')].filter(e=>e.textContent.includes('Same thing')).length")
+  ok(n==1,'the same alert pops once, the rest go to the bell',n)
+  ok(A.evaluate("D.alerts.filter(a=>a.t==='Same thing').length")==5,'all of them are still in the alert list')
+  A.evaluate("ALP.t0=Date.now()-120000;ALP.sayT=0;pushAlert({sev:'info',t:'Policy logged',m:'x'})");A.wait_for_timeout(900)
+  ok(A.evaluate("window.__SAY")==S0,'ordinary alerts are not read out',[S0,A.evaluate("window.__SAY")])
+  A.evaluate("ALP.popT=0;pushAlert({sev:'crit',t:'Chargeback received',m:'Test'})");A.wait_for_timeout(1200)
+  ok(A.evaluate("window.__SAY")==S0+1,'important alerts are read out',[S0,A.evaluate("window.__SAY")])
+  A.evaluate("ALP.popT=0;pushAlert({sev:'crit',t:'Chargeback received 2',m:'Test'})");A.wait_for_timeout(1200)
+  ok(A.evaluate("window.__SAY")==S0+1,'and never twice within 5 minutes')
+  # in-place refresh
+  A.evaluate("openTab('Agency Performance','Overview')");A.wait_for_timeout(1500)
+  A.evaluate("(()=>{const e=document.querySelector('#main .c');e.__mark=1})()")
+  A.evaluate("D.policies.push({id:nid(),d:dkey(new Date()),ag:'Cole Leckey',cl:'Test Client',car:'Americo',prod:'Term',ap:1234,pct:100,st:'Submitted'});refreshQuiet()");A.wait_for_timeout(300)
+  ok(A.evaluate("!!document.querySelector('#main .c').__mark"),'a live update patches the page in place (same elements, nothing flashes)')
+  t=A.inner_text('#main')
+  ok('ANNUALIZED PREMIUM (SUBMITTED)' in t.upper(),'submitted business is labelled Annualized Premium',t[:300])
+  ok('ISSUED PREMIUM' in t.upper(),'issued premium keeps its own label')
+  # late popup
+  A.evaluate("D.flStart='00:00';localStorage.removeItem('owq_late_ColeLeckey');lateCheck()");A.wait_for_timeout(300)
+  wd=time.strftime('%a')
+  if wd!='Sun':
+    ok(A.locator('#latepop').count()==1 and 'lazy' in A.inner_text('#latepop').lower(),'late popup appears on the first late join')
+    A.screenshot(path=SP+'/web/test/shots/b1_late.png')
+    A.click('#latepop .btn');A.evaluate("lateCheck()");A.wait_for_timeout(200)
+    ok(A.locator('#latepop').count()==0,'only once a day')
+  m=json.load(open(SITE+'/manifest.webmanifest'))
+  ok(any(i.get('purpose')=='maskable' for i in m['icons']) and os.path.getsize(SITE+'/icon-512.png')>20000,'app icon is the lion logo (with a maskable copy)')
+  ok(not errs,'no page errors',errs)
+  b.close()
+finally:srv.terminate()
+print('%d/%d'%(sum(res),len(res)))

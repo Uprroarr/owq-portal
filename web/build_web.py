@@ -61,7 +61,7 @@ head=('<!doctype html><html lang="en"><head><meta charset="utf-8">'
       '<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">'
       '<meta name="theme-color" content="#0b0b10"><meta name="color-scheme" content="dark">'
       '<meta name="robots" content="noindex,nofollow">'
-      '<link rel="manifest" href="manifest.webmanifest"><link rel="icon" href="icon-192.png"><link rel="apple-touch-icon" href="icon-192.png">'
+      '<link rel="manifest" href="manifest.webmanifest"><link rel="icon" href="icon-192.png"><link rel="apple-touch-icon" href="'+('apple-touch-icon.png' if os.path.exists(W+'/src/appicon.png') else 'icon-192.png')+'">'
       +title+
       '<script>window.OWQ_FIREBASE='+json.dumps(cfg)+';window.OWQ_GUESTS='+json.dumps(guests)+';window.OWQ_WEB=1;window.OWQ_BUILD='+json.dumps(STAMP)+';addEventListener("beforeinstallprompt",function(e){e.preventDefault();window.OWQ_BIP=e});'+floorjs+'</script>'+('<style>'+pocss+'</style>' if pocss else '')
       +('<script src="fakefb-client.js"></script>' if TEST else '')+
@@ -72,19 +72,27 @@ open(SITE+'/index.html','w',encoding='utf-8').write(s)
 open(SITE+'/.nojekyll','w').write('')
 open(SITE+'/version.txt','w').write(STAMP+'\n')
 man={'id':'./','name':'Only Winners & Quitters','short_name':'OWQ Station','description':'The Only Winners & Quitters command station.','start_url':'./','scope':'./','display':'standalone','display_override':['standalone'],'launch_handler':{'client_mode':'focus-existing'},'background_color':'#0b0b10','theme_color':'#0b0b10',
-     'icons':[{'src':'icon-192.png','sizes':'192x192','type':'image/png'},{'src':'icon-512.png','sizes':'512x512','type':'image/png','purpose':'any maskable'}]}
+     'icons':[{'src':'icon-192.png','sizes':'192x192','type':'image/png','purpose':'any'},{'src':'icon-512.png','sizes':'512x512','type':'image/png','purpose':'any'},{'src':'icon-maskable-512.png','sizes':'512x512','type':'image/png','purpose':'maskable'}]}
 json.dump(man,open(SITE+'/manifest.webmanifest','w'),indent=1)
 # install as an app: install page and offline-capable service worker
 for f in ('install.html','sw.js'): shutil.copy(W+'/src/'+f,SITE+'/'+f)
-# icons: crimson ring + core on black (brand mark)
+# icons: the owner's crowned lion logo (web/src/appicon.png) on black; maskable copy keeps it inside the safe zone
 try:
     from PIL import Image, ImageDraw
+    AI=W+'/src/appicon.png'
+    if os.path.exists(AI):
+        src=Image.open(AI).convert('RGB');src=src.crop((0,0,min(src.size),min(src.size)))
+        for n in (192,512,180,32):
+            src.resize((n,n),Image.LANCZOS).save(SITE+'/'+('apple-touch-icon.png' if n==180 else 'favicon-32.png' if n==32 else 'icon-%d.png'%n),optimize=True)
+        m=Image.new('RGB',(512,512),(0,0,0));m.paste(src.resize((410,410),Image.LANCZOS),(51,51));m.save(SITE+'/icon-maskable-512.png',optimize=True)
+        raise StopIteration
     for n in (192,512):
         im=Image.new('RGB',(n,n),(11,11,16)); d=ImageDraw.Draw(im); c=n/2
         r1=n*0.36; w=max(3,int(n*0.035))
         for a in range(0,360,24): d.arc([c-r1,c-r1,c+r1,c+r1],a,a+14,fill=(255,31,79),width=w)
         r2=n*0.17; d.ellipse([c-r2,c-r2,c+r2,c+r2],fill=(255,31,79))
         im.save(SITE+'/icon-%d.png'%n)
+except StopIteration: pass
 except Exception as e: print('icons skipped',e)
 if TEST:
     for f in ('fakefb-worker.js','fakefb-client.js','keep.html'): shutil.copy(W+'/test/'+f,SITE+'/'+f)
