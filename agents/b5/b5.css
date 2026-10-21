@@ -1,0 +1,10 @@
+/*B5css*/
+.fsc{display:flex;flex-direction:column;gap:10px}.fsbar{display:flex;flex-wrap:wrap;gap:10px;align-items:center}.fsbar .seg{margin:0}.fsbar label{display:flex;align-items:center;gap:6px;font-size:11px;letter-spacing:1px;text-transform:uppercase;color:var(--mut)}.fsbar input{width:auto}
+.fsact{display:flex;flex-wrap:wrap;gap:8px}
+.fsdoc{margin-top:12px}.fshd{display:flex;flex-direction:column;gap:2px;margin-bottom:10px}.fshd b{font-size:15px;letter-spacing:2px}.fshd span{color:var(--mut);font-size:12px}
+.fst{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums}.fst td{padding:6px 8px;border-bottom:1px solid var(--ln)}.fst .n{text-align:right;white-space:nowrap;width:150px}
+.fst .fsh td{padding-top:18px;font-weight:700;font-size:13px;letter-spacing:2px;text-transform:uppercase;color:var(--red);border-bottom:2px solid var(--red)}.fst .fsh2 td{font-weight:700;padding-top:10px;color:#d8d8e0}
+.fst .fsi{padding-left:22px}.fst .fsi small{color:var(--mut)}.fst .fsto td{font-weight:700;border-top:1px solid #6d6d7a;background:#ffffff05}.fst .fss td{border:0;height:6px}
+.fsn{font-size:12.5px;color:#cfcfd8;line-height:1.55;margin:6px 0}.fsk{display:flex;flex-direction:column;gap:4px;font-size:12.5px}.fsk .ok{color:#3ddc97}.fsk .bad{color:#ffcf40}
+.fsdis{font-size:11px;color:var(--mut);border-top:1px solid var(--ln);padding-top:10px;margin-top:14px}
+@media(max-width:640px){.fst .n{width:auto}.fst td{padding:5px 4px;font-size:12px}}
