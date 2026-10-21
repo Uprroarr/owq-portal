@@ -6,3 +6,4 @@ export {OUTC_ALL} from './avatar.js';
 import './cosm2.js';
 import './cosm3.js';
 export {thumb,preview} from './preview.js';
+export {cityMount,CITY_LIST} from './city.js';
