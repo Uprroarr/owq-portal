@@ -1,4 +1,4 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#0b0b10"><meta name="color-scheme" content="dark"><meta name="robots" content="noindex,nofollow"><link rel="manifest" href="manifest.webmanifest"><link rel="icon" href="icon-192.png"><link rel="apple-touch-icon" href="apple-touch-icon.png"><title>Only Winners &amp; Quitters | Command Station II</title><script>window.OWQ_FIREBASE={"apiKey": "AIzaSyCEUwZQsV04SgNzc-MzsiAO9cyMbLM1RuU", "authDomain": "owaq-946ee.firebaseapp.com", "databaseURL": "https://owaq-946ee-default-rtdb.firebaseio.com", "projectId": "owaq-946ee", "storageBucket": "owaq-946ee.firebasestorage.app", "messagingSenderId": "884987875546", "appId": "1:884987875546:web:102d9fc0ab0aceaa3315e3"};window.OWQ_GUESTS={"bnp8l8Uf4rjjd1": {"n": "Brandon Negri", "exp": "2026-10-24T23:59:59-04:00"}};window.OWQ_WEB=1;window.OWQ_BUILD="2026-10-21 17:17 UTC";addEventListener("beforeinstallprompt",function(e){e.preventDefault();window.OWQ_BIP=e});</script><script>
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#0b0b10"><meta name="color-scheme" content="dark"><meta name="robots" content="noindex,nofollow"><link rel="manifest" href="manifest.webmanifest"><link rel="icon" href="icon-192.png"><link rel="apple-touch-icon" href="apple-touch-icon.png"><title>Only Winners &amp; Quitters | Command Station II</title><script>window.OWQ_FIREBASE={"apiKey": "AIzaSyCEUwZQsV04SgNzc-MzsiAO9cyMbLM1RuU", "authDomain": "owaq-946ee.firebaseapp.com", "databaseURL": "https://owaq-946ee-default-rtdb.firebaseio.com", "projectId": "owaq-946ee", "storageBucket": "owaq-946ee.firebasestorage.app", "messagingSenderId": "884987875546", "appId": "1:884987875546:web:102d9fc0ab0aceaa3315e3"};window.OWQ_GUESTS={"bnp8l8Uf4rjjd1": {"n": "Brandon Negri", "exp": "2026-10-24T23:59:59-04:00"}};window.OWQ_WEB=1;window.OWQ_BUILD="2026-10-21 17:45 UTC";addEventListener("beforeinstallprompt",function(e){e.preventDefault();window.OWQ_BIP=e});</script><script>
 /*OWQCLOUDstart*/
 /* OWQ Cloud: runs the portal as its own website. It provides the same `claude.use()` surface the portal was written for
    (db, room, user, downloads), backed by Firebase: Firestore = shared documents, Realtime Database = live room (presence,
@@ -183,7 +183,16 @@ W.claude={use:function(name){name=String(name||'');return whenReady().then(funct
  if(name==='room')return NS.room||(NS.room=(NS.rf||(NS.rf=mkRoomFactory()))());
  if(name==='user')return NS.user||(NS.user=mkUser());
  if(name==='downloads')return DL;
+ if(name==='sample')return NS.smp||(NS.smp=mkSample());
  return null})}};
+/* Ask Claude on the website: the owner's Claude function (address in cfg/ai). The page sends the conversation with the
+   signed-in person's Firebase ID token; the function checks the team list, holds the API key and can search the web. */
+function mkSample(){var F=ST.F.fs;return F.getDoc(F.doc(ST.fs,'cfg/ai')).then(function(sn){var d=sn&&sn.exists()?dec(sn.data()):null,url=d&&typeof d.url==='string'&&/^https:\/\/[^\s]+$/.test(d.url)?d.url:'';if(!url)return null;
+ var fn=function(input,opts){opts=opts||{};var u=ST.auth&&ST.auth.currentUser;if(!u)return Promise.reject({code:'session_expired'});
+  return (typeof u.getIdToken==='function'?u.getIdToken():Promise.reject(0)).then(function(tok){return fetch(url,{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+tok},body:JSON.stringify({input:input,web:!!opts.web,tier:opts.modelTier||'default'}),signal:opts.signal||undefined})},function(){throw{code:'session_expired'}})
+   .then(function(r){return r.json().catch(function(){return{}}).then(function(j){if(!r.ok)throw{code:(j&&j.code)||(r.status===429?'rate_limited':r.status===403?'not_member':'error'),message:j&&j.message};var t=String(j.text||'');try{if(opts.onText)opts.onText({text:t,delta:t})}catch(e){}return{text:t,truncated:!!j.truncated}})},
+    function(e){if(e&&e.name==='AbortError')throw{code:'cancelled'};throw e&&e.code?e:{code:'network'}})};
+ fn.limits=function(){return Promise.resolve({images:false})};fn.json=function(i,o){return fn(i,o).then(function(r){return JSON.parse(String(r.text).replace(/^```(json)?|```$/g,''))})};return fn},function(){return null})}
 
 /* ---------------- sign-in gate ---------------- */
 var CSS='#owqg{position:fixed;inset:0;z-index:2147483000;display:flex;align-items:center;justify-content:center;background:radial-gradient(ellipse at 50% 30%,#2a0a14ee,#07070bf2 60%);font-family:Verdana,"DejaVu Sans",sans-serif;color:#f4f4f6;transition:opacity .6s ease}'+
@@ -1824,6 +1833,34 @@ ol.pf-steps{text-align:left;max-width:470px;margin:4px auto 16px;padding-left:22
 #login .gxin button{flex:none;background:#ff1f4f;border:0;color:#fff;padding:10px 14px;font:700 11px Verdana,sans-serif;letter-spacing:.16em;cursor:pointer}
 #login .gxin p{margin:0;padding:0 12px 10px;color:rgba(244,244,246,.55);font-size:11px}
 @keyframes gxsh{20%,60%{transform:translateX(-6px)}40%,80%{transform:translateX(6px)}}
+/*B2css*/
+.b2tabs{display:flex;flex-direction:column;gap:8px;margin:4px 0 16px}
+.b2row{display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:8px 10px;border:1px solid var(--ln);background:#0d0d14;border-left:3px solid #ff1f4f}
+.b2row>b{font:700 10px Verdana,"DejaVu Sans",sans-serif;letter-spacing:2.5px;text-transform:uppercase;color:#ff1f4f;min-width:170px}
+.b2row.l{border-left-color:#ffcf40;background:linear-gradient(90deg,rgba(255,207,64,.07),#0d0d14 40%)}.b2row.l>b{color:#ffcf40}
+.b2row .seg{margin:0;flex:1}.b2row.l .seg button.on{background:#ffcf40;color:#111;border-color:#ffcf40}
+.b2llcw{border-top:2px solid rgba(255,207,64,.45);padding-top:12px}
+.b2lv{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:8px 0;border-bottom:1px solid var(--ln)}.b2lv:last-of-type{border-bottom:0}.b2lv span{display:flex;flex-direction:column;min-width:0}.b2lv small{color:var(--mut);font-size:11px}.b2lv em{font-style:normal;font-weight:700}
+.apx-lg{display:flex;gap:16px;font-size:11px;color:var(--mut);margin-top:6px}.apx-lg i{display:inline-block;width:10px;height:10px;margin-right:6px;vertical-align:-1px}
+.lrctl{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:12px}.lrctl .seg{margin:0}.lrctl select{width:auto;min-width:160px}
+.lrm{max-width:720px;width:100%}.lrg{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px 12px;margin:10px 0}.lrg label{display:flex;flex-direction:column;gap:4px;font-size:11px;letter-spacing:1px;text-transform:uppercase;color:var(--mut)}.lrg .lrw{grid-column:1/-1}
+.b2al{display:inline-block;padding:2px 8px;font-size:11px;font-weight:700;border:1px solid}.b2al.b{color:#ffcf40;border-color:#ffcf4066}.b2al.p{color:#5ac8ff;border-color:#5ac8ff66}
+.aqtb{flex:none;display:inline-flex;align-items:center;gap:7px;margin-left:8px;padding:8px 14px;border:1px solid #ff1f4f;background:linear-gradient(90deg,rgba(255,31,79,.18),rgba(255,31,79,.04));color:#fff;font:700 11px Verdana,"DejaVu Sans",sans-serif;letter-spacing:1.5px;text-transform:uppercase;cursor:pointer;white-space:nowrap}.aqtb:hover{background:#ff1f4f}.aqtb i{font-style:normal;color:#ffcf40}
+.aqg{display:grid;grid-template-columns:minmax(0,1fr) 320px;gap:14px;align-items:start}.aqg .aqns{grid-column:1/-1}
+.aqh{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:10px}.aqh h4{margin:0;flex:1}.aqw{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--mut);text-transform:none;letter-spacing:0}.aqw input{width:auto}
+.aqs{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px}.aqs button{background:#0f0f15;border:1px solid var(--ln);color:var(--tx);padding:6px 10px;font:12px Verdana,"DejaVu Sans",sans-serif;cursor:pointer}.aqs button:hover:not(:disabled){border-color:#ff1f4f}.aqs button:disabled{opacity:.45;cursor:default}
+.aqm{min-height:260px;max-height:52vh;overflow-y:auto;display:flex;flex-direction:column;gap:10px;padding:4px 2px 10px}
+.aqb{max-width:88%;padding:10px 12px;line-height:1.55;font-size:14px;border:1px solid var(--ln);background:#12121a}.aqb.u{align-self:flex-end;border-color:#ff1f4f66;background:rgba(255,31,79,.1)}.aqb.err{border-color:#ff1f4f;color:#ff9fb3}.aqb a{color:#5ac8ff}
+.aqba{display:flex;gap:6px;margin-top:8px}.aqba button{background:transparent;border:1px solid var(--ln);color:var(--mut);font-size:11px;padding:3px 8px;cursor:pointer}.aqba button:hover{color:#fff;border-color:#ff1f4f}
+.aqe{margin:auto;text-align:center;color:var(--mut);display:flex;flex-direction:column;gap:4px;padding:40px 10px}.aqe b{color:var(--tx);font-size:16px}
+.aqf{display:flex;gap:8px;align-items:flex-end;margin:6px 0}.aqf textarea{flex:1;resize:vertical;min-height:46px}
+.aqta{display:flex;gap:6px;margin-bottom:8px}.aqti{display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid var(--ln)}.aqti label{display:flex;gap:8px;align-items:flex-start;flex:1;cursor:pointer;text-transform:none;letter-spacing:0;font-size:13px;color:var(--tx)}.aqti input{width:auto;margin-top:2px}.aqti.d span{text-decoration:line-through;color:var(--mut)}
+.aqol{margin:8px 0;padding-left:20px;line-height:1.6;color:#d8d8e0;font-size:13px}.aqcf{display:flex;gap:8px}.aqcf input{flex:1}
+@media(max-width:900px){.aqg{grid-template-columns:1fr}.lrg{grid-template-columns:1fr 1fr}.b2row>b{min-width:0;width:100%}}
+@media(max-width:640px){.aqtb span{display:none}.aqtb{padding:8px 10px;margin-left:6px}.lrg{grid-template-columns:1fr}}
+
+.srch{min-width:170px}@media(max-width:1500px){.aqtb span{display:none}.aqtb{padding:8px 11px}}
+.b2llcw~.note{display:none}
 </style><canvas id=bgc></canvas><div class="app" id=app>
 <aside><div class="brand"><svg class=lo viewBox="0 0 40 40"><circle class=r2 cx=20 cy=20 r=17 style="transform-origin:20px 20px" /><circle cx=20 cy=20 r=8 fill="#ff1f4f" style="animation:pulse 1.6s infinite" /></svg>Only Winners<br><small>&amp; QUITTERS</small><i></i></div><div class="stat"><b></b>COMMAND STATION LIVE</div>
 <div class="nvs" id="nav"></div><div class="foot"><div id="clk"></div><div id="dt"></div><div id=who style="margin-top:8px;letter-spacing:2px;font-size:10px"></div><div id=syn2 class=syn2></div><div id=acl class=syn2></div><button class="btn o" onclick="lockView()">Lock station</button><button class="btn o owqtab" id=owqtab hidden onclick="OWQC.team()" style="margin-top:6px">Team access</button></div></aside>
@@ -6365,7 +6402,7 @@ const PA=()=>{const s=S(),ds=D.activity.map(x=>x.d).sort(),P=eqPer(),hw=P.h,lw=P
 const NM=['High hours, low lead spend','Low hours, high lead spend','High hours, high lead spend','Low hours, low lead spend'];
 let tt;const toast=(m,ok)=>{const e=document.getElementById('ts');e.textContent=m;e.className='ts show'+(ok?'':' bad');clearTimeout(tt);tt=setTimeout(()=>e.className='ts',2600)};
 const ask=(m,fn)=>{document.getElementById('md').innerHTML=`<div class=mb><div class=c><h4>Please confirm</h4><p>${m}</p><button class=btn id=yes>Yes, do it</button> <button class="btn o" onclick="closeM()">Cancel</button></div></div>`;document.getElementById('yes').onclick=()=>{closeM();fn()}};
-const openTab=(k,s)=>{if(k==='Business Performance'){k='Agency Performance';s=APX_FROM_BP[s||SUB['Business Performance']]||'Overview'}tab=k;if(s){SUB[k]=s;if(k==='Agency Performance')AGD=null}go();document.getElementById('main').scrollTop=0};
+const openTab=(k,s)=>{if(k==='Production Equation'){k='Agency Performance';s='Business Analytics'}if(k==='Business Performance'){k='Agency Performance';s=APX_FROM_BP[s||SUB['Business Performance']]||'Overview'}tab=k;if(s){SUB[k]=s;if(k==='Agency Performance')AGD=null}go();document.getElementById('main').scrollTop=0};
 const setPS=(i,v)=>{D.policies[i].st=v;save();go();toast('Status updated',1)};
 const DIM=new Date(now.getFullYear(),now.getMonth()+1,0).getDate(),DOM=now.getDate(),cl01=v=>Math.max(0,Math.min(1,isFinite(v)?v:0));
 const SL=()=>`<datalist id=sl>${[...new Set([...D.expenses.map(x=>x.src),...MYCL().map(c=>c.src),...D.policies.map(p=>p.src)].filter(Boolean))].map(x=>`<option>${esc(x)}`).join('')}</datalist>`;
@@ -6378,7 +6415,7 @@ return`<svg viewBox="0 0 260 236" width="100%">${[.25,.5,.75,1].map(v=>`<polygon
 const heat=an=>{const end=new Date(now.getFullYear(),now.getMonth(),now.getDate()),val={},cells=[];D.activity.filter(a=>!an||(a.ag||'Unassigned')===an).forEach(a=>val[a.d]=(val[a.d]||0)+a.h);D.policies.filter(p=>!an||(p.ag||'Unassigned')===an).forEach(p=>val[p.d]=(val[p.d]||0)+2);
 for(let i=139;i>=0;i--){const d=new Date(end);d.setDate(d.getDate()-i);const k=d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());cells.push([k,val[k]||0,d.getDay()])}
 const a=[...Array(cells[0][2]).fill(null),...cells];return`<div class=hm>${a.map((c,i)=>c?`<i title="${c[0]}: ${c[1]}" style="--i:${i};background:${c[1]?`rgba(255,31,79,${c[1]<3?.25:c[1]<6?.5:c[1]<9?.75:1})`:'#12121a'}"></i>`:'<i></i>').join('')}</div>`};
-const tick2=()=>{const s=S(),f=FC(),h=HS(),it=[['ISSUED PREMIUM',$(s.issAP)],['INCOME',$(s.rev)],['NET PROFIT',$(s.net)],['PLACEMENT',P(s.iss.length/s.p.length)],['PIPELINE',$(f.pend)],['FORECAST',$(f.proj)],['HEALTH',h.score+'/100'],['FOLLOW-UPS DUE',MYCL().filter(c=>c.fu&&c.fu<=today).length]].map(x=>`<span>${x[0]} <b>${x[1]}</b></span>`).join('');return`<div class=tk><div class=tki>${it}${it}</div></div>`};
+const tick2=()=>{const s=S(),f=FC(),h=HS(),it=[['ISSUED PREMIUM',$(s.issAP)],...((typeof bizOwner==='function'&&!bizOwner())?[['SUBMITTED AP',$(s.sub)]]:[['INCOME',$(s.rev)],['NET PROFIT',$(s.net)]]),['PLACEMENT',P(s.iss.length/s.p.length)],['PIPELINE',$(f.pend)],['FORECAST',$(f.proj)],['HEALTH',h.score+'/100'],['FOLLOW-UPS DUE',MYCL().filter(c=>c.fu&&c.fu<=today).length]].map(x=>`<span>${x[0]} <b>${x[1]}</b></span>`).join('');return`<div class=tk><div class=tki>${it}${it}</div></div>`};
 function brief(){const s=S(),f=FC(),pa=PA(),best=LS().filter(x=>x.roi!=null).sort((a,b)=>b.roi-a.roi)[0],due=MYCL().filter(c=>c.fu&&c.fu<=today).sort((a,b)=>a.fu.localeCompare(b.fu)),L=[];
 if(!s.p.length&&!D.expenses.length&&!D.income.length)return[['info','Awaiting data. Log a policy, income, or expense to bring the systems online.']];
 L.push([f.proj>=D.goal?'ok':'warn',`On pace for ${$(f.proj)} issued this month against a ${$(D.goal)} goal (${P(f.proj/D.goal)}).`]);
@@ -6521,7 +6558,7 @@ const nl=r.querySelector('.rl');if(nl&&y)nl.scrollTop=y}
 const latestAl=()=>{const L=AL().slice(0,4);return L.length?L.map(a=>`<div class=qr style="border-left-color:${SEV[a.sev][1]}" onclick="alGo(${a.id})"><span><b>${esc(a.t)}</b><small>${esc(a.m)}</small></span><span class=mut>${ago2(a.ts)}</span></div>`).join(''):'<p class=mut>No alerts yet. New activity shows up here as it comes in.</p>'};
 function hudRender(){const h=document.getElementById('hud');if(!h)return;const un=AL().filter(a=>!a.rd),cr=un.filter(a=>a.sev==='crit').length,wr=un.filter(a=>a.sev==='warn').length,st=cr?['ALERT','crit']:wr?['ATTENTION','warn']:['NOMINAL','ok'],v=views[tab],sb=(tab==='Agency Performance'||tab==='Business Performance'||tab==='Clients')?SUB[tab]:'';
 h.innerHTML=`<div class=bc><span>${v?v[2]:''}</span><i>/</i><b>${esc(tab)}</b>${sb?`<i>/</i><span>${esc(sb)}</span>`:''}</div><svg class=wv viewBox="0 0 140 24" width=120 height=24 aria-hidden=true><polyline points="0,12 20,12 26,12 30,3 36,21 42,12 70,12 76,12 80,6 86,18 92,12 140,12" fill=none stroke="#ff1f4f" stroke-width=1.5 pathLength=140 stroke-dasharray="40 100" class=wvl /></svg>
-<button class=srch onclick="openCP()"><span>Search or jump to...</span><kbd>Ctrl K</kbd></button>
+<button class=srch onclick="openCP()"><span>Search or jump to...</span><kbd>Ctrl K</kbd></button><button class=aqtb onclick="openTab('Ask Claude')" title="Ask Claude: quick answers, web search, task lists"><i>&#10022;</i><span>Ask Claude</span></button>
 <div class=hs><span class="pill ${st[1]}">${st[0]}</span><span id=syn>SYNC ${LASTSYNC}</span><button class=bell id=bell onclick="toggleRail()" aria-label="Alerts, ${un.length} unread"><svg viewBox="0 0 24 24" width=20 height=20 fill=none stroke=currentColor stroke-width=2 stroke-linecap=round stroke-linejoin=round><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.9 1.9 0 0 0 3.4 0"/></svg>${un.length?`<b>${Math.min(99,un.length)}</b>`:''}</button></div>`;
 const d=document.getElementById('dal');if(d)d.innerHTML=latestAl();navRender()}
 const WK=()=>Math.floor(Date.now()/6048e5);
@@ -11406,7 +11443,7 @@ function anim(){document.querySelectorAll('.cu').forEach(e=>{const v=+e.dataset.
 const NSUB={'Agency Performance':['Overview','Policies','Agents','Time Report','Income','Expenses','Statement'],'Clients':['Client Book','Message Builder'],'Leaderboard':['Rankings','Challenges']};
 function navSubs(k){if(k!==tab)return'';let it=[];
 if(k==='Learning Network'){const S=lnStates(WHO),T=lnTrkCur(S);it=[{l:'01 &middot; Agency Essentials',on:!LN.id&&T===0,st:lnSecDone(S,0)?'ok':'',c:'sec',f:'lnTrk(0)'},{l:'02 &middot; New Broker Blueprint',on:!LN.id&&T===1,st:lnBpOpen(WHO,S)?'':'lock',c:'sec',f:'lnTrk(1)'}].concat(S.filter(s=>s.tr===T).map(s=>({l:s.m.ic+' '+s.m.t,on:LN.id===s.m.id,st:s.done?'ok':(s.unlocked?'':'lock'),f:"lnSub('"+s.m.id+"')"})))}
-else if(NSUB[k]){const cur=k==='Leaderboard'?LBV:SUB[k]||NSUB[k][0];it=(k==='Agency Performance'&&typeof pfCanSee==='function'&&pfCanSee()?NSUB[k].concat('Portfolio'):NSUB[k]).map(x=>({l:x,on:cur===x,st:'',f:"navSub('"+k+"','"+x+"')"}))}
+else if(NSUB[k]){const cur=k==='Leaderboard'?LBV:SUB[k]||NSUB[k][0];it=NSUB[k].map(x=>({l:x,on:cur===x,st:'',f:"navSub('"+k+"','"+x+"')"}))}
 return it.length?'<div class=nsubs>'+it.map(x=>`<button class="nsb ${x.on?'on':''} ${x.st} ${x.c||''}" onclick="${x.f}">${x.st==='ok'?'<i>&#10003;</i>':x.st==='lock'?'<i>&#128274;</i>':'<i>&bull;</i>'}${x.l}</button>`).join('')+'</div>':''}
 function navSub(k,x){if(k==='Leaderboard'){LBV=x;openTab(k)}else openTab(k,x)}
 function lnSub(id){if(LN.id===id&&LN.mode==='lesson')return;lnOpen(id)}
@@ -11963,11 +12000,12 @@ function pfSym(s){return String(s||'').trim().toUpperCase().replace(/[^A-Z0-9.\-
 function pfIsCrypto(s){return !!PFCG[pfSym(s)]}
 function pfToday(){const d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')}
 function pfOwnerNow(){return !!PF.owner&&(typeof WHO!=='undefined')&&(WHO==='Cole Leckey'||WHO==='Agency Owner')}
-function pfCanSee(){return pfOwnerNow()||(!!PF.view&&!(typeof window!=='undefined'&&window.OWQ_GUEST))}
+var PF_TEAM=false;
+function pfCanSee(){return pfOwnerNow()||(PF_TEAM&&!!PF.view&&!(typeof window!=='undefined'&&window.OWQ_GUEST))}
 function pfLp(){const o={};Object.keys(PF.px).forEach(k=>{const P=PF.px[k];if(P&&isFinite(P.p))o[k]={p:+P.p,dp:isFinite(P.dp)?+P.dp:null,at:P.at||Date.now()}});return o}
 function pfShare(d){if(PF.view||!PF.db||!pfOwnerNow())return;PF.shAt=Date.now();d=d||JSON.parse(JSON.stringify(PF.data));
  const o={v:1,tx:d.tx||[],hist:d.hist||[],mp:d.mp||{},ph:d.ph||{},seq:d.seq||0,lp:pfLp(),at:Date.now()};PF.shN=Object.keys(o.lp).length;try{PF.db.doc('pfshare/main').set(o).catch(()=>{})}catch(e){}}
-function pfView(db){PF.ready=true;if(!db||(typeof window!=='undefined'&&window.OWQ_GUEST))return;PF.view=1;PF.ready=false;PF.db=db;PF.sref=db.doc('pfshare/main');
+function pfView(db){PF.ready=true;if(!PF_TEAM||!db||(typeof window!=='undefined'&&window.OWQ_GUEST))return;PF.view=1;PF.ready=false;PF.db=db;PF.sref=db.doc('pfshare/main');
  PF.unsub=PF.sref.onSnapshot(sn=>{const d=sn&&sn.exists?sn.data():null;if(d&&typeof d==='object'){PF.data=pfClean(d);PF.shared=d.at||0;const lp=d.lp&&typeof d.lp==='object'?d.lp:{};
    Object.keys(lp).forEach(k=>{const v=lp[k];if(!v||!isFinite(v.p)||v.p<=0)return;const P=PF.px[k];if(!P||(v.at||0)>(P.at||0)||P.src==='Owner')PF.px[k]={p:+v.p,dp:v.dp==null?NaN:+v.dp,at:v.at||0,src:'Owner'}})}
   const first=!PF.ready;PF.ready=true;if(first){try{if(typeof tab!=='undefined'&&(tab==='Agency Performance'||tab==='Command Deck'))go();else if(typeof navRender==='function')navRender()}catch(e){}}else pfSoon()},()=>{PF.ready=true});
@@ -13245,6 +13283,188 @@ function lateCheck(){try{if(!ONLINE||!WHO||WHO==='Agency Owner')return;const t=l
  d.onclick=e=>{if(e.target===d)d.remove()};document.body.appendChild(d)}catch(e){}}
 {const _vj=vcJoin;vcJoin=async function(){const was=VC.on;const r=await _vj.apply(this,arguments);try{if(!was&&VC.on)lateCheck()}catch(e){}return r}}
 /*B1end*/
+
+/*B2start*/
+/* v118 Agency Performance in two halves.
+   SALES PERFORMANCE (everyone): Overview (sales only), Policies, Agents, Lead ROI, Time Report, Business Analytics (the old
+   Production Equation). BUSINESS PERFORMANCE (LLC) (Agency Owner and Cole Leckey only): LLC Overview, Income, Expenses,
+   Statement, Portfolio, Capital (private equity, notes, loans, owner money in and out, each allocated to business or
+   personal cash flow; kept in the owner's private document). The portfolio is owner-only again (PF_TEAM). Ask Claude (Team):
+   quick answers, web search, drafts and a personal task list, through the agency's Claude connection. */
+function bizOwner(){try{return!window.OWQ_GUEST&&typeof WHO!=='undefined'&&(WHO==='Agency Owner'||WHO==='Cole Leckey')}catch(e){return false}}
+APX_SALES.splice(0,APX_SALES.length,'Policies','Agents','Lead ROI','Time Report','Business Analytics');
+APX_MONEY.splice(0,APX_MONEY.length,'LLC Overview','Income','Expenses','Statement','Portfolio','Capital');
+apxTabs=function(){return['Overview'].concat(APX_SALES,bizOwner()?APX_MONEY.filter(x=>x!=='Portfolio'||apxOwner()):[])};
+try{Object.defineProperty(NSUB,'Agency Performance',{get:()=>apxTabs(),enumerable:true,configurable:true})}catch(e){}
+apxSeg=function(){const cur=SUB['Agency Performance'],b=x=>`<button class="${cur===x?'on':''}" onclick="${apxGo(x)}">${x}</button>`;
+ return`<div class=b2tabs role=tablist aria-label="Agency Performance"><div class="b2row s"><b>Sales Performance</b><div class="seg apx-seg">${['Overview'].concat(APX_SALES).map(b).join('')}</div></div>`+
+ (bizOwner()?`<div class="b2row l"><b>&#128274; Business Performance &middot; LLC</b><div class="seg apx-seg">${APX_MONEY.filter(x=>x!=='Portfolio'||apxOwner()).map(b).join('')}</div></div>`:'')+`</div>`};
+{const _n=apxNorm;apxNorm=function(){try{if(tab==='Production Equation'){tab='Agency Performance';SUB['Agency Performance']='Business Analytics'}}catch(e){}return _n.apply(this,arguments)}}
+try{delete views['Production Equation']}catch(e){}
+try{APX_FROM_BP.Summary='LLC Overview'}catch(e){}
+function b2Strip(h){const i=h.indexOf('</div></div>');return h.indexOf('<div class=hd>')===0&&i>0?h.slice(i+12):h}
+{const _ag=ag;ag=function(){apxNorm();const T=SUB['Agency Performance'],biz=bizOwner();
+ if(APX_MONEY.includes(T)&&!biz){SUB['Agency Performance']='Overview';return ag()}
+ if(T==='Overview')return hd('Agency Performance','Sales performance at a glance: production, pipeline, leads and the team.',[['+ Policy',"openM('P')"],['+ Activity',"openM('A')"],['+ Lead buy',"lrAdd()"]])+apxSeg()+b2Sales();
+ if(T==='Lead ROI')return hd('Agency Performance','Lead ROI: what each lead buy cost and what it brought back.',[['+ Add leads purchased',"lrAdd()"]])+apxSeg()+lrPage();
+ if(T==='Business Analytics')return hd('Agency Performance','Business Analytics: where your hours and lead spend put you on the growth path.',[['+ Activity',"openM('A')"],['+ Lead buy',"lrAdd()"]])+apxSeg()+b2Strip(eqn());
+ if(T==='LLC Overview')return hd('Agency Performance','The LLC: income, expenses, profit, investments and capital. Agency Owner only.',[['+ Income',"openM('I')"],['+ Expense',"openM('E')"]])+apxSeg()+'<div class=b2llcw>'+b2Llc()+'</div>';
+ if(T==='Capital')return hd('Agency Performance','Capital: private equity, notes, loans and owner money, allocated to business or personal cash flow. Private to you.',[['+ Capital entry',"capAdd()"]])+apxSeg()+'<div class=b2llcw>'+capPage()+'</div>';
+ let h=_ag();if(APX_MONEY.includes(T)){const sg=apxSeg(),i=h.indexOf(sg);if(i>=0)h=h.slice(0,i+sg.length)+'<div class=b2llcw>'+h.slice(i+sg.length)+'</div>'}return h}}
+/* ---------- sales overview: production, pipeline, leads, hours, the team (no LLC money) ---------- */
+function b2LeadM(k){return sum(D.expenses.filter(x=>isLeadEx(x)&&mon(x.d)===k),x=>+x.amt||0)}
+function b2Bars(R){const W=720,H=220,L=46,B=24,T=12,iw=W-L-10,ih=H-B-T,mx=Math.max(1,...R.map(r=>Math.max(r.sub,r.iss))),gw=iw/R.length,bw=Math.max(4,Math.min(16,gw*.3)),y=v=>T+ih-v/mx*ih;
+ let g='';for(let i=0;i<=4;i++){const v=mx*i/4;g+=`<line x1=${L} x2=${W-10} y1=${y(v).toFixed(1)} y2=${y(v).toFixed(1)} class=apx-gl /><text x=${L-6} y=${(y(v)+3).toFixed(1)} text-anchor=end class=apx-ax>${apxK(v)}</text>`}
+ R.forEach((r,i)=>{const x=L+gw*i+gw/2;g+=`<rect x=${(x-bw-1).toFixed(1)} y=${y(r.sub).toFixed(1)} width=${bw} height=${(T+ih-y(r.sub)).toFixed(1)} fill="#6d6d7a" rx=1><title>${apxML(r.k)}: ${$(r.sub)} submitted AP</title></rect><rect x=${(x+1).toFixed(1)} y=${y(r.iss).toFixed(1)} width=${bw} height=${(T+ih-y(r.iss)).toFixed(1)} fill="#ff1f4f" rx=1><title>${apxML(r.k)}: ${$(r.iss)} issued</title></rect><text x=${x.toFixed(1)} y=${H-6} text-anchor=middle class=apx-ax>${apxML(r.k)}</text>`});
+ return`<svg viewBox="0 0 ${W} ${H}" width=100% class=apx-tr role=img aria-label="Submitted AP and issued premium by month">${g}</svg><div class=apx-lg><span><i style="background:#6d6d7a"></i>Submitted AP</span><span><i style="background:#ff1f4f"></i>Issued premium</span></div>`}
+function b2Sales(){const s=S(),R=apxRows(12),c=R[R.length-1],p=apxPrev(),v=k=>R.map(r=>r[k]),f=FC(),gl=+D.goal||0,mIss=c.iss,ck=cmk;
+ const lm=b2LeadM(ck),lmp=b2LeadM(apxMk(-1)),lN=sum(D.expenses.filter(x=>isLeadEx(x)&&mon(x.d)===ck),x=>+x.leads||0),cm=sum(D.policies.filter(x=>live(x)&&mon(x.d)===ck),com);
+ let EH={h:0,goalH:0,paceH:0};try{EH=eqPer('mo')}catch(e){}
+ const tiles=`<div class=apx-kp>
+ ${apxTile('Issued Premium',cu(c.iss,'$'),'This month &middot; '+$(s.issAP)+' all time',apxDelta(c.iss,p.iss),apxSpark(v('iss')),apxGo('Policies'))}
+ ${apxTile('Annualized Premium (Submitted)',cu(c.sub,'$'),c.n+' application'+(c.n===1?'':'s')+' this month',apxDelta(c.sub,p.sub),apxSpark(v('sub'),'#c9c9d3'),apxGo('Policies'))}
+ ${apxTile('Placement Rate',cu(s.p.length?s.iss.length/s.p.length*100:0,'%'),s.iss.length+' of '+s.p.length+' placed &middot; '+$(s.cb)+' in chargebacks','',apxSpark(R.map(r=>r.n?r.ni/r.n:0),'#ffcf40'),apxGo('Policies'))}
+ ${apxTile('Lead Spend',cu(lm,'$'),'This month &middot; '+lN.toLocaleString()+' leads'+(lN?' &middot; '+$(lm/lN)+' each':''),apxDelta(lm,lmp,1),apxSpark(R.map(r=>b2LeadM(r.k)),'#8a8a9a'),apxGo('Lead ROI'))}
+ ${apxTile('Lead ROI',lm?`<span class="${cm>=lm?'pos':'neg'}">${(cm/lm).toFixed(1)}x</span>`:'-','Commission issued this month per $1 of leads','','',apxGo('Lead ROI'))}
+ ${apxTile('Hours This Month',cu(EH.h,'n'),'Goal '+(EH.goalH||0).toLocaleString()+' &middot; pace '+(EH.paceH||0).toLocaleString()+' by today','','',apxGo('Business Analytics'),EH.h>=EH.paceH?'apx-np':'')}
+ </div>`;
+ const trend=`<div class="c apx-wide"><div class=apx-ch><h4>Production &middot; Last 12 Months</h4><small>${$(sum(R,r=>r.sub))} submitted AP &middot; ${$(sum(R,r=>r.iss))} issued</small></div>${b2Bars(R)}</div>`;
+ const goal=`<div class="c apx-goal"><h4>This Month's Goal</h4>${apxRing(gl?mIss/gl:0,gl?P(mIss/gl):'-','of goal',`${$(mIss)} of ${$(gl)} issued`)}<div class=apx-gs><div><small>On pace for</small><b>${apxK(f.proj)}</b></div><div><small>Pipeline</small><b>${apxK(f.pend)}</b></div><div><small>Day</small><b>${DOM}/${DIM}</b></div></div></div>`;
+ const fn=`<div class=c><h4>Sales Funnel &middot; All Time</h4>${apxFunnel([['Contacts',s.con],['Appointments',s.app],['Submitted',s.p.length],['Issued / Paid',s.iss.length]])}</div>`;
+ const pd=grp(D.policies.filter(x=>x.st==='Submitted'),x=>x.ag||'Unassigned',x=>x.ap),top=grp(D.policies.filter(x=>live(x)&&mon(x.d)===ck),x=>x.ag||'Unassigned',x=>x.ap).slice(0,5).map(r=>r.concat([(pd.find(q=>q[0]===r[0])||[0,0])[1]]));
+ const tp=`<div class="c mod" tabindex=0 role=button onclick="${apxGo('Agents')}" onkeydown="if(event.key=='Enter')this.click()"><h4>Top Producers &middot; ${APX_MN[now.getMonth()]}</h4>${apxRank(top)}<em class=open>AGENTS &#9656;</em></div>`;
+ const vs=lrVendors(D.expenses.filter(isLeadEx)).slice(0,5);
+ const lv=`<div class="c mod" tabindex=0 role=button onclick="${apxGo('Lead ROI')}" onkeydown="if(event.key=='Enter')this.click()"><h4>Lead Vendors &middot; ROI</h4>${vs.length?vs.map(r=>`<div class=b2lv><span><b>${esc(r.v)}</b><small>${$(r.sp)} &middot; ${r.n.toLocaleString()} leads &middot; ${r.iss} issued</small></span><em class="${r.roi>=1?'pos':'neg'}">${r.sp?r.roi.toFixed(1)+'x':'-'}</em></div>`).join(''):'<p class=mut>No lead buys yet. Use + Lead buy.</p>'}<em class=open>LEAD ROI &#9656;</em></div>`;
+ const pm=`<div class=c><h4>Issued Premium by Product</h4>${dn(grp(s.iss,x=>x.prod||'Other',x=>x.ap))}</div>`;
+ const lt=D.policies.map((x,i)=>[x,i]).sort((a,b)=>String(b[0].d).localeCompare(String(a[0].d))).slice(0,6);
+ const lp=`<div class=c><div class=apx-ch><h4>Latest Policies</h4><button class="btn o sm" onclick="${apxGo('Policies')}">All policies</button></div>${lt.length?lt.map(([x,i])=>`<div class=apx-lp><span class=apx-st style="--c:${APX_STC[x.st]||'#8a8a9a'}">${esc(x.st)}</span><span class=apx-lpn><b>${esc(x.cl)}</b><small>${esc(x.d)} &middot; ${esc(x.ag||'Unassigned')} &middot; ${esc(x.prod||'')}</small></span><em>${$(x.ap)}</em>${apxEB('policies',i)}</div>`).join(''):'<p class=mut>No policies yet. Use + Policy to log one.</p>'}</div>`;
+ return tiles+`<div class=apx-r21>${trend}${goal}</div><div class=apx-r3>${fn}${tp}${lv}</div><div class=apx-r3>${pm}${lp}</div>`}
+/* ---------- LLC overview: the money side ---------- */
+function b2Llc(){const s=S(),R=apxRows(12),c=R[R.length-1],p=apxPrev(),v=k=>R.map(r=>r[k]);let pb=null;try{if(apxOwner()&&typeof pfBook==='function'&&PF.ready)pb=pfBook()}catch(e){}
+ const cap=capTot();
+ const tiles=`<div class=apx-kp>
+ ${apxTile('Total Income',cu(c.inc,'$'),'This month &middot; '+$(s.rev)+' all time'+(s.pv?' (incl. '+$(s.pv)+' invested)':''),apxDelta(c.inc,p.inc),apxSpark(v('inc'),'#5ac8ff'),apxGo('Income'))}
+ ${apxTile('Expenses',cu(c.exp,'$'),'This month &middot; '+$(s.exT)+' all time',apxDelta(c.exp,p.exp,1),apxSpark(v('exp'),'#8a8a9a'),apxGo('Expenses'))}
+ ${apxTile('Net Profit',`<span class="${c.net<0?'neg':'pos'}">${cu(c.net,'$')}</span>`,'This month &middot; '+$(s.net)+' all time, '+P(s.net/s.rev)+' margin',apxDelta(c.net,p.net),apxSpark(v('net'),'#3ddc97'),apxGo('Statement'),'apx-np')}
+ ${apxTile('Portfolio',pb?cu(pb.val,'$'):'-',pb?'Market value &middot; '+(pb.unr+pb.real>=0?'+':'')+$(pb.unr+pb.real)+' P&amp;L':'Open the Portfolio tab to load it','','',apxGo('Portfolio'))}
+ ${apxTile('Capital (Business)',cu(cap.biz,'$'),'Net in &middot; '+cap.n+' entr'+(cap.n===1?'y':'ies'),'','',apxGo('Capital'))}
+ ${apxTile('Capital (Personal)',cu(cap.per,'$'),'Allocated to personal cash flow','','',apxGo('Capital'))}
+ </div>`;
+ const trend=`<div class="c apx-wide"><div class=apx-ch><h4>Income, Expenses &amp; Profit &middot; Last 12 Months</h4><small>${$(sum(R,r=>r.inc))} income &middot; ${$(sum(R,r=>r.net))} net</small></div>${apxTrend(R)}</div>`;
+ const im=`<div class="c mod" tabindex=0 role=button onclick="${apxGo('Income')}" onkeydown="if(event.key=='Enter')this.click()"><h4>Where the Money Comes From</h4>${dn([['Policy Commission',s.pr],...grp(D.income,x=>x.src,x=>x.amt),['Portfolio Invested',s.pv]].filter(r=>r[1]>0))}<em class=open>INCOME &#9656;</em></div>`;
+ const em=`<div class="c mod" tabindex=0 role=button onclick="${apxGo('Expenses')}" onkeydown="if(event.key=='Enter')this.click()"><h4>Where the Money Goes</h4>${hb(grp(D.expenses,x=>x.cat||'Other',x=>x.amt).slice(0,6))}<em class=open>EXPENSES &#9656;</em></div>`;
+ return tiles+`<div class=apx-r21>${trend}<div class=c><h4>Cash Flow Split</h4>${dn([['Business capital',Math.max(0,cap.biz)],['Personal capital',Math.max(0,cap.per)],['Net profit',Math.max(0,s.net)]].filter(r=>r[1]>0))}</div></div><div class=apx-r3>${im}${em}<div class=c><h4>Statements</h4><p class=mut>Profit and loss by month is on the Statement tab.</p><button class="btn o sm" onclick="${apxGo('Statement')}">Open Statement</button></div></div>`}
+/* ---------- Lead ROI ---------- */
+const LR_T=['Final Expense','Mortgage Protection','IUL','Term Life','Whole Life','Annuity','Medicare Supplement','Veteran','Other'];
+const LR_A=['Real-time','Aged 1-2 weeks','Aged 3-4 weeks','Aged 5-8 weeks','Aged 9+ weeks','Aged 6+ months'];
+var LR={per:'mo',ag:'All'};
+function lrIn(x){if(!isLeadEx(x))return false;if(LR.ag!=='All'&&(x.ag||'')!==LR.ag)return false;const d=String(x.d||'');if(LR.per==='mo')return mon(d)===cmk;if(LR.per==='30'){const t=Date.parse(d);return isFinite(t)&&Date.now()-t<=30*864e5}return true}
+function lrPol(v){v=String(v||'').toLowerCase().trim();return v?D.policies.filter(p=>String(p.src||'').toLowerCase().trim()===v&&(LR.ag==='All'||p.ag===LR.ag)):[]}
+function lrVendors(E){const by={};E.forEach(x=>{const v=String(x.src||'').trim()||'Unnamed vendor',o=by[v]||(by[v]={v,sp:0,n:0,buys:0});o.sp+=+x.amt||0;o.n+=+x.leads||0;o.buys++});
+ return Object.values(by).map(o=>{const P=lrPol(o.v),is=P.filter(live);o.apps=P.length;o.iss=is.length;o.iap=sum(is,x=>x.ap);o.cm=sum(is,com);o.roi=o.sp?o.cm/o.sp:0;o.cpl=o.n?o.sp/o.n:0;o.cpa=o.iss?o.sp/o.iss:0;o.close=o.n?o.iss/o.n:0;return o}).sort((a,b)=>b.sp-a.sp)}
+function lrPage(){const E=D.expenses.map((x,i)=>[x,i]).filter(([x])=>lrIn(x)),X=E.map(r=>r[0]),V=lrVendors(X),sp=sum(X,x=>+x.amt||0),n=sum(X,x=>+x.leads||0),apps=sum(V,r=>r.apps),iss=sum(V,r=>r.iss),cm=sum(V,r=>r.cm),iap=sum(V,r=>r.iap);
+ const ags=[...new Set(D.agents.map(a=>a.name))];
+ const ctl=`<div class=lrctl><div class=seg>${[['mo','This month'],['30','Last 30 days'],['all','All time']].map(([k,l])=>`<button class="${LR.per===k?'on':''}" onclick="LR.per='${k}';go()">${l}</button>`).join('')}</div><select onchange="LR.ag=this.value;go()" aria-label="Agent"><option${LR.ag==='All'?' selected':''}>All</option>${ags.map(a=>`<option${LR.ag===a?' selected':''}>${esc(a)}</option>`).join('')}</select></div>`;
+ const k=`<div class=g>${kpi('Lead Spend',cu(sp,'$'),X.length+' purchase'+(X.length===1?'':'s'))}${kpi('Leads Bought',cu(n,'n'),n?$(sp/n)+' per lead':'Add how many leads with each buy')}${kpi('Applications',cu(apps,'n'),apps?$(sp/apps)+' per application':'Policies whose lead source matches a vendor')}${kpi('Issued',cu(iss,'n'),$(iap)+' issued premium'+(iss?' &middot; '+$(sp/iss)+' per issued':''))}${kpi('Commission',cu(cm,'$'),'From issued lead policies')}${kpi('Lead ROI',sp?`<span class="${cm>=sp?'pos':'neg'}">${(cm/sp).toFixed(2)}x</span>`:'-',sp?(cm-sp>=0?'+':'')+$(cm-sp)+' after lead cost':'Commission per $1 of leads')}</div>`;
+ const vt=V.length?`<div class="c sc"><h4>By Vendor</h4><table><tr><th>Vendor<th class=n>Spend<th class=n>Leads<th class=n>Cost / lead<th class=n>Apps<th class=n>Issued<th class=n>Close rate<th class=n>Issued premium<th class=n>Commission<th class=n>ROI</tr>${V.map(r=>`<tr><td><b>${esc(r.v)}</b><small class=mut> &middot; ${r.buys} buy${r.buys===1?'':'s'}</small><td class=n>${$(r.sp)}<td class=n>${r.n.toLocaleString()}<td class=n>${r.n?$(r.cpl):'-'}<td class=n>${r.apps}<td class=n>${r.iss}<td class=n>${r.n?(r.close*100).toFixed(1)+'%':'-'}<td class=n>${$(r.iap)}<td class=n>${$(r.cm)}<td class="n ${r.roi>=1?'pos':'neg'}">${r.sp?r.roi.toFixed(2)+'x':'-'}</tr>`).join('')}</table><small class=mut>Applications and issued policies count when the policy's lead source matches the vendor name.</small></div>`:'';
+ const byT=grp(X,x=>x.ltype||'Not set',x=>+x.amt||0),byA=grp(X,x=>x.lage||'Not set',x=>+x.amt||0);
+ const mix=X.length?`<div class=apx-r3><div class=c><h4>Spend by Lead Type</h4>${hb(byT)}</div><div class=c><h4>Spend by Lead Age</h4>${hb(byA)}</div><div class=c><h4>Exclusive vs Shared</h4>${dn(grp(X,x=>x.lex==='Shared'?'Shared':x.lex==='Exclusive'?'Exclusive':'Not set',x=>+x.amt||0))}</div></div>`:'';
+ const L=E.slice().sort((a,b)=>String(b[0].d).localeCompare(String(a[0].d)));
+ const lt=`<div class="c sc"><h4>Lead Purchases</h4>${L.length?`<table><tr><th>Date<th>Agent<th>Vendor<th>Type<th>Age<th class=n>Leads<th class=n>Cost / lead<th class=n>Total<th>States<th></th></tr>${L.map(([x,i])=>`<tr><td>${esc(x.d)}<td>${esc(x.ag||'-')}<td>${esc(x.src||'-')}${x.cat!=='Leads'?' <small class=mut>(logged as '+esc(x.cat||'Other')+')</small>':''}<td>${esc(x.ltype||'-')}<td>${esc(x.lage||'-')}${x.lex?' <small class=mut>'+esc(x.lex)+'</small>':''}<td class=n>${x.leads?(+x.leads).toLocaleString():'-'}<td class=n>${x.leads?$((+x.amt||0)/x.leads):'-'}<td class=n>${$(+x.amt||0)}<td>${esc(x.lst||'')}<td class=apx-ra><button class="x apx-eb" title="Edit" aria-label="Edit" onclick="lrAdd(${i})">&#9998;</button><button class=x title="Delete" onclick="ask('Delete this lead purchase?',()=>del('expenses',${i}))">&times;</button></tr>`).join('')}</table>`:`<p class=mut>No lead purchases ${LR.per==='mo'?'this month':LR.per==='30'?'in the last 30 days':'yet'}. Use <b>+ Add leads purchased</b> to log one: vendor, how many, price, type and age.</p>`}</div>`;
+ return ctl+k+vt+mix+lt}
+function lrAdd(i){const x=i!==undefined?D.expenses[i]:null,ags=[...new Set(D.agents.map(a=>a.name))],vend=[...new Set(D.expenses.filter(isLeadEx).map(e=>e.src).concat(D.policies.map(p=>p.src)).filter(Boolean))].sort(),me=(typeof WHO!=='undefined'&&WHO!=='Agency Owner')?WHO:'Cole Leckey',o=(k,v)=>`<option${v===k?' selected':''}>${esc(k)}</option>`;
+ document.getElementById('md').innerHTML=`<div class=mb onclick="if(event.target===this)closeM()"><div class="c lrm" role=dialog aria-modal=true aria-label="Lead purchase"><h4>${x?'Edit lead purchase':'Add leads purchased'}</h4>
+ <div class=lrg><label>Date<input id=lr_d type=date value="${esc(x?x.d:dkey(new Date()))}"></label><label>Agent<select id=lr_ag>${ags.map(a=>o(a,x?x.ag:me)).join('')}</select></label>
+ <label>Vendor<input id=lr_v list=lr_vl value="${esc(x?x.src||'':'')}" placeholder="e.g. Lead Vault, EverQuote"><datalist id=lr_vl>${vend.map(v=>`<option value="${esc(v)}">`).join('')}</datalist></label>
+ <label>Lead type<select id=lr_t>${LR_T.map(t=>o(t,x?x.ltype:'Final Expense')).join('')}</select></label>
+ <label>Lead age<select id=lr_a>${LR_A.map(t=>o(t,x?x.lage:'Real-time')).join('')}</select></label>
+ <label>Exclusive or shared<select id=lr_x>${['Exclusive','Shared'].map(t=>o(t,x?x.lex:'Exclusive')).join('')}</select></label>
+ <label>Number of leads<input id=lr_n type=number min=1 step=1 value="${x&&x.leads?x.leads:''}" oninput="lrCalc('n')"></label>
+ <label>Price per lead ($)<input id=lr_c type=number min=0 step=0.01 value="${x&&x.leads?((+x.amt||0)/x.leads).toFixed(2):''}" oninput="lrCalc('c')"></label>
+ <label>Total cost ($)<input id=lr_s type=number min=0 step=0.01 value="${x?(+x.amt||0):''}" oninput="lrCalc('s')"></label>
+ <label>State(s)<input id=lr_st value="${esc(x&&x.lst||'')}" placeholder="e.g. OH, PA"></label>
+ <label class=lrw>Notes<input id=lr_no value="${esc(x&&x.n||'')}" placeholder="Filters, campaign, order number"></label></div>
+ <p class=cherr id=lr_e></p><div><button class=btn onclick="lrSave(${i===undefined?'':i})">${x?'Save':'Add purchase'}</button> <button class="btn o" onclick="closeM()">Cancel</button></div></div></div>`;
+ setTimeout(()=>{const e=document.getElementById('lr_v');if(e&&!x)e.focus()},30)}
+function lrCalc(w){const g=id=>parseFloat((document.getElementById(id)||{}).value),n=g('lr_n'),c=g('lr_c'),s=g('lr_s'),set=(id,v)=>{const e=document.getElementById(id);if(e&&isFinite(v))e.value=(+v).toFixed(2)};
+ if(w==='n'||w==='c'){if(n>0&&c>=0)set('lr_s',n*c)}else if(w==='s'){if(n>0&&s>=0)set('lr_c',s/n)}}
+function lrSave(i){const v=id=>String((document.getElementById(id)||{}).value||'').trim(),n=Math.round(+v('lr_n')||0),s=+v('lr_s')||(n*(+v('lr_c')||0)),er=document.getElementById('lr_e');
+ if(!v('lr_v')){er.textContent='Enter the vendor.';return}if(!(n>0)){er.textContent='Enter how many leads.';return}if(!(s>0)){er.textContent='Enter the price per lead or the total cost.';return}
+ const o={d:v('lr_d')||dkey(new Date()),cat:'Leads',amt:Math.round(s*100)/100,leads:n,src:v('lr_v'),n:v('lr_no').slice(0,120),ag:v('lr_ag'),ltype:v('lr_t'),lage:v('lr_a'),lex:v('lr_x'),lst:v('lr_st').slice(0,60),lr:1};
+ if(i!==undefined&&i!==''&&D.expenses[i])Object.assign(D.expenses[i],o);else D.expenses.push(o);save();closeM();go();toast(n.toLocaleString()+' leads from '+o.src+' saved',1)}
+/* ---------- Capital (owner's private document) ---------- */
+const CAP_T=['Private equity','Convertible note','SAFE','Loan','Line of credit','Owner contribution','Owner distribution','Grant','Other security'];
+var CAP={rows:[],ready:false,ref:null,boot:0};
+function capLocal(){try{CAP.rows=JSON.parse(localStorage.getItem('owq_cap')||'[]')||[]}catch(e){CAP.rows=[]}CAP.ready=true}
+async function capInit(){if(CAP.boot)return;CAP.boot=1;try{const c=globalThis.claude;if(!c||!c.use){capLocal();return}const[u,db]=await Promise.all([c.use('user'),c.use('db')]);
+ if(!u||!db||!(u.isOwner&&u.isOwner())){capLocal();return}const id=await u.id();if(!id){capLocal();return}CAP.ref=db.doc('data/users/'+id+'/capital');
+ CAP.ref.onSnapshot(sn=>{const d=sn&&sn.exists?sn.data():null;CAP.rows=d&&Array.isArray(d.rows)?d.rows:[];CAP.ready=true;try{if(tab==='Agency Performance'&&/Capital|LLC Overview/.test(SUB['Agency Performance']))refreshQuiet()}catch(e){}},()=>capLocal())}catch(e){capLocal()}}
+function capSave(){const d={v:1,rows:CAP.rows};if(CAP.ref)CAP.ref.set(d).catch(()=>toast('Could not save capital entries'));else try{localStorage.setItem('owq_cap',JSON.stringify(CAP.rows))}catch(e){}}
+function capSign(r){return /distribution/i.test(r.t||'')||r.dir==='out'?-1:1}
+function capTot(){let biz=0,per=0;(CAP.rows||[]).forEach(r=>{const v=(+r.amt||0)*capSign(r);if(r.al==='Personal')per+=v;else biz+=v});return{biz,per,n:(CAP.rows||[]).length}}
+function capPage(){if(!CAP.ready){capInit();return'<div class=c><p class=mut>Loading capital entries...</p></div>'}const t=capTot(),R=CAP.rows.map((r,i)=>[r,i]).sort((a,b)=>String(b[0].d).localeCompare(String(a[0].d)));
+ const k=`<div class=g>${kpi('Business Cash Flow',cu(t.biz,'$'),'Capital allocated to the LLC')}${kpi('Personal Cash Flow',cu(t.per,'$'),'Capital allocated to you personally')}${kpi('Total Capital',cu(t.biz+t.per,'$'),t.n+' entr'+(t.n===1?'y':'ies'))}${kpi('By Type',String(new Set(CAP.rows.map(r=>r.t)).size),'Kinds of vehicles used')}</div>`;
+ const tb=`<div class="c sc"><h4>Capital Ledger</h4>${R.length?`<table><tr><th>Date<th>Type<th>Counterparty<th>Allocation<th class=n>Amount<th>Notes<th></th></tr>${R.map(([r,i])=>`<tr><td>${esc(r.d)}<td>${esc(r.t)}<td>${esc(r.who||'-')}<td><span class="b2al ${r.al==='Personal'?'p':'b'}">${esc(r.al||'Business')}</span><td class="n ${capSign(r)<0?'neg':'pos'}">${capSign(r)<0?'-':''}${$(+r.amt||0)}<td class=mut>${esc(r.n||'')}<td class=apx-ra><button class="x apx-eb" title="Edit" onclick="capAdd(${i})">&#9998;</button><button class=x title="Delete" onclick="ask('Delete this capital entry?',()=>{CAP.rows.splice(${i},1);capSave();go()})">&times;</button></tr>`).join('')}</table>`:'<p class=mut>No capital entries yet. Use <b>+ Capital entry</b> to record private equity funding, notes, loans or owner money in and out, and allocate each to business or personal cash flow.</p>'}</div>`;
+ return k+`<div class=apx-r21><div class=c><h4>By Vehicle</h4>${hb(grp(CAP.rows,r=>r.t,r=>(+r.amt||0)*capSign(r)))}</div><div class=c><h4>Business vs Personal</h4>${dn([['Business',Math.max(0,t.biz)],['Personal',Math.max(0,t.per)]].filter(r=>r[1]>0))}</div></div>`+tb+'<p class=mut style="font-size:11px">Private to the Agency Owner: stored in your own account, never in the shared team data.</p>'}
+function capAdd(i){const r=i!==undefined?CAP.rows[i]:null,o=(k,v)=>`<option${v===k?' selected':''}>${esc(k)}</option>`;
+ document.getElementById('md').innerHTML=`<div class=mb onclick="if(event.target===this)closeM()"><div class="c lrm" role=dialog aria-modal=true aria-label="Capital entry"><h4>${r?'Edit capital entry':'Capital entry'}</h4><div class=lrg>
+ <label>Date<input id=cp_d type=date value="${esc(r?r.d:dkey(new Date()))}"></label><label>Type<select id=cp_t>${CAP_T.map(t=>o(t,r?r.t:'Private equity')).join('')}</select></label>
+ <label>Counterparty<input id=cp_w value="${esc(r&&r.who||'')}" placeholder="Investor, lender, fund"></label><label>Amount ($)<input id=cp_a type=number min=0 step=0.01 value="${r?r.amt:''}"></label>
+ <label>Allocation<select id=cp_al>${['Business','Personal'].map(t=>o(t,r?r.al:'Business')).join('')}</select></label><label>Direction<select id=cp_dir>${[['in','Money in'],['out','Money out']].map(([k,l])=>`<option value=${k}${(r?r.dir:'in')===k?' selected':''}>${l}</option>`).join('')}</select></label>
+ <label class=lrw>Notes<input id=cp_n value="${esc(r&&r.n||'')}" placeholder="Terms, valuation, maturity"></label></div><p class=cherr id=cp_e></p>
+ <div><button class=btn onclick="capSaveRow(${i===undefined?'':i})">Save</button> <button class="btn o" onclick="closeM()">Cancel</button></div></div></div>`}
+function capSaveRow(i){const v=id=>String((document.getElementById(id)||{}).value||'').trim(),a=+v('cp_a');if(!(a>0)){document.getElementById('cp_e').textContent='Enter an amount above 0.';return}
+ const o={d:v('cp_d')||dkey(new Date()),t:v('cp_t'),who:v('cp_w').slice(0,80),amt:Math.round(a*100)/100,al:v('cp_al')==='Personal'?'Personal':'Business',dir:v('cp_dir')==='out'?'out':'in',n:v('cp_n').slice(0,160)};
+ if(i!==undefined&&i!==''&&CAP.rows[i])CAP.rows[i]=o;else CAP.rows.push(o);capSave();closeM();go()}
+/* ---------- Ask Claude (Team) ---------- */
+var AQ={turns:[],busy:0,fn:undefined,err:'',web:1,cur:'',ctl:null};
+try{const t=JSON.parse(sessionStorage.getItem('owq_aq')||'[]');if(Array.isArray(t))AQ.turns=t.slice(-20)}catch(e){}
+const AQS=[['Quick answer','What is the difference between term and whole life insurance, in two sentences?'],['Web search','Search the web: what are the current final expense underwriting trends this year?'],['Task list','Make me a task list for today: 60 dials, 3 appointments, follow up with yesterday\u2019s leads, log my activity.'],['Draft a text','Draft a short, friendly text to a client who missed our call today, asking for a good time to reconnect.'],['Objection','A client says "I need to think about it." Give me three short ways to respond.']];
+const AQR=`You are Claude, helping a life insurance agent at Only Winners & Quitters (a fully remote agency). Be quick and practical: short answers first, then detail only if asked. For task lists, answer with one task per line starting with "- ". Never ask for or repeat Social Security numbers, bank details or passwords. You are not a lawyer or financial advisor: for compliance, legal or tax questions say so and suggest checking with the carrier or a professional.`;
+function aqInit(){if(AQ.fn!==undefined)return;AQ.fn=undefined;AQ.probe=1;try{const c=globalThis.claude;if(!c||!c.use){AQ.fn=null;return}c.use('sample').then(f=>{AQ.fn=f||null;aqPaint()}).catch(()=>{AQ.fn=null;aqPaint()})}catch(e){AQ.fn=null}}
+function aqTasksKey(){return'owq_tasks_'+String(typeof WHO!=='undefined'?WHO:'me').replace(/\W/g,'')}
+function aqTasks(){try{const a=JSON.parse(localStorage.getItem(aqTasksKey())||'[]');return Array.isArray(a)?a:[]}catch(e){return[]}}
+function aqTasksSet(a){try{localStorage.setItem(aqTasksKey(),JSON.stringify(a.slice(0,200)))}catch(e){}aqPaintTasks()}
+function aqFmt(t){return esc(t).replace(/\*\*([^*]+)\*\*/g,'<b>$1</b>').replace(/\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g,'<a href="$2" target=_blank rel=noopener>$1</a>').replace(/(^|\s)(https?:\/\/[^\s<]+)/g,'$1<a href="$2" target=_blank rel=noopener>$2</a>').replace(/\n/g,'<br>')}
+function aqList(t){return String(t||'').split(/\n/).map(l=>l.match(/^\s*(?:[-*\u2022]|\d+[.)]|\[ \])\s+(.+)$/)).filter(Boolean).map(m=>m[1].replace(/\*\*/g,'').trim()).filter(Boolean)}
+function aqMsgs(){let h=AQ.turns.map((m,i)=>`<div class="aqb ${m.role==='user'?'u':'a'}">${aqFmt(m.content)}${m.role==='assistant'?`<div class=aqba><button onclick="aqCopy(${i})">Copy</button>${aqList(m.content).length>1?`<button onclick="aqToTasks(${i})">Add ${aqList(m.content).length} to my tasks</button>`:''}</div>`:''}</div>`).join('');
+ if(AQ.busy)h+=`<div class="aqb a">${AQ.cur?aqFmt(AQ.cur):'<span class=cqd><i></i><i></i><i></i></span> '+(AQ.web?'Searching and thinking...':'Thinking...')}</div>`;if(AQ.err)h+=`<div class="aqb err">${esc(AQ.err)}</div>`;
+ return h||`<div class=aqe><b>Ask anything.</b><span>Quick answers, web searches, drafts, objection handling and task lists.</span></div>`}
+function aqSetup(){const own=bizOwner();return`<div class="c aqns"><h4>Ask Claude is not connected yet</h4><p class=mut>The portal needs the agency's Claude connection to answer. ${own?'You set it up once and the whole team can use it.':'The Agency Owner sets it up once for the whole team.'}</p>${own?`<ol class=aqol><li>Deploy the small Claude function (instructions in the portal source: <b>web/functions/README.md</b>) with your Anthropic API key.</li><li>Paste its web address here and save. Everyone gets Ask Claude after a reload.</li></ol><div class=aqcf><input id=aq_url placeholder="https://...cloudfunctions.net/askClaude"><button class=btn onclick="aqSaveUrl()">Save</button></div><p class=cherr id=aq_ue></p>`:''}</div>`}
+async function aqSaveUrl(){const u=String((document.getElementById('aq_url')||{}).value||'').trim(),e=document.getElementById('aq_ue');if(!/^https:\/\/[^\s]+$/.test(u)){if(e)e.textContent='Enter the https address of the function.';return}
+ try{const db=await globalThis.claude.use('db');await db.doc('cfg/ai').set({url:u,at:Date.now()});toast('Saved. Reload the portal to connect Ask Claude.',1);if(e)e.textContent=''}catch(x){if(e)e.textContent='Could not save it: '+((x&&x.code)||'error')}}
+function aqPage(){aqInit();const ready=AQ.fn!==null;
+ return hd('Ask Claude','Quick answers, web searches, drafts and task lists for your day.',[])+`<div class=aqg>${ready?'':aqSetup()}<div class="c aqc"><div class=aqh><h4>&#10022; Ask Claude</h4><label class=aqw><input type=checkbox ${AQ.web?'checked':''} onchange="AQ.web=this.checked?1:0"> Search the web</label>${AQ.turns.length?'<button class="btn o sm" onclick="aqClear()">New chat</button>':''}</div>
+ <div class=aqs>${AQS.map(([l,q])=>`<button onclick="aqAsk(${esc(JSON.stringify(q))})"${ready?'':' disabled'}>${l}</button>`).join('')}</div>
+ <div class=aqm id=aqm aria-live=polite>${aqMsgs()}</div>
+ <div class=aqf><textarea id=aqi rows=2 placeholder="${ready?'Ask a question, paste something to rewrite, or ask for a task list...':'Not connected yet'}" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();aqAsk()}"${ready?'':' disabled'}></textarea><button class=btn id=aqgo onclick="${AQ.busy?'aqStop()':'aqAsk()'}"${ready?'':' disabled'}>${AQ.busy?'Stop':'Ask'}</button></div>
+ <small class=mut>Answers can be wrong: double-check anything that matters before you act on it. No SSNs, bank details or passwords.</small></div>
+ <div class="c aqt"><div class=aqh><h4>My Tasks</h4><small class=mut id=aqtc></small></div><div class=aqta><input id=aqtn placeholder="Add a task" onkeydown="if(event.key==='Enter')aqTaskAdd()"><button class="btn o sm" onclick="aqTaskAdd()">Add</button></div><div id=aqtl></div></div></div>`}
+function aqPaint(){if(tab!=='Ask Claude')return;const m=document.getElementById('aqm');if(!m||AQ.fn===null&&!document.querySelector('.aqns')){go();return}m.innerHTML=aqMsgs();m.scrollTop=m.scrollHeight;const b=document.getElementById('aqgo');if(b){b.textContent=AQ.busy?'Stop':'Ask';b.setAttribute('onclick',AQ.busy?'aqStop()':'aqAsk()')}aqPaintTasks()}
+function aqPaintTasks(){const l=document.getElementById('aqtl');if(!l)return;const T=aqTasks(),c=document.getElementById('aqtc');if(c)c.textContent=T.filter(t=>!t.done).length+' open';
+ l.innerHTML=T.length?T.map((t,i)=>`<div class="aqti ${t.done?'d':''}"><label><input type=checkbox ${t.done?'checked':''} onchange="aqTaskTog(${i})"><span>${esc(t.t)}</span></label><button class=x aria-label="Delete task" onclick="aqTaskDel(${i})">&times;</button></div>`).join('')+(T.some(t=>t.done)?'<button class="btn o sm" onclick="aqTaskClean()">Clear done</button>':''):'<p class=mut>No tasks yet. Add one, or ask Claude for a task list and tap "Add to my tasks".</p>'}
+function aqTaskAdd(){const e=document.getElementById('aqtn'),t=String(e&&e.value||'').trim();if(!t)return;const T=aqTasks();T.push({t:t.slice(0,200),done:0,at:Date.now()});aqTasksSet(T);e.value='';e.focus()}
+function aqTaskTog(i){const T=aqTasks();if(T[i])T[i].done=T[i].done?0:1;aqTasksSet(T)}
+function aqTaskDel(i){const T=aqTasks();T.splice(i,1);aqTasksSet(T)}
+function aqTaskClean(){aqTasksSet(aqTasks().filter(t=>!t.done))}
+function aqToTasks(i){const m=AQ.turns[i];if(!m)return;const L=aqList(m.content),T=aqTasks();L.forEach(t=>T.push({t:t.slice(0,200),done:0,at:Date.now()}));aqTasksSet(T);toast(L.length+' tasks added',1)}
+function aqCopy(i){const m=AQ.turns[i];if(!m)return;try{navigator.clipboard.writeText(m.content).then(()=>toast('Copied',1),()=>toast('Could not copy'))}catch(e){toast('Could not copy')}}
+function aqClear(){AQ.turns=[];AQ.err='';try{sessionStorage.removeItem('owq_aq')}catch(e){}go()}
+function aqStop(){try{AQ.ctl&&AQ.ctl.abort()}catch(e){}}
+async function aqAsk(q){if(AQ.busy||!AQ.fn)return;const i=document.getElementById('aqi');q=String(q||(i?i.value:'')).trim();if(!q)return;if(i)i.value='';
+ AQ.turns.push({role:'user',content:q.slice(0,4000)});AQ.busy=1;AQ.cur='';AQ.err='';AQ.ctl=typeof AbortController!=='undefined'?new AbortController():null;aqPaint();
+ const hist=AQ.turns.slice(-10),input=hist.map((m,k)=>k===0&&m.role==='user'?{role:'user',content:AQR+'\nToday is '+new Date().toDateString()+'. The agent asking is '+(typeof WHO!=='undefined'?WHO:'an agent')+'.\n\n'+m.content}:m);
+ if(input[0].role!=='user')input.shift();
+ try{const r=await AQ.fn(input,{cache:false,web:!!AQ.web,signal:AQ.ctl&&AQ.ctl.signal,modelTier:'default',onText:({text})=>{AQ.cur=text;const m=document.getElementById('aqm');if(m){m.innerHTML=aqMsgs();m.scrollTop=m.scrollHeight}}});
+  AQ.turns.push({role:'assistant',content:String(r.text||'')+(r.truncated?'\n(Answer was cut short. Ask for less at a time.)':'')})}
+ catch(e){const c=e&&e.code;if(e&&e.text){AQ.turns.push({role:'assistant',content:e.text+'\n(interrupted)'})}else if(c!=='cancelled'){AQ.err=c==='rate_limited'?'Too many questions right now. Try again in a minute.':c==='not_granted'?'Claude access was declined for this portal.':c==='session_expired'?'Sign in again, then retry.':c==='not_member'?'Your account is not on the team list.':'Could not get an answer. Try again.'}}
+ AQ.busy=0;AQ.cur='';AQ.ctl=null;try{sessionStorage.setItem('owq_aq',JSON.stringify(AQ.turns.slice(-20)))}catch(e){}aqPaint()}
+try{views['Agency Performance'][0]=ag}catch(e){}
+views['Ask Claude']=[aqPage,'&#10022;','TEAM','Quick answers, web search, tasks'];
+{const _rq=refreshQuiet;refreshQuiet=function(){if(typeof tab!=='undefined'&&tab==='Ask Claude')return;return _rq.apply(this,arguments)}}
+/* alerts: an unread alert with the same title and text is not added again within 30 minutes (no repeats in the bell) */
+{const _pa5=pushAlert;pushAlert=function(a,quiet){try{if(a&&!a.k&&AL().some(x=>x.t===a.t&&x.m===a.m&&!x.rd&&Date.now()-(x.ts||0)<18e5))return null}catch(e){}return _pa5.apply(this,arguments)}}
+/*B2end*/
 
 </script>
 
