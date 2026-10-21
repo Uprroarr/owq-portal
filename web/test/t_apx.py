@@ -85,10 +85,10 @@ try:
         # ---- the Command Deck
         A.evaluate("openTab('Command Deck')"); A.wait_for_timeout(800)
         pk = A.evaluate("[...document.querySelectorAll('.apx-peeks .apx-pkh h4')].map(h=>h.innerText.toUpperCase())")
-        ok(len(pk) == 4 and any('AGENCY PERFORMANCE' in x for x in pk) and any('MONEY' in x for x in pk) and any('PRODUCTION EQUATION' in x for x in pk) and any('CLIENTS' in x for x in pk), 'the Command Deck has sneak peeks of Agency Performance, Money, Production Equation and Clients', pk)
-        ok(A.evaluate("!!document.getElementById('pls')&&!!document.getElementById('dal')&&!!document.querySelector('.rx')"), 'it keeps the reactor, the Live Pulse and the alerts')
+        ok(len(pk) == 4 and any('AGENCY PERFORMANCE' in x for x in pk) and any('MONEY' in x for x in pk) and any('BUSINESS ANALYTICS' in x for x in pk) and any('CLIENTS' in x for x in pk), 'the Command Deck has sneak peeks of Agency Performance, Money, Production Equation and Clients', pk)
+        ok(A.evaluate("!!document.getElementById('pls')&&!!document.querySelector('.dkts')&&!!document.querySelector('.rx')"), 'it keeps the reactor, the Live Pulse and the briefing / alerts tabs (v119)')
         A.click('.apx-peeks .apx-pk:nth-child(2)'); A.wait_for_timeout(500)
-        ok(A.evaluate("tab") == 'Agency Performance' and A.evaluate("SUB['Agency Performance']") == 'Statement', 'tapping the Money peek opens the Statement')
+        ok(A.evaluate("tab") == 'Agency Performance' and A.evaluate("SUB['Agency Performance']") == 'LLC Overview', 'tapping the LLC Money peek opens the LLC Overview (v119)')
         A.evaluate("openTab('Command Deck')"); A.wait_for_timeout(500); A.click('.apx-peeks .apx-pk:nth-child(3)'); A.wait_for_timeout(500)
         ok(A.evaluate("tab") == 'Agency Performance' and A.evaluate("SUB['Agency Performance']") == 'Business Analytics', 'the Production Equation peek opens Business Analytics (v118)')
         # ---- phone width
