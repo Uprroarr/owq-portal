@@ -1,6 +1,6 @@
 /* OWQ Station service worker: network first for the portal page (so every update arrives at once), last good copy when
    offline. Only same-origin GET requests; Firebase, prices and everything else go straight to the network. */
-var C='owq-shell-v1',SHELL=['./','index.html','manifest.webmanifest','icon-192.png','icon-512.png','install.html'];
+var C='owq-shell-v2',SHELL=['./','index.html','manifest.webmanifest','icon-192.png','icon-512.png','icon-maskable-512.png','apple-touch-icon.png','install.html'];
 self.addEventListener('install',function(e){self.skipWaiting();e.waitUntil(caches.open(C).then(function(c){return Promise.all(SHELL.map(function(u){return c.add(new Request(u,{cache:'reload'})).catch(function(){})}))}))});
 self.addEventListener('activate',function(e){e.waitUntil(caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k!==C}).map(function(k){return caches.delete(k)}))}).then(function(){return self.clients.claim()}))});
 self.addEventListener('fetch',function(e){var r=e.request;if(r.method!=='GET')return;var u=new URL(r.url);if(u.origin!==location.origin)return;
