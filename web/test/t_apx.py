@@ -26,13 +26,13 @@ try:
         A.evaluate("(()=>{try{mock()}catch(e){}})()"); A.wait_for_timeout(1200)
         # ---- one section
         nav = A.evaluate("document.getElementById('nav').innerText.toUpperCase()")
-        ok('BUSINESS PERFORMANCE' not in nav and 'AGENCY PERFORMANCE' in nav and 'PRODUCTION EQUATION' in nav, 'Business Performance is gone from the sidebar; Agency Performance and Production Equation stay', nav[:300])
+        ok('BUSINESS PERFORMANCE' not in nav and 'AGENCY PERFORMANCE' in nav and 'PRODUCTION EQUATION' not in nav, 'Business Performance and Production Equation are inside Agency Performance (v118)', nav[:300])
         tab(A, 'Overview')
-        seg = A.evaluate("document.querySelector('.apx-seg').innerText.toUpperCase()")
-        ok(all(x in seg for x in ['OVERVIEW', 'SALES', 'POLICIES', 'AGENTS', 'TIME REPORT', 'MONEY', 'INCOME', 'EXPENSES', 'STATEMENT', 'PORTFOLIO']), 'Agency Performance has Overview, Sales and Money tabs (Portfolio for the owner)', seg)
+        seg = A.evaluate("document.querySelector('.b2tabs').innerText.toUpperCase()")
+        ok(all(x in seg for x in ['OVERVIEW', 'SALES PERFORMANCE', 'POLICIES', 'AGENTS', 'LEAD ROI', 'TIME REPORT', 'BUSINESS ANALYTICS', 'BUSINESS PERFORMANCE', 'LLC OVERVIEW', 'INCOME', 'EXPENSES', 'STATEMENT', 'PORTFOLIO', 'CAPITAL']), 'Agency Performance has Sales Performance and Business Performance (LLC) tabs (v118)', seg)
         t = A.evaluate(MAIN).upper()
-        ok(all(x in t for x in ['ISSUED PREMIUM', 'TOTAL INCOME', 'NET PROFIT', 'PRODUCTION & PROFIT', "THIS MONTH'S GOAL", 'SALES FUNNEL', 'TOP PRODUCERS', 'WHERE THE MONEY GOES', 'LATEST POLICIES']), 'the Overview shows production and money together', t[:400])
-        ok(A.evaluate("document.querySelectorAll('.apx-tr .apx-bg').length") == 12 and A.evaluate("!!document.querySelector('.apx-tr .apx-nl')"), 'the 12-month chart has bars for every month and the profit line')
+        ok(all(x in t for x in ['ISSUED PREMIUM', 'LEAD SPEND', 'PRODUCTION', "THIS MONTH'S GOAL", 'SALES FUNNEL', 'TOP PRODUCERS', 'LATEST POLICIES']), 'the sales Overview shows production, leads and the team (v118)', t[:400])
+        ok(A.evaluate("document.querySelectorAll('.apx-tr rect').length") == 24, 'the 12-month chart has submitted AP and issued bars for every month (v118)')
         # ---- old addresses
         A.evaluate("openTab('Business Performance','Expenses')"); A.wait_for_timeout(500)
         ok(A.evaluate("tab") == 'Agency Performance' and A.evaluate("SUB['Agency Performance']") == 'Expenses' and 'BY CATEGORY' in A.evaluate(MAIN).upper(), 'an old Business Performance > Expenses link opens Agency Performance > Expenses')
@@ -90,7 +90,7 @@ try:
         A.click('.apx-peeks .apx-pk:nth-child(2)'); A.wait_for_timeout(500)
         ok(A.evaluate("tab") == 'Agency Performance' and A.evaluate("SUB['Agency Performance']") == 'Statement', 'tapping the Money peek opens the Statement')
         A.evaluate("openTab('Command Deck')"); A.wait_for_timeout(500); A.click('.apx-peeks .apx-pk:nth-child(3)'); A.wait_for_timeout(500)
-        ok(A.evaluate("tab") == 'Production Equation', 'the Production Equation peek opens it')
+        ok(A.evaluate("tab") == 'Agency Performance' and A.evaluate("SUB['Agency Performance']") == 'Business Analytics', 'the Production Equation peek opens Business Analytics (v118)')
         # ---- phone width
         A.set_viewport_size({'width': 390, 'height': 844}); A.wait_for_timeout(300)
         for t2 in ['Command Deck', 'Agency Performance']:

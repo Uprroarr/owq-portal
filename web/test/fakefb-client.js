@@ -8,10 +8,11 @@ function E(c){return Object.assign(new Error(c),{code:c})}
 /* ---- app + auth ---- */
 var app={initializeApp:function(cfg){return{cfg:cfg}}};
 var authL=[],AUTH={currentUser:null};
-function fire(){AUTH.currentUser=U();authL.slice().forEach(function(f){try{f(AUTH.currentUser)}catch(e){console.error(e)}})}
+function tokU(u){if(u&&!u.getIdToken)u.getIdToken=function(){return Promise.resolve('fake-id-token.'+u.uid)};return u}
+function fire(){AUTH.currentUser=tokU(U());authL.slice().forEach(function(f){try{f(AUTH.currentUser)}catch(e){console.error(e)}})}
 function GoogleAuthProvider(){}GoogleAuthProvider.prototype.setCustomParameters=function(){};
 var auth={getAuth:function(){return AUTH},GoogleAuthProvider:GoogleAuthProvider,
- onAuthStateChanged:function(a,cb){authL.push(cb);setTimeout(function(){cb(U())},30);return function(){var i=authL.indexOf(cb);if(i>=0)authL.splice(i,1)}},
+ onAuthStateChanged:function(a,cb){authL.push(cb);setTimeout(function(){AUTH.currentUser=tokU(U());cb(AUTH.currentUser)},30);return function(){var i=authL.indexOf(cb);if(i>=0)authL.splice(i,1)}},
  signInWithPopup:function(){var u=W.__FAKE_SIGNIN||null;if(!u)return Promise.reject(E('auth/popup-closed-by-user'));try{sessionStorage.setItem('fake_user',JSON.stringify(u))}catch(e){}W.__FAKE_USER=u;setTimeout(fire,20);return Promise.resolve({user:u})},
  signInWithRedirect:function(){return Promise.reject(E('auth/operation-not-supported-in-this-environment'))},getRedirectResult:function(){return Promise.resolve(null)},
  sendSignInLinkToEmail:function(a,e,o){try{sessionStorage.setItem('fake_link_email',e);sessionStorage.setItem('fake_link_url',o&&o.url||'')}catch(x){}W.__FAKE_MAILED=e;return Promise.resolve()},

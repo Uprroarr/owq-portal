@@ -20,7 +20,7 @@ try:
   A.wait_for_function("OWQC.phase==='out'",timeout=30000);A.click('#owqgi');A.wait_for_function("OWQC.phase==='in'",timeout=30000)
   lgx.login(A,2);A.wait_for_timeout(1500)
   A.evaluate("openTab('Business Performance')");A.wait_for_timeout(1500)
-  s=A.evaluate(SUBS);ok(s==['Overview','Policies','Agents','Time Report','Income','Expenses','Statement','Portfolio'],'Cole sees Overview, the Sales tabs and the Money tabs with Portfolio in the dropdown (v114: Agency Performance)',s)
+  s=A.evaluate(SUBS);ok(s==['Overview','Policies','Agents','Lead ROI','Time Report','Business Analytics','LLC Overview','Income','Expenses','Statement','Portfolio','Capital'],'Cole sees Overview, the Sales tabs and the Money tabs with Portfolio in the dropdown (v114: Agency Performance)',s)
   A.click(".nsubs .nsb:has-text('Portfolio')");A.wait_for_timeout(1500)
   ok(A.evaluate("SUB['Business Performance']")=='Portfolio' and A.evaluate("!!document.getElementById('pfw')||/portfolio/i.test(document.querySelector('main,#main,body').innerText.slice(0,3000))"),'clicking it opens the Portfolio page')
   ok(A.evaluate("[...document.querySelectorAll('.nsubs .nsb.on')].map(b=>b.textContent.trim()).join()").endswith('Portfolio'),'and Portfolio is highlighted in the dropdown')

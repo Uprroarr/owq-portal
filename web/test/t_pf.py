@@ -135,9 +135,8 @@ try:
   B.click('#owqgr');B.wait_for_function("OWQC.reqd===true",timeout=10000)
   A.evaluate("OWQC.team()");A.wait_for_timeout(1200);A.select_option('#owqrn0','John Montini');A.click("#md button:has-text('Approve')");A.wait_for_timeout(1200);A.evaluate("OWQC.teamClose()")
   B.reload();B.wait_for_function("OWQC.phase==='in'",timeout=30000);lgx.login(B,3);B.wait_for_timeout(800)
-  B.wait_for_function("PF.view===1&&PF.ready",timeout=15000);B.evaluate("openTab('Agency Performance','Portfolio')");B.wait_for_timeout(1500)
-  ok(B.evaluate("!!document.getElementById('pfw')&&document.getElementById('pfw').classList.contains('pf-ro')"),'a teammate gets the Portfolio as view only')
-  ok(B.evaluate("PF.data.fk")=='' and B.evaluate("PF.data.tx.length")==5,"a teammate sees the owner's transactions but never the key")
+  B.evaluate("openTab('Agency Performance','Portfolio')");B.wait_for_timeout(1500)
+  ok(B.evaluate("!document.getElementById('pfw')"),'v118: a teammate does not get the Portfolio (owner-only again)')
   got=B.evaluate("(async()=>{try{const db=await claude.use('db');const s=await db.doc('data/users/uOwner/portfolio').get();return s.exists?'READ':'none'}catch(e){return 'denied'}})()")
   ok(got!='READ',"a teammate cannot read the owner's portfolio",got)
   # 10. phone layout

@@ -182,7 +182,16 @@ W.claude={use:function(name){name=String(name||'');return whenReady().then(funct
  if(name==='room')return NS.room||(NS.room=(NS.rf||(NS.rf=mkRoomFactory()))());
  if(name==='user')return NS.user||(NS.user=mkUser());
  if(name==='downloads')return DL;
+ if(name==='sample')return NS.smp||(NS.smp=mkSample());
  return null})}};
+/* Ask Claude on the website: the owner's Claude function (address in cfg/ai). The page sends the conversation with the
+   signed-in person's Firebase ID token; the function checks the team list, holds the API key and can search the web. */
+function mkSample(){var F=ST.F.fs;return F.getDoc(F.doc(ST.fs,'cfg/ai')).then(function(sn){var d=sn&&sn.exists()?dec(sn.data()):null,url=d&&typeof d.url==='string'&&/^https:\/\/[^\s]+$/.test(d.url)?d.url:'';if(!url)return null;
+ var fn=function(input,opts){opts=opts||{};var u=ST.auth&&ST.auth.currentUser;if(!u)return Promise.reject({code:'session_expired'});
+  return (typeof u.getIdToken==='function'?u.getIdToken():Promise.reject(0)).then(function(tok){return fetch(url,{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+tok},body:JSON.stringify({input:input,web:!!opts.web,tier:opts.modelTier||'default'}),signal:opts.signal||undefined})},function(){throw{code:'session_expired'}})
+   .then(function(r){return r.json().catch(function(){return{}}).then(function(j){if(!r.ok)throw{code:(j&&j.code)||(r.status===429?'rate_limited':r.status===403?'not_member':'error'),message:j&&j.message};var t=String(j.text||'');try{if(opts.onText)opts.onText({text:t,delta:t})}catch(e){}return{text:t,truncated:!!j.truncated}})},
+    function(e){if(e&&e.name==='AbortError')throw{code:'cancelled'};throw e&&e.code?e:{code:'network'}})};
+ fn.limits=function(){return Promise.resolve({images:false})};fn.json=function(i,o){return fn(i,o).then(function(r){return JSON.parse(String(r.text).replace(/^```(json)?|```$/g,''))})};return fn},function(){return null})}
 
 /* ---------------- sign-in gate ---------------- */
 var CSS='#owqg{position:fixed;inset:0;z-index:2147483000;display:flex;align-items:center;justify-content:center;background:radial-gradient(ellipse at 50% 30%,#2a0a14ee,#07070bf2 60%);font-family:Verdana,"DejaVu Sans",sans-serif;color:#f4f4f6;transition:opacity .6s ease}'+
